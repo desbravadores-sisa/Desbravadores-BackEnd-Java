@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Tigre da Montanha - POC</title>
+<style>
+/* Todo o CSS intacto gerado pelo Claude */
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#0a0a0f;color:#fff;min-height:100vh;overflow-x:hidden;}
+.bg-canvas{position:fixed;inset:0;z-index:0;overflow:hidden;}
+.orb{position:absolute;border-radius:50%;filter:blur(80px);opacity:0.35;animation:float 8s ease-in-out infinite;}
+.orb1{width:500px;height:500px;background:radial-gradient(circle,#ff6a00,#ee0979);top:-100px;left:-100px;animation-delay:0s;}
+.orb2{width:400px;height:400px;background:radial-gradient(circle,#ff8c00,#ff4500);bottom:-80px;right:-80px;animation-delay:-3s;}
+.orb3{width:300px;height:300px;background:radial-gradient(circle,#ffa500,#ff6347);top:40%;left:50%;transform:translate(-50%,-50%);animation-delay:-5s;}
+@keyframes float{0%,100%{transform:translateY(0) scale(1);}50%{transform:translateY(-30px) scale(1.05);}}
+.page{position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column;}
+
+.glass{background:rgba(255,255,255,0.07);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.12);border-radius:16px;}
+.glass-sm{background:rgba(255,255,255,0.05);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,0.1);border-radius:12px;}
+
+.navbar{background:rgba(10,10,15,0.6);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,0.1);padding:12px 28px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+.nav-brand{display:flex;align-items:center;gap:10px;font-size:18px;font-weight:700;background:linear-gradient(135deg,#ff8c00,#ff4500);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.nav-brand svg{flex-shrink:0;}
+.nav-user{display:flex;align-items:center;gap:12px;}
+.nav-user-info{text-align:right;}
+.nav-user-name{font-size:14px;font-weight:600;color:#fff;}
+.nav-user-role{font-size:11px;color:rgba(255,140,0,0.9);text-transform:uppercase;letter-spacing:0.5px;}
+.btn-logoff{background:rgba(255,100,0,0.15);border:1px solid rgba(255,140,0,0.3);color:#ff8c00;padding:7px 14px;border-radius:8px;cursor:pointer;font-size:13px;transition:all 0.2s;display:flex;align-items:center;gap:6px;}
+.btn-logoff:hover{background:rgba(255,100,0,0.25);border-color:rgba(255,140,0,0.6);}
+
+#toast-container{position:fixed;top:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:10px;pointer-events:none;}
+.toast{background:rgba(20,20,30,0.95);backdrop-filter:blur(20px);border-radius:12px;padding:14px 18px;min-width:280px;display:flex;align-items:center;gap:12px;pointer-events:all;animation:toastIn 0.4s cubic-bezier(0.34,1.56,0.64,1) forwards;box-shadow:0 8px 32px rgba(0,0,0,0.4);}
+.toast.success{border:1px solid rgba(34,197,94,0.4);border-left:3px solid #22c55e;}
+.toast.error{border:1px solid rgba(239,68,68,0.4);border-left:3px solid #ef4444;}
+.toast-icon{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.toast.success .toast-icon{background:rgba(34,197,94,0.15);}
+.toast.error .toast-icon{background:rgba(239,68,68,0.15);}
+.toast-msg{font-size:13px;font-weight:500;color:#fff;flex:1;}
+.toast-sub{font-size:11px;color:rgba(255,255,255,0.5);margin-top:2px;}
+@keyframes toastIn{from{opacity:0;transform:translateX(60px) scale(0.9);}to{opacity:1;transform:translateX(0) scale(1);}}
+@keyframes toastOut{to{opacity:0;transform:translateX(60px) scale(0.9);}}
+
+.input-wrap{position:relative;margin-bottom:16px;}
+.input-label{font-size:12px;font-weight:600;color:rgba(255,255,255,0.6);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;display:block;}
+.input-field{width:100%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:10px;padding:12px 16px;color:#fff;font-size:14px;outline:none;transition:all 0.2s;}
+.input-field::placeholder{color:rgba(255,255,255,0.3);}
+.input-field:focus{border-color:rgba(255,140,0,0.5);background:rgba(255,255,255,0.09);box-shadow:0 0 0 3px rgba(255,140,0,0.1);}
+.btn-primary{width:100%;background:linear-gradient(135deg,#ff8c00,#ff4500);border:none;border-radius:10px;padding:13px;color:#fff;font-size:15px;font-weight:700;cursor:pointer;transition:all 0.2s;letter-spacing:0.3px;}
+.btn-primary:hover{opacity:0.9;transform:translateY(-1px);box-shadow:0 8px 24px rgba(255,100,0,0.35);}
+.btn-primary:active{transform:translateY(0);}
+.btn-primary:disabled{opacity:0.6;cursor:not-allowed;transform:none;}
+
+.pwd-bar-wrap{margin-top:8px;}
+.pwd-bar-track{height:4px;background:rgba(255,255,255,0.1);border-radius:2px;overflow:hidden;}
+.pwd-bar-fill{height:100%;border-radius:2px;transition:width 0.4s ease,background 0.4s ease;width:0%;}
+.pwd-bar-label{font-size:11px;margin-top:5px;color:rgba(255,255,255,0.4);}
+
+.radio-group{display:flex;gap:10px;margin-bottom:16px;}
+.radio-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:11px 14px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);border-radius:10px;cursor:pointer;transition:all 0.2s;font-size:13px;font-weight:600;}
+.radio-btn.active{background:rgba(255,140,0,0.15);border-color:rgba(255,140,0,0.5);color:#ff8c00;}
+
+.unit-card{padding:20px;transition:transform 0.2s;}
+.unit-card:hover{transform:translateY(-3px);}
+.unit-name{font-size:18px;font-weight:700;margin-bottom:4px;}
+.unit-counselor{font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:16px;}
+.unit-score{font-size:28px;font-weight:800;background:linear-gradient(135deg,#ff8c00,#ff4500);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.unit-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+.unit-tasks{font-size:13px;color:rgba(255,255,255,0.6);}
+.prog-track{height:6px;background:rgba(255,255,255,0.1);border-radius:3px;overflow:hidden;margin-top:10px;}
+.prog-fill{height:100%;background:linear-gradient(90deg,#ff8c00,#ff4500);border-radius:3px;}
+
+.kanban-wrap{display:flex;gap:16px;padding:20px 28px;overflow-x:auto;flex:1;}
+.kanban-col{min-width:240px;flex-shrink:0;}
+.kanban-col-header{padding:12px 14px;border-radius:10px 10px 0 0;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.col-todo .kanban-col-header{background:rgba(148,163,184,0.12);border:1px solid rgba(148,163,184,0.2);}
+.col-doing .kanban-col-header{background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.2);}
+.col-review .kanban-col-header{background:rgba(234,179,8,0.12);border:1px solid rgba(234,179,8,0.2);}
+.col-done .kanban-col-header{background:rgba(34,197,94,0.12);border:1px solid rgba(34,197,94,0.2);}
+.col-count{font-size:11px;background:rgba(255,255,255,0.1);padding:2px 8px;border-radius:20px;}
+.task-card{padding:14px;margin-bottom:10px;cursor:pointer;transition:transform 0.15s;}
+.task-card:hover{transform:translateY(-2px);}
+.task-title{font-size:13px;font-weight:600;margin-bottom:8px;line-height:1.4;}
+.task-tags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;}
+.tag{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;text-transform:uppercase;letter-spacing:0.4px;}
+.tag-urgent{background:rgba(239,68,68,0.15);color:#f87171;border:1px solid rgba(239,68,68,0.25);}
+.tag-late{background:rgba(234,179,8,0.15);color:#fbbf24;border:1px solid rgba(234,179,8,0.25);}
+.tag-ok{background:rgba(34,197,94,0.15);color:#4ade80;border:1px solid rgba(34,197,94,0.25);}
+.task-meta{display:flex;justify-content:space-between;align-items:center;font-size:11px;color:rgba(255,255,255,0.4);}
+.task-pts{color:#ff8c00;font-weight:700;font-size:12px;}
+
+.screen{display:none;min-height:100vh;}
+.screen.active{display:flex;flex-direction:column;}
+.center-screen{align-items:center;justify-content:center;padding:20px;}
+.auth-card{width:100%;max-width:420px;padding:36px;}
+.auth-title{font-size:26px;font-weight:800;margin-bottom:6px;}
+.auth-sub{font-size:14px;color:rgba(255,255,255,0.5);margin-bottom:28px;}
+.link-text{text-align:center;font-size:13px;color:rgba(255,255,255,0.5);margin-top:16px;}
+.link-text a{color:#ff8c00;cursor:pointer;text-decoration:none;}
+.link-text a:hover{text-decoration:underline;}
+
+.dash-content{padding:28px;flex:1;}
+.dash-title{font-size:22px;font-weight:800;margin-bottom:4px;}
+.dash-sub{font-size:14px;color:rgba(255,255,255,0.4);margin-bottom:24px;}
+.units-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px;}
+
+.lock-icon{width:80px;height:80px;background:rgba(239,68,68,0.1);border:2px solid rgba(239,68,68,0.25);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;}
+.unauth-title{font-size:20px;font-weight:700;margin-bottom:10px;text-align:center;}
+.unauth-msg{font-size:14px;color:rgba(255,255,255,0.5);text-align:center;margin-bottom:24px;line-height:1.6;}
+.btn-back{background:linear-gradient(135deg,#ff8c00,#ff4500);border:none;border-radius:10px;padding:12px 24px;color:#fff;font-size:14px;font-weight:700;cursor:pointer;transition:all 0.2s;}
+.btn-back:hover{opacity:0.9;}
+
+.spinner{width:18px;height:18px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.6s linear infinite;display:inline-block;}
+@keyframes spin{to{transform:rotate(360deg);}}
+</style>
+</head>
+<body>
+
+<div class="bg-canvas">
+  <div class="orb orb1"></div>
+  <div class="orb orb2"></div>
+  <div class="orb orb3"></div>
+</div>
+
+<div id="toast-container"></div>
+
+<div id="screen-login" class="screen active center-screen">
+  <div class="auth-card glass">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:24px;">
+      <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+        <polygon points="18,2 34,30 2,30" fill="none" stroke="#ff8c00" stroke-width="2.5" stroke-linejoin="round"/>
+        <text x="18" y="26" text-anchor="middle" font-size="16" fill="#ff8c00">🐯</text>
+      </svg>
+      <div>
+        <div style="font-size:18px;font-weight:800;background:linear-gradient(135deg,#ff8c00,#ff4500);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Tigre da Montanha</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:1px;">Clube de Desbravadores</div>
+      </div>
+    </div>
+    <div class="auth-title">Bem-vindo</div>
+    <div class="auth-sub">Acesse o sistema de gestão do clube</div>
+    <div class="input-wrap">
+      <label class="input-label">E-mail</label>
+      <input id="login-email" class="input-field" type="email" placeholder="seu@email.com"/>
+    </div>
+    <div class="input-wrap">
+      <label class="input-label">Senha</label>
+      <input id="login-pwd" class="input-field" type="password" placeholder="••••••••"/>
+    </div>
+    <button class="btn-primary" id="btn-login" onclick="handleLogin()">Entrar</button>
+    <p class="link-text">Não tem conta? <a onclick="goto('screen-register')">Cadastre-se</a></p>
+  </div>
+</div>
+
+<div id="screen-register" class="screen center-screen">
+  <div class="auth-card glass" style="max-width:460px;">
+    <div class="auth-title">Criar conta</div>
+    <div class="auth-sub">Preencha os dados para se cadastrar</div>
+    <div class="input-wrap">
+      <label class="input-label">Nome completo</label>
+      <input id="reg-name" class="input-field" type="text" placeholder="Seu nome"/>
+    </div>
+    <div class="input-wrap">
+      <label class="input-label">E-mail</label>
+      <input id="reg-email" class="input-field" type="email" placeholder="seu@email.com"/>
+    </div>
+    <div class="input-wrap">
+      <label class="input-label">Senha</label>
+      <input id="reg-pwd" class="input-field" type="password" placeholder="••••••••" oninput="checkPwd(this.value)"/>
+      <div class="pwd-bar-wrap">
+        <div class="pwd-bar-track"><div id="pwd-bar" class="pwd-bar-fill"></div></div>
+        <div id="pwd-label" class="pwd-bar-label">Digite uma senha</div>
+      </div>
+    </div>
+    <div class="input-wrap">
+      <label class="input-label">Confirmar senha</label>
+      <input id="reg-cpwd" class="input-field" type="password" placeholder="••••••••"/>
+    </div>
+    <div style="margin-bottom:16px;">
+      <label class="input-label">Tipo de conta</label>
+      <div class="radio-group">
+        <div class="radio-btn active" id="r-director" onclick="selectRole('DIRETOR')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          Diretor
+        </div>
+        <div class="radio-btn" id="r-counselor" onclick="selectRole('CONSELHEIRO')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="5"/><path d="M3 21v-1a9 9 0 0 1 18 0v1"/></svg>
+          Conselheiro
+        </div>
+      </div>
+    </div>
+    <button class="btn-primary" onclick="handleRegister()">Cadastrar</button>
+    <p class="link-text">Já tem conta? <a onclick="goto('screen-login')">Entrar</a></p>
+  </div>
+</div>
+
+<div id="screen-director" class="screen">
+  <nav class="navbar">
+    <div class="nav-brand">
+      <svg width="28" height="28" viewBox="0 0 28 28"><text y="22" font-size="22">🐯</text></svg>
+      Tigre da Montanha
+    </div>
+    <div class="nav-user">
+      <div class="nav-user-info">
+        <div class="nav-user-name" id="nav-dir-name">Diretor</div>
+        <div class="nav-user-role">Diretor</div>
+      </div>
+      <button class="btn-logoff" onclick="handleLogoff()">Sair</button>
+    </div>
+  </nav>
+  <div class="dash-content">
+    <div class="dash-title">Painel de Unidades</div>
+    <div class="dash-sub">Acompanhe o desempenho de cada unidade em tempo real</div>
+    <div class="units-grid">
+      <div class="unit-card glass">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+          <div><div style="font-size:11px;color:rgba(255,140,0,0.7);font-weight:700;margin-bottom:4px;">🐯 Unidade</div><div class="unit-name">Tigresas</div><div class="unit-counselor">Ana Paula Silva</div></div>
+          <div style="text-align:right;"><div class="unit-score">920</div></div>
+        </div>
+        <div class="prog-track"><div class="prog-fill" style="width:93%;background:linear-gradient(90deg,#22c55e,#4ade80);"></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="screen-counselor" class="screen">
+  <nav class="navbar">
+    <div class="nav-brand">
+      <svg width="28" height="28" viewBox="0 0 28 28"><text y="22" font-size="22">🐯</text></svg>
+      Tigre da Montanha
+    </div>
+    <div class="nav-user">
+      <div class="nav-user-info">
+        <div class="nav-user-name" id="nav-con-name">Conselheiro</div>
+        <div class="nav-user-role">Conselheiro</div>
+      </div>
+      <button class="btn-logoff" onclick="handleLogoff()">Sair</button>
+    </div>
+  </nav>
+  <div style="padding:20px 28px 8px;">
+    <div class="dash-title">Quadro de Tarefas</div>
+    <div class="dash-sub">Gerencie as atividades do período</div>
+  </div>
+  <div class="kanban-wrap">
+    <div class="kanban-col col-todo">
+      <div class="kanban-col-header"><span>📋 A Fazer</span><span class="col-count">1</span></div>
+      <div class="task-card glass-sm"><div class="task-title">Organizar reunião</div><div class="task-meta"><span class="task-pts">+200 pts</span></div></div>
+    </div>
+  </div>
+</div>
+
+<div id="screen-unauth" class="screen center-screen">
+  <div class="glass" style="max-width:380px;padding:40px 36px;text-align:center;">
+    <div class="unauth-title">Acesso Negado</div>
+    <div class="unauth-msg">Você não tem permissão para visualizar esta tela.</div>
+    <button class="btn-back" onclick="gotoUserDash()">Voltar</button>
+  </div>
+</div>
+
+<script>
+// Variáveis de Estado Global
+let currentUser = null;
+let selectedRole = 'DIRETOR'; // Tem que bater com o que a API espera
+
+// URL Base do seu Back-end Local
+const API_URL = 'http://localhost:8080/usuarios';
+
+// 1. Funções de Navegação e UX
+function goto(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function showToast(msg, sub, type) {
+  const ct = document.getElementById('toast-container');
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  const icon = type === 'success' ? '✅' : '❌';
+  t.innerHTML = `<div class="toast-icon">${icon}</div><div><div class="toast-msg">${msg}</div>${sub?`<div class="toast-sub">${sub}</div>`:''}</div>`;
+  ct.appendChild(t);
+  setTimeout(() => { t.style.animation = 'toastOut 0.3s ease forwards'; setTimeout(() => t.remove(), 300); }, 3500);
+}
+
+function selectRole(role) {
+  selectedRole = role;
+  document.getElementById('r-director').classList.toggle('active', role === 'DIRETOR');
+  document.getElementById('r-counselor').classList.toggle('active', role === 'CONSELHEIRO');
+}
+
+function checkPwd(val) {
+  let score = 0;
+  if (val.length >= 6) score++;
+  if (val.length >= 10) score++;
+  if (/[0-9]/.test(val)) score++;
+  if (/[^a-zA-Z0-9]/.test(val)) score++;
+  const pct = (score / 4) * 100;
+  const bar = document.getElementById('pwd-bar');
+  const lbl = document.getElementById('pwd-label');
+  const colors = ['','#ef4444','#f59e0b','#eab308','#22c55e'];
+  const labels = ['','Muito fraca','Fraca','Boa','Forte'];
+  bar.style.width = pct + '%';
+  bar.style.background = colors[score] || '#ef4444';
+  lbl.textContent = score ? labels[score] : 'Digite uma senha';
+  lbl.style.color = colors[score] || 'rgba(255,255,255,0.4)';
+}
+
+function gotoUserDash() {
+  if (!currentUser) { goto('screen-login'); return; }
+  goto(currentUser.role === 'DIRETOR' ? 'screen-director' : 'screen-counselor');
+}
+
+// 2. INTEGRAÇÃO: Cadastro
+async function handleRegister() {
+  const name = document.getElementById('reg-name').value.trim();
+  const email = document.getElementById('reg-email').value.trim();
+  const pwd = document.getElementById('reg-pwd').value;
+  const cpwd = document.getElementById('reg-cpwd').value;
+
+  if (!name || !email || !pwd) { showToast('Atenção', 'Preencha todos os campos', 'error'); return; }
+  if (pwd !== cpwd) { showToast('Atenção', 'Senhas não coincidem', 'error'); return; }
+
+  try {
+    const response = await fetch(API_URL + "/cadastro", {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        nome: name,
+        email: email,
+        senha: pwd,
+        tipoConta: selectedRole,
+        idClube: 10000 // Chumbado pro seu clube para funcionar o MVP
+      })
+    });
+
+    if (response.status === 201) {
+      showToast('Sucesso!', 'Conta criada com sucesso no Banco de Dados', 'success');
+      setTimeout(() => goto('screen-login'), 1500);
+    } else {
+      showToast('Erro', 'E-mail já cadastrado ou dados inválidos.', 'error');
+    }
+  } catch (err) {
+    showToast('Erro de Conexão', 'O Spring Boot está rodando?', 'error');
+  }
+}
+
+// 3. INTEGRAÇÃO: Login
+async function handleLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const pwd = document.getElementById('login-pwd').value;
+
+  if (!email || !pwd) { showToast('Atenção', 'Preencha e-mail e senha', 'error'); return; }
+
+  const btn = document.getElementById('btn-login');
+  btn.innerHTML = '<span class="spinner"></span>';
+  btn.disabled = true;
+
+  try {
+    const response = await fetch(`${API_URL}/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include', // Mágica para aceitar o Cookie JWT
+      body: JSON.stringify({ email: email, senha: pwd })
+    });
+
+    if (response.ok) {
+      const data = await response.json(); // Pega o UsuarioSessaoDto
+      currentUser = { name: data.nome, role: data.tipoConta };
+      
+      showToast('Acesso Liberado!', `Bem-vindo, ${data.nome}`, 'success');
+      
+      setTimeout(() => {
+        if (data.tipoConta === 'DIRETOR') {
+          document.getElementById('nav-dir-name').textContent = data.nome;
+          goto('screen-director');
+        } else {
+          document.getElementById('nav-con-name').textContent = data.nome;
+          goto('screen-counselor');
+        }
+      }, 1000);
+    } else {
+      showToast('Acesso Negado', 'E-mail ou senha incorretos.', 'error');
+    }
+  } catch (err) {
+    showToast('Erro de Conexão', 'O Spring Boot está rodando?', 'error');
+  } finally {
+    btn.innerHTML = 'Entrar';
+    btn.disabled = false;
+  }
+}
+
+// 4. INTEGRAÇÃO: Logoff
+async function handleLogoff() {
+  try {
+    // Bate na rota de Logoff que corta o Cookie
+    await fetch(`${API_URL}/logoff`, {
+      method: 'POST',
+      credentials: 'include'
+    });
+  } catch (err) {
+    console.log("Erro ao limpar cookies na API");
+  } finally {
+    currentUser = null;
+    showToast('Até logo!', 'Sessão encerrada', 'success');
+    setTimeout(() => goto('screen-login'), 800);
+  }
+}
+
+// Suporte a Enter no teclado para logar
+document.getElementById('login-pwd').addEventListener('keydown', e => { if (e.key === 'Enter') handleLogin(); });
+</script>
+</body>
+</html>
