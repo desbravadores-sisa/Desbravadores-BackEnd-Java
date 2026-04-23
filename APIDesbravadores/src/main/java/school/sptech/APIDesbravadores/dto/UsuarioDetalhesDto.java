@@ -19,6 +19,8 @@ public class UsuarioDetalhesDto implements UserDetails {
 
     private final String tipoConta;
 
+    private Integer idClube;
+
     public UsuarioDetalhesDto(String nome, String email, String senha, String tipoConta) {
         this.nome = nome;
         this.email = email;
@@ -31,6 +33,14 @@ public class UsuarioDetalhesDto implements UserDetails {
         this.email = usuario.getEmail();
         this.senha = usuario.getSenha();
         this.tipoConta = usuario.getTipoConta();
+
+        if (usuario.getClube().getId() != null){
+            this.idClube = usuario.getClube().getId();
+        }
+    }
+
+    public Integer getIdClube() {
+        return idClube;
     }
 
     public String getNome() {
