@@ -1,6 +1,12 @@
 package school.sptech.APIDesbravadores.dto;
 
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 
+@Getter
+@Setter
+@ToString
 public class UnidadeResponseDto {
 
     private Integer id;

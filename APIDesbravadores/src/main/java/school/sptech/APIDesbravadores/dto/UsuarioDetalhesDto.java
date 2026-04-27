@@ -1,5 +1,6 @@
 package school.sptech.APIDesbravadores.dto;
 
+import lombok.ToString;
 import org.jspecify.annotations.Nullable;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -9,6 +10,7 @@ import school.sptech.APIDesbravadores.domain.Usuario;
 import java.util.Collection;
 import java.util.List;
 
+@ToString
 public class UsuarioDetalhesDto implements UserDetails {
 
     private final String nome;
@@ -20,6 +22,8 @@ public class UsuarioDetalhesDto implements UserDetails {
     private final String tipoConta;
 
     private Integer idClube;
+
+    private Integer idUnidade;
 
     public UsuarioDetalhesDto(String nome, String email, String senha, String tipoConta) {
         this.nome = nome;
@@ -37,10 +41,18 @@ public class UsuarioDetalhesDto implements UserDetails {
         if (usuario.getClube().getId() != null){
             this.idClube = usuario.getClube().getId();
         }
+
+        if (usuario.getUnidade() != null && usuario.getUnidade().getId() != null){
+            this.idUnidade = usuario.getUnidade().getId();
+        }
     }
 
     public Integer getIdClube() {
         return idClube;
+    }
+
+    public Integer getIdUnidade() {
+        return idUnidade;
     }
 
     public String getNome() {

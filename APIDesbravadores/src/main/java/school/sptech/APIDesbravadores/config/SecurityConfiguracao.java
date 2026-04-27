@@ -42,9 +42,10 @@ public class SecurityConfiguracao {
             "/usuarios/cadastro",
             "/swagger-ui/**",
             "/v3/api-docs/**",
-            "/usuarios/login/**", // A porta de login precisa ficar destrancada!
+            "/usuarios/login/**",
             "/h2-console/**",
-            "/error/**"
+            "/error/**",
+            "/swagger-ui.html"
     };
 
     @Bean
