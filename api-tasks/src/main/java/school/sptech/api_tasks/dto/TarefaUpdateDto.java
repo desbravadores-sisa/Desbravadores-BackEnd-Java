@@ -1,17 +1,22 @@
 package school.sptech.api_tasks.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import java.time.LocalDateTime;
 
 public class TarefaUpdateDto {
 
     @NotBlank
+    @Schema(description = "Nome da tarefa", example = "Comprar materiais atualizado")
     private String nome;
 
+    @Schema(description = "Descrição da tarefa", example = "Nova descrição para a tarefa")
     private String descricao;
 
+    @Schema(description = "Pontuação da tarefa", example = "15")
     private Integer pontuacao;
 
+    @Schema(description = "Prazo de entrega da tarefa", example = "2026-04-15T23:59:59")
     private LocalDateTime prazoEntrega;
 
     public TarefaUpdateDto() {
