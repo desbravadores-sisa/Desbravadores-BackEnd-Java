@@ -43,6 +43,7 @@ public class SecurityConfiguracao {
             "/swagger-ui/**",
             "/v3/api-docs/**",
             "/usuarios/login/**",
+            "/tarefas/**",
             "/h2-console/**",
             "/error/**",
             "/swagger-ui.html"
