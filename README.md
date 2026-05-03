@@ -3,15 +3,14 @@
 Repositorio do backend Java/Spring Boot do sistema Desbravadores.
 
 Na branch `integrar-api-tasks`, a aplicacao principal `APIDesbravadores`
-tambem recebeu os endpoints de tarefas que antes estavam separados na
-`api-tasks`. O repositorio ainda mantem a pasta `api-tasks` como referencia de
-origem, mas a API principal para execucao e evolucao e a `APIDesbravadores`.
+tambem recebeu os endpoints de tarefas que antes estavam em uma API separada.
+A partir desta reorganizacao, a API principal para execucao e evolucao e apenas
+a `APIDesbravadores`.
 
 ## Estrutura
 
 ```text
 APIDesbravadores/   API principal do sistema
-api-tasks/          API de tarefas usada como referencia da integracao
 README.md           Documentacao do repositorio
 ```
 
