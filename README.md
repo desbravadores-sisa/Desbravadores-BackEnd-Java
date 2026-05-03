@@ -1,81 +1,136 @@
-# 🚀 API Desbravadores & Tasks
+# Desbravadores BackEnd Java
 
-Sistema backend desenvolvido com **Java + Spring Boot**, responsável pelo gerenciamento de usuários, autenticação e atividades do clube de Desbravadores.
+Repositorio do backend Java/Spring Boot do sistema Desbravadores.
 
-O projeto foi estruturado com foco em **boas práticas de desenvolvimento**, organização em camadas e escalabilidade.
+Na branch `integrar-api-tasks`, a aplicacao principal `APIDesbravadores`
+tambem recebeu os endpoints de tarefas que antes estavam separados na
+`api-tasks`. O repositorio ainda mantem a pasta `api-tasks` como referencia de
+origem, mas a API principal para execucao e evolucao e a `APIDesbravadores`.
 
----
+## Estrutura
 
-## 🧱 Arquitetura
+```text
+APIDesbravadores/   API principal do sistema
+api-tasks/          API de tarefas usada como referencia da integracao
+README.md           Documentacao do repositorio
+```
 
-A aplicação segue o padrão de arquitetura em camadas (**Layered Architecture**), promovendo separação de responsabilidades e facilidade de manutenção.
+## Responsabilidade deste repositorio
 
-### 📁 Estrutura de Pastas
+- API REST do sistema.
+- Autenticacao e autorizacao com Spring Security/JWT.
+- Cadastro, login e logoff de usuarios.
+- Gestao de unidades.
+- Gestao de tarefas e quadro Kanban.
+- Testes unitarios/de controller com JUnit e MockMvc.
 
-#### 🔐 config
-Configurações da aplicação:
-- Segurança (Spring Security)
-- Autenticação (JWT, filtros)
-- Configurações globais
+Os scripts e a modelagem do banco **nao ficam neste repositorio**. Eles devem
+ser mantidos no repositorio `Desbravadores-Banco-De-Dados`.
 
-#### 🌐 controller
-Camada de entrada (API REST):
-- Recebe requisições HTTP
-- Retorna respostas ao cliente
+## Tecnologias
 
-#### 🧠 service
-Regras de negócio:
-- Processamento de dados
-- Validações e lógica da aplicação
-
-#### 🗄️ repository
-Acesso ao banco de dados:
-- Interfaces JPA
-- Operações CRUD
-
-#### 📦 domain
-Entidades do sistema:
-- Representação das tabelas do banco
-
-#### 🔄 dto
-Objetos de transferência de dados:
-- Entrada e saída da API
-- Evita expor entidades diretamente
-
-#### 🔁 mapper
-Conversão entre objetos:
-- Entity ⇄ DTO
-
-#### ⚠️ exception
-Tratamento de erros:
-- Exceções personalizadas
-- Respostas padronizadas
-
----
-
-## ⚙️ Tecnologias Utilizadas
-
-- Java 17+
-- Spring Boot
+- Java 21
+- Spring Boot 4
+- Spring Web MVC
 - Spring Security
 - Spring Data JPA
+- JWT
 - Maven
-- Banco de Dados Relacional (MySQL/PostgreSQL)
+- JUnit
+- MockMvc
+- MySQL via variaveis de ambiente
 
----
+## Configuracao
 
-## ▶️ Como Executar
+A API principal le as configuracoes sensiveis por variaveis de ambiente em
+`APIDesbravadores/src/main/resources/application.properties`:
 
-### Pré-requisitos
-- Java instalado
-- Maven instalado
-- Banco de dados configurado
+```properties
+spring.datasource.url=${DB_URL}
+spring.datasource.username=${DB_USER}
+spring.datasource.password=${DB_PASSWORD}
+api.security.token.secret=${JWT_SECRET}
+```
 
-### Passos
+Exemplo local:
+
+```powershell
+$env:DB_URL="jdbc:mysql://localhost:3306/desbravadores"
+$env:DB_USER="jpauser"
+$env:DB_PASSWORD="senha-segura123"
+$env:JWT_SECRET="uma-chave-local-para-desenvolvimento"
+```
+
+Nao versionar `.env`, senhas, dumps ou scripts de banco neste repositorio.
+
+## Como executar
 
 ```bash
-# Clone o repositório
-git clone <URL_DO_REPOSITORIO>
+cd APIDesbravadores
+./mvnw.cmd spring-boot:run
+```
 
-# Entre na pasta do projeto
-cd nome-do-projeto
+URLs comuns:
+
+- API: `http://localhost:8080`
+- Swagger UI: `http://localhost:8080/swagger-ui.html`
+
+## Endpoints
+
+### Usuarios
+
+```http
+POST /usuarios/cadastro
+POST /usuarios/login
+POST /usuarios/logoff
+GET  /usuarios/painel-diretoria
+```
+
+### Unidades
+
+```http
+GET    /unidades/diretor
+POST   /unidades
+PUT    /unidades
+DELETE /unidades/{idUnidade}
+GET    /unidades/conselheiro
+```
+
+### Tarefas
+
+```http
+POST   /tarefas
+GET    /tarefas
+GET    /tarefas/{id}
+PUT    /tarefas/{id}
+DELETE /tarefas/{id}
+PATCH  /tarefas/{id}/status
+GET    /tarefas/kanban
+```
+
+Total atual: 16 endpoints.
+
+## Testes
+
+Os testes dos endpoints ficam em:
+
+```text
+APIDesbravadores/src/test/java/school/sptech/APIDesbravadores/controller/
+```
+
+Para executar:
+
+```bash
+cd APIDesbravadores
+./mvnw.cmd test
+```
+
+A suite cobre os controllers de usuarios, unidades e tarefas usando JUnit,
+MockMvc e services mockados, sem depender de banco real.
+
+## Observacoes
+
+- A pasta `target/` e ignorada pelo Git.
+- Arquivos de banco devem ficar apenas em `Desbravadores-Banco-De-Dados`.
+- Para alterar estrutura de tabelas, atualizar primeiro o repositorio de banco
+  e depois alinhar as entidades JPA neste backend.
