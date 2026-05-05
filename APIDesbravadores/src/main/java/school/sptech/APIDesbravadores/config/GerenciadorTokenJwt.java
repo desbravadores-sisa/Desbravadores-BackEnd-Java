@@ -10,13 +10,14 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class GerenciadorTokenJwt {
 
-    @Value("${jwt.secret}")
+    @Value("${api.security.token.secret}")
     private String secret;
 
     @Value("${jwt.validity}")
@@ -68,6 +69,17 @@ public class GerenciadorTokenJwt {
     }
 
     private SecretKey parseSecret() {
-        return Keys.hmacShaKeyFor(Decoders.BASE64.decode(this.secret));
+        byte[] secretBytes;
+
+        try {
+            byte[] decodedSecret = Decoders.BASE64.decode(this.secret);
+            secretBytes = decodedSecret.length >= 32
+                    ? decodedSecret
+                    : this.secret.getBytes(StandardCharsets.UTF_8);
+        } catch (IllegalArgumentException exception) {
+            secretBytes = this.secret.getBytes(StandardCharsets.UTF_8);
+        }
+
+        return Keys.hmacShaKeyFor(secretBytes);
     }
 }
