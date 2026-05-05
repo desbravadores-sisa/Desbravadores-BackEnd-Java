@@ -30,4 +30,7 @@ public class UsuarioCriacaoDto {
     @NotNull
     @Positive
     private Integer idClube;
+
+    @Positive
+    private Integer idUnidade;
 }

@@ -15,4 +15,6 @@ public interface UnidadeRepository extends JpaRepository<Unidade, Integer> {
 
    Optional<Unidade> findByClubeIdAndNome(Integer idClube,String nome);
 
+   Optional<Unidade> findFirstByClubeIdOrderByIdAsc(Integer idClube);
+
 }

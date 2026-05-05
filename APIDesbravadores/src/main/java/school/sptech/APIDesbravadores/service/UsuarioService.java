@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import school.sptech.APIDesbravadores.config.GerenciadorTokenJwt;
 import school.sptech.APIDesbravadores.domain.Clube;
+import school.sptech.APIDesbravadores.domain.Unidade;
 import school.sptech.APIDesbravadores.domain.Usuario;
 import school.sptech.APIDesbravadores.dto.UsuarioCriacaoDto;
 import school.sptech.APIDesbravadores.dto.UsuarioLoginDto;
@@ -17,6 +18,7 @@ import school.sptech.APIDesbravadores.exception.ClubeNãoEncontradoException;
 import school.sptech.APIDesbravadores.exception.EmailJaCadastradoException;
 import school.sptech.APIDesbravadores.mapper.UsuarioMapper;
 import school.sptech.APIDesbravadores.repository.ClubeRepository;
+import school.sptech.APIDesbravadores.repository.UnidadeRepository;
 import school.sptech.APIDesbravadores.repository.UsuarioRepository;
 
 import java.util.Optional;
@@ -29,13 +31,15 @@ public class UsuarioService {
     private final AuthenticationManager authenticationManager;
     private final PasswordEncoder passwordEncoder;
     private final ClubeRepository clubeRepository;
+    private final UnidadeRepository unidadeRepository;
 
-    public UsuarioService(UsuarioRepository usuarioRepository, GerenciadorTokenJwt gerenciadorTokenJwt, AuthenticationManager authenticationManager, PasswordEncoder passwordEncoder, ClubeRepository clubeRepository) {
+    public UsuarioService(UsuarioRepository usuarioRepository, GerenciadorTokenJwt gerenciadorTokenJwt, AuthenticationManager authenticationManager, PasswordEncoder passwordEncoder, ClubeRepository clubeRepository, UnidadeRepository unidadeRepository) {
         this.usuarioRepository = usuarioRepository;
         this.gerenciadorTokenJwt = gerenciadorTokenJwt;
         this.authenticationManager = authenticationManager;
         this.passwordEncoder = passwordEncoder;
         this.clubeRepository = clubeRepository;
+        this.unidadeRepository = unidadeRepository;
     }
 
     public Usuario cadastarUsuario(UsuarioCriacaoDto request){
@@ -52,8 +56,21 @@ public class UsuarioService {
         String senhaCriptografada = passwordEncoder.encode(request.getSenha());
         usuario.setSenha(senhaCriptografada);
         usuario.setClube(clube.get());
+        vincularUnidadeDoConselheiro(request, usuario);
         usuarioRepository.save(usuario);
         return usuario;
+    }
+
+    private void vincularUnidadeDoConselheiro(UsuarioCriacaoDto request, Usuario usuario) {
+        if (!"CONSELHEIRO".equalsIgnoreCase(request.getTipoConta())) {
+            return;
+        }
+
+        Unidade unidade = request.getIdUnidade() != null
+                ? unidadeRepository.findById(request.getIdUnidade()).orElseThrow()
+                : unidadeRepository.findFirstByClubeIdOrderByIdAsc(request.getIdClube()).orElseThrow();
+
+        usuario.setUnidade(unidade);
     }
 
     public UsuarioTokenDto autenticar(UsuarioLoginDto loginDto) {
