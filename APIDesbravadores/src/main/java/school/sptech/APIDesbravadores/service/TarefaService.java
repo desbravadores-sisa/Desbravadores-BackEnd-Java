@@ -9,6 +9,7 @@ import school.sptech.APIDesbravadores.dto.TarefaCreateDto;
 import school.sptech.APIDesbravadores.dto.TarefaResponseDto;
 import school.sptech.APIDesbravadores.dto.TarefaUpdateDto;
 import school.sptech.APIDesbravadores.exception.EntidadeNaoEncontradaException;
+import school.sptech.APIDesbravadores.exception.RequisicaoInvalidaException;
 import school.sptech.APIDesbravadores.mapper.TarefaMapper;
 import school.sptech.APIDesbravadores.repository.TarefaRepository;
 import school.sptech.APIDesbravadores.repository.TarefaUnidadeRepository;
@@ -73,8 +74,18 @@ public class TarefaService {
         Tarefa t = tarefaRepository.findById(id)
                 .orElseThrow(() -> new EntidadeNaoEncontradaException("Tarefa não encontrada com ID: " + id));
 
-        tarefaUnidadeRepository.findByTarefaId(t.getId()).ifPresent(tarefaUnidadeRepository::delete);
+        tarefaUnidadeRepository.deleteByTarefaId(t.getId());
         tarefaRepository.delete(t);
+    }
+
+    public TarefaResponseDto findStatusByTarefaId(Integer id) {
+        Tarefa t = tarefaRepository.findById(id)
+                .orElseThrow(() -> new EntidadeNaoEncontradaException("Tarefa não encontrada com ID: " + id));
+
+        TarefaUnidade tu = tarefaUnidadeRepository.findByTarefaId(t.getId())
+                .orElseThrow(() -> new EntidadeNaoEncontradaException("TarefaUnidade não encontrada para Tarefa ID: " + id));
+
+        return TarefaMapper.toResponseDto(t, tu);
     }
 
     @Transactional
@@ -87,7 +98,7 @@ public class TarefaService {
 
         StatusKanban status = StatusKanban.fromString(statusStr);
         if (status == null) {
-            throw new IllegalArgumentException("Status inválido: " + statusStr);
+            throw new RequisicaoInvalidaException("Status inválido: " + statusStr);
         }
 
         tu.setStatusKanban(status);

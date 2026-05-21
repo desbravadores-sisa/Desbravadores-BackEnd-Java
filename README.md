@@ -79,3 +79,28 @@ git clone <URL_DO_REPOSITORIO>
 
 # Entre na pasta do projeto
 cd nome-do-projeto
+
+```
+
+---
+
+## 📌 Endpoints de Tarefas
+
+### Tarefas
+
+| Método | Rota | Permissão | Descrição |
+| --- | --- | --- | --- |
+| GET | `/tarefas` | Sem permissão | Lista todas as tarefas |
+| GET | `/tarefas/{id}` | Sem permissão | Busca uma tarefa específica |
+| POST | `/tarefas` | Diretor | Cria uma tarefa e o vínculo inicial com a unidade |
+| PUT | `/tarefas/{id}` | Diretor | Atualiza os dados da tarefa |
+| DELETE | `/tarefas/{id}` | Diretor | Exclui a tarefa e seu vínculo com a unidade |
+
+### Tarefas Unidades
+
+| Método | Rota | Permissão | Descrição |
+| --- | --- | --- | --- |
+| GET | `/tarefas-unidades/{idTarefa}` | Sem permissão | Visualiza o status da tarefa na unidade |
+| PUT | `/tarefas-unidades/{idTarefa}/status` | Conselheiro | Move o status da tarefa no Kanban |
+
+O vínculo `tarefas-unidades` é criado junto com `POST /tarefas` e removido junto com `DELETE /tarefas/{id}`.
