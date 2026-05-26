@@ -6,9 +6,11 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import school.sptech.APIDesbravadores.dto.TarefaCreateDto;
 import school.sptech.APIDesbravadores.dto.TarefaResponseDto;
+import school.sptech.APIDesbravadores.dto.TarefaStatusUpdateDto;
 import school.sptech.APIDesbravadores.dto.TarefaUpdateDto;
 import school.sptech.APIDesbravadores.service.TarefaService;
 
@@ -30,6 +32,7 @@ public class TarefaController {
     @Operation(summary = "Criar uma nova tarefa", description = "Cria uma tarefa com as informações fornecidas")
     @ApiResponse(responseCode = "201", description = "Tarefa criada com sucesso")
     @ApiResponse(responseCode = "400", description = "Dados de entrada inválidos")
+    @PreAuthorize("hasRole('DIRETOR')")
     public ResponseEntity<TarefaResponseDto> create(@RequestBody @Valid TarefaCreateDto dto) {
         TarefaResponseDto response = tarefaService.create(dto);
         return ResponseEntity.status(201).body(response);
@@ -62,6 +65,7 @@ public class TarefaController {
     @ApiResponse(responseCode = "200", description = "Tarefa atualizada com sucesso")
     @ApiResponse(responseCode = "404", description = "Tarefa não encontrada")
     @ApiResponse(responseCode = "400", description = "Dados de entrada inválidos")
+    @PreAuthorize("hasRole('DIRETOR')")
     public ResponseEntity<TarefaResponseDto> update(
             @Parameter(description = "ID da tarefa a ser atualizada", example = "1") @PathVariable Integer id,
             @RequestBody @Valid TarefaUpdateDto dto) {
@@ -73,6 +77,7 @@ public class TarefaController {
     @Operation(summary = "Deletar uma tarefa", description = "Remove uma tarefa do sistema")
     @ApiResponse(responseCode = "204", description = "Tarefa deletada com sucesso")
     @ApiResponse(responseCode = "404", description = "Tarefa não encontrada")
+    @PreAuthorize("hasRole('DIRETOR')")
     public ResponseEntity<Void> delete(
             @Parameter(description = "ID da tarefa a ser deletada", example = "1") @PathVariable Integer id) {
         tarefaService.delete(id);
@@ -84,14 +89,11 @@ public class TarefaController {
     @ApiResponse(responseCode = "200", description = "Status atualizado com sucesso")
     @ApiResponse(responseCode = "404", description = "Tarefa não encontrada")
     @ApiResponse(responseCode = "400", description = "Status inválido ou não fornecido")
+    @PreAuthorize("hasRole('CONSELHEIRO')")
     public ResponseEntity<TarefaResponseDto> updateStatus(
             @Parameter(description = "ID da tarefa a ter o status alterado", example = "1") @PathVariable Integer id,
-            @RequestBody Map<String, String> body) {
-        String status = body.get("status");
-        if (status == null) {
-            return ResponseEntity.status(400).build();
-        }
-        TarefaResponseDto response = tarefaService.updateStatus(id, status);
+            @RequestBody @Valid TarefaStatusUpdateDto dto) {
+        TarefaResponseDto response = tarefaService.updateStatus(id, dto.getStatus());
         return ResponseEntity.status(200).body(response);
     }
 
