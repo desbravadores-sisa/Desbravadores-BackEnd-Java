@@ -41,8 +41,12 @@ public class  SecurityConfiguracao {
             "/usuarios/cadastro",
             "/swagger-ui/**",
             "/v3/api-docs/**",
+<<<<<<< HEAD
             "/usuarios/login",
             "/tarefas/**",
+=======
+            "/usuarios/login/**",
+>>>>>>> 66abfca6f8863214673c11b3c3574a4aca330e8d
             "/h2-console/**",
             "/error/**",
             "/swagger-ui.html"
@@ -55,6 +59,9 @@ public class  SecurityConfiguracao {
                 .cors(Customizer.withDefaults())
                 .csrf(CsrfConfigurer<HttpSecurity>::disable)
                 .authorizeHttpRequests(authorize -> authorize
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/tarefas/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/tarefas-unidades/**").permitAll()
                         .requestMatchers(URLS_PERMITIDAS).permitAll()
                         .anyRequest().authenticated()
                 )

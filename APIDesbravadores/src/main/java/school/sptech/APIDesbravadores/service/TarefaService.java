@@ -90,8 +90,18 @@ public class TarefaService {
         Tarefa t = tarefaRepository.findById(id)
                 .orElseThrow(() -> new EntidadeNaoEncontradaException("Tarefa não encontrada com ID: " + id));
 
-        tarefaUnidadeRepository.findByTarefaId(t.getId()).ifPresent(tarefaUnidadeRepository::delete);
+        tarefaUnidadeRepository.deleteByTarefaId(t.getId());
         tarefaRepository.delete(t);
+    }
+
+    public TarefaResponseDto findStatusByTarefaId(Integer id) {
+        Tarefa t = tarefaRepository.findById(id)
+                .orElseThrow(() -> new EntidadeNaoEncontradaException("Tarefa não encontrada com ID: " + id));
+
+        TarefaUnidade tu = tarefaUnidadeRepository.findByTarefaId(t.getId())
+                .orElseThrow(() -> new EntidadeNaoEncontradaException("TarefaUnidade não encontrada para Tarefa ID: " + id));
+
+        return TarefaMapper.toResponseDto(t, tu);
     }
 
     @Transactional
