@@ -79,3 +79,58 @@ git clone <URL_DO_REPOSITORIO>
 
 # Entre na pasta do projeto
 cd nome-do-projeto
+
+```
+
+---
+
+## 📌 Endpoints
+
+### Autenticação e Usuários
+
+| Método | Rota | Permissão | Descrição |
+| --- | --- | --- | --- |
+| POST | `/usuarios/cadastro` | Sem permissão | Cadastra um usuário |
+| POST | `/usuarios/login` | Sem permissão | Autentica o usuário e cria o cookie `authToken` |
+| POST | `/usuarios/logoff` | Usuário autenticado | Encerra a sessão removendo o cookie `authToken` |
+| GET | `/usuarios/painel-diretoria` | Diretor | Valida acesso ao painel exclusivo da diretoria |
+
+### Unidades
+
+| Método | Rota | Permissão | Descrição |
+| --- | --- | --- | --- |
+| GET | `/unidades/diretor` | Diretor | Lista as unidades do clube do diretor autenticado |
+| POST | `/unidades` | Diretor | Cadastra uma unidade no clube do diretor autenticado |
+| PUT | `/unidades` | Diretor | Atualiza uma unidade |
+| DELETE | `/unidades/{idUnidade}` | Diretor | Exclui uma unidade |
+| GET | `/unidades/conselheiro` | Conselheiro | Busca a unidade vinculada ao conselheiro autenticado |
+
+### Tarefas
+
+| Método | Rota | Permissão | Descrição |
+| --- | --- | --- | --- |
+| GET | `/tarefas` | Sem permissão | Lista todas as tarefas |
+| GET | `/tarefas/{id}` | Sem permissão | Busca uma tarefa específica |
+| GET | `/tarefas/kanban` | Sem permissão | Lista as tarefas agrupadas por status do Kanban |
+| POST | `/tarefas` | Diretor | Cria uma tarefa e o vínculo inicial com a unidade |
+| PUT | `/tarefas/{id}` | Diretor | Atualiza os dados da tarefa |
+| DELETE | `/tarefas/{id}` | Diretor | Exclui a tarefa e seu vínculo com a unidade |
+| PATCH | `/tarefas/{id}/status` | Conselheiro | Atualiza o status da tarefa no Kanban |
+
+### Tarefas Unidades
+
+| Método | Rota | Permissão | Descrição |
+| --- | --- | --- | --- |
+| GET | `/tarefas-unidades/{idTarefa}` | Sem permissão | Visualiza o status da tarefa na unidade |
+| PUT | `/tarefas-unidades/{idTarefa}/status` | Conselheiro | Move o status da tarefa no Kanban |
+
+O vínculo `tarefas-unidades` é criado junto com `POST /tarefas` e removido junto com `DELETE /tarefas/{id}`.
+
+### Documentação e Ferramentas
+
+| Método | Rota | Permissão | Descrição |
+| --- | --- | --- | --- |
+| GET | `/swagger-ui.html` | Sem permissão | Redireciona para a interface do Swagger |
+| GET | `/swagger-ui/**` | Sem permissão | Interface visual da documentação OpenAPI |
+| GET | `/v3/api-docs/**` | Sem permissão | Especificação OpenAPI gerada pela aplicação |
+| GET | `/h2-console/**` | Sem permissão | Console web do H2 quando habilitado no ambiente |
