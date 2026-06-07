@@ -126,6 +126,18 @@ cd nome-do-projeto
 
 O vínculo `tarefas-unidades` é criado junto com `POST /tarefas` e removido junto com `DELETE /tarefas/{id}`.
 
+### Evidências
+
+| Método | Rota | Permissão | Descrição |
+| --- | --- | --- | --- |
+| POST | `/evidencias` | Conselheiro | Anexa uma evidência a uma tarefa da unidade do conselheiro |
+| GET | `/evidencias` | Diretor | Lista as evidências do clube do diretor autenticado |
+| GET | `/evidencias/unidade` | Conselheiro | Lista as evidências da unidade do conselheiro autenticado |
+| PUT | `/evidencias/{id}` | Conselheiro | Edita uma evidência da unidade do conselheiro |
+| DELETE | `/evidencias/{id}` | Conselheiro | Deleta uma evidência da unidade do conselheiro quando a tarefa não está concluída |
+
+O `DELETE /evidencias/{id}` é bloqueado quando a tarefa vinculada à evidência está com status `Concluído`.
+
 ### Documentação e Ferramentas
 
 | Método | Rota | Permissão | Descrição |
