@@ -113,6 +113,15 @@ class EvidenciaControllerTest {
     }
 
     @Test
+    void findAllByUnidadeDeveRetornarNoContentQuandoNaoExistiremEvidencias() throws Exception {
+        autenticar(conselheiro());
+        when(evidenciaService.findAllByUnidade(2)).thenReturn(List.of());
+
+        mockMvc.perform(get("/evidencias/unidade"))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
     void updateDeveEditarEvidencia() throws Exception {
         autenticar(conselheiro());
         EvidenciaUpdateDto request = new EvidenciaUpdateDto();
