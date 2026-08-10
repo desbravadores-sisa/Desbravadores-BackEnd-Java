@@ -1,13 +1,13 @@
 package school.sptech.APIDesbravadores;
 
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-class ApiDesbravadoresApplicationTests {
+public class ApiDesbravadoresApplicationTests {
 
 	@Test
-	void applicationClassExists() {
+    public void applicationClassExists() {
 		assertNotNull(ApiDesbravadoresApplication.class);
 	}
 

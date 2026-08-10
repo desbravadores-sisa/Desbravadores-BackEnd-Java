@@ -54,6 +54,14 @@ api.security.token.secret=${JWT_SECRET}
 Exemplo local:
 
 ```powershell
+cd APIDesbravadores
+Copy-Item .env.example .env
+```
+
+Depois ajuste os valores no `.env` de acordo com seu MySQL local. O arquivo
+`.env` nao deve ser versionado.
+
+```powershell
 $env:DB_URL="jdbc:mysql://localhost:3306/desbravadores"
 $env:DB_USER="jpauser"
 $env:DB_PASSWORD="senha-segura123"
