@@ -6,6 +6,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import school.sptech.APIDesbravadores.config.GerenciadorTokenJwt;
 import school.sptech.APIDesbravadores.domain.Clube;
@@ -38,13 +39,12 @@ public class UsuarioService {
         this.clubeRepository = clubeRepository;
     }
 
-    public Usuario cadastarUsuario(UsuarioCriacaoDto request){
+    @Transactional
+    public Usuario cadastrarUsuario(UsuarioCriacaoDto request){
         Optional<Clube> clube = clubeRepository.findById(request.getIdClube());
-        System.out.println(clube.isEmpty());
         if (clube.isEmpty()){
             throw new ClubeNãoEncontradoException();
         }
-        System.out.println(usuarioRepository.findByEmail(request.getEmail()).isEmpty());
         if (!usuarioRepository.findByEmail(request.getEmail()).isEmpty()){
             throw new EmailJaCadastradoException();
         }

@@ -1,6 +1,9 @@
 package school.sptech.APIDesbravadores.domain;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.Generated;
+import org.hibernate.generator.EventType;
+
 import java.time.LocalDateTime;
 
 @Entity
@@ -24,6 +27,9 @@ public class Tarefa {
     @Column(name = "prazo_entrega")
     private LocalDateTime prazoEntrega;
 
+    // Quem preenche é o DEFAULT do banco. O @Generated faz o Hibernate reler o valor
+    // depois do INSERT, senão a resposta do POST sai com dataCriacao nula.
+    @Generated(event = EventType.INSERT)
     @Column(name = "data_criacao", insertable = false, updatable = false)
     private LocalDateTime dataCriacao;
 

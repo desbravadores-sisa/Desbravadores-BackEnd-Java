@@ -102,7 +102,7 @@ class UnidadeControllerTest {
         doNothing().when(unidadeService).deletarUnidade(2);
 
         mockMvc.perform(delete("/unidades/{idUnidade}", 2))
-                .andExpect(status().isOk());
+                .andExpect(status().isNoContent());
 
         verify(unidadeService).deletarUnidade(2);
     }

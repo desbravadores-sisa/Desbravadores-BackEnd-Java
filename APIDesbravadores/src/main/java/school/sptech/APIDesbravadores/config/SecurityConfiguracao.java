@@ -29,7 +29,7 @@ import java.util.List;
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity // Permite usar o @PreAuthorize("hasRole('DIRETOR')")
-public class SecurityConfiguracao {
+public class  SecurityConfiguracao {
 
     @Autowired
     private AutenticacaoService autenticacaoService;
@@ -38,7 +38,6 @@ public class SecurityConfiguracao {
     private AutenticacaoEntryPoint autenticacaoJwtEntryPoint;
 
     private static final String[] URLS_PERMITIDAS = {
-            "/clubes/**",
             "/usuarios/cadastro",
             "/swagger-ui/**",
             "/v3/api-docs/**",
@@ -101,6 +100,9 @@ public class SecurityConfiguracao {
 
         configuracao.setAllowedOrigins(List.of(
                 "http://localhost:5173",
+                "http://localhost:5174",
+                "http://127.0.0.1:5173",
+                "http://127.0.0.1:5174",
                 "http://127.0.0.1:5500/"
         ));
         configuracao.setAllowCredentials(true);

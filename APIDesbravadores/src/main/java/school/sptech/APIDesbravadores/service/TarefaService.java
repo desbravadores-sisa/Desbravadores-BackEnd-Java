@@ -9,12 +9,16 @@ import school.sptech.APIDesbravadores.dto.TarefaCreateDto;
 import school.sptech.APIDesbravadores.dto.TarefaResponseDto;
 import school.sptech.APIDesbravadores.dto.TarefaUpdateDto;
 import school.sptech.APIDesbravadores.exception.EntidadeNaoEncontradaException;
+import school.sptech.APIDesbravadores.exception.RequisicaoInvalidaException;
 import school.sptech.APIDesbravadores.mapper.TarefaMapper;
 import school.sptech.APIDesbravadores.repository.TarefaRepository;
 import school.sptech.APIDesbravadores.repository.TarefaUnidadeRepository;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -42,15 +46,28 @@ public class TarefaService {
         return TarefaMapper.toResponseDto(savedTarefa, tu);
     }
 
+    @Transactional(readOnly = true)
     public List<TarefaResponseDto> findAll() {
-        return tarefaRepository.findAll().stream()
-                .map(t -> {
-                    TarefaUnidade tu = tarefaUnidadeRepository.findByTarefaId(t.getId()).orElse(null);
-                    return TarefaMapper.toResponseDto(t, tu);
-                })
+        List<Tarefa> tarefas = tarefaRepository.findAll();
+        if (tarefas.isEmpty()) {
+            return List.of();
+        }
+
+        // Busca os vínculos de uma vez só. Consultar dentro do laço custava
+        // uma query por tarefa (N+1).
+        List<Integer> ids = tarefas.stream().map(Tarefa::getId).toList();
+        Map<Integer, TarefaUnidade> vinculosPorTarefa = tarefaUnidadeRepository.findByTarefaIdIn(ids).stream()
+                .collect(Collectors.toMap(
+                        tu -> tu.getTarefa().getId(),
+                        Function.identity(),
+                        (existente, duplicado) -> existente));
+
+        return tarefas.stream()
+                .map(t -> TarefaMapper.toResponseDto(t, vinculosPorTarefa.get(t.getId())))
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public TarefaResponseDto findById(Integer id) {
         Tarefa t = tarefaRepository.findById(id)
                 .orElseThrow(() -> new EntidadeNaoEncontradaException("Tarefa não encontrada com ID: " + id));
@@ -87,7 +104,7 @@ public class TarefaService {
 
         StatusKanban status = StatusKanban.fromString(statusStr);
         if (status == null) {
-            throw new IllegalArgumentException("Status inválido: " + statusStr);
+            throw new RequisicaoInvalidaException("Status inválido: " + statusStr);
         }
 
         tu.setStatusKanban(status);
@@ -96,9 +113,28 @@ public class TarefaService {
         return TarefaMapper.toResponseDto(t, tu);
     }
 
+    @Transactional(readOnly = true)
     public Map<String, List<TarefaResponseDto>> getKanban() {
         List<TarefaResponseDto> all = findAll();
-        return all.stream()
-                .collect(Collectors.groupingBy(TarefaResponseDto::getStatusKanban));
+        if (all.isEmpty()) {
+            return Map.of();
+        }
+
+        // Semeia as quatro colunas para o quadro nunca vir com coluna faltando
+        // quando nenhuma tarefa está naquele status.
+        Map<String, List<TarefaResponseDto>> kanban = new LinkedHashMap<>();
+        for (StatusKanban status : StatusKanban.values()) {
+            kanban.put(status.getDescricao(), new ArrayList<>());
+        }
+
+        for (TarefaResponseDto tarefa : all) {
+            // Tarefa sem vínculo não tem status e portanto não pertence a nenhuma coluna.
+            if (tarefa.getStatusKanban() == null) {
+                continue;
+            }
+            kanban.computeIfAbsent(tarefa.getStatusKanban(), chave -> new ArrayList<>()).add(tarefa);
+        }
+
+        return kanban;
     }
 }

@@ -11,6 +11,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import school.sptech.APIDesbravadores.dto.TarefaCreateDto;
 import school.sptech.APIDesbravadores.dto.TarefaResponseDto;
 import school.sptech.APIDesbravadores.dto.TarefaUpdateDto;
+import school.sptech.APIDesbravadores.exception.EntidadeNaoEncontradaException;
+import school.sptech.APIDesbravadores.exception.RequisicaoInvalidaException;
 import school.sptech.APIDesbravadores.service.TarefaService;
 
 import java.time.LocalDateTime;
@@ -140,6 +142,42 @@ class TarefaControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(Map.of())))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void updateStatusDeveRetornarBadRequestComMotivoQuandoStatusForInvalido() throws Exception {
+        when(tarefaService.updateStatus(1, "Concluido!"))
+                .thenThrow(new RequisicaoInvalidaException("Status inválido: Concluido!"));
+
+        mockMvc.perform(patch("/tarefas/{id}/status", 1)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of("status", "Concluido!"))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.message").value("Status inválido: Concluido!"))
+                .andExpect(jsonPath("$.path").value("/tarefas/1/status"));
+    }
+
+    @Test
+    void findByIdDeveRetornarNotFoundComMotivoQuandoTarefaNaoExistir() throws Exception {
+        when(tarefaService.findById(99))
+                .thenThrow(new EntidadeNaoEncontradaException("Tarefa não encontrada com ID: 99"));
+
+        mockMvc.perform(get("/tarefas/{id}", 99))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.message").value("Tarefa não encontrada com ID: 99"));
+    }
+
+    @Test
+    void createDeveRetornarBadRequestComCamposQuandoPayloadForInvalido() throws Exception {
+        mockMvc.perform(post("/tarefas")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nome\":\"\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Dados de entrada inválidos"))
+                .andExpect(jsonPath("$.campos.nome").exists())
+                .andExpect(jsonPath("$.campos.fkClube").exists());
     }
 
     @Test

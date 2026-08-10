@@ -1,6 +1,7 @@
 package school.sptech.APIDesbravadores.service;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import school.sptech.APIDesbravadores.domain.Clube;
 import school.sptech.APIDesbravadores.domain.Unidade;
 import school.sptech.APIDesbravadores.domain.Usuario;
@@ -31,29 +32,24 @@ public class UnidadeService {
         this.usuarioRepository = usuarioRepository;
     }
 
+    @Transactional(readOnly = true)
     public List<UnidadeResponseDto> listaUnidade(Integer idClube){
         if (!clubeRepository.existsById(idClube)){
             throw new ClubeNãoEncontradoException();
         }
 
-        List<Unidade> unidades = unidadeRepository.findByClubeId(idClube);
-
-        if (unidades.isEmpty()){
-            throw new UnidadeNãoEncontradaException();
-        }
-
-        return UnidadeMapper.toResponse(unidades);
+        // Clube sem unidades não é erro: devolve lista vazia e o controller responde 204.
+        return UnidadeMapper.toResponse(unidadeRepository.findByClubeId(idClube));
     }
 
+    @Transactional(readOnly = true)
     public UnidadeResponseDto buscarUnidadePorId(Integer id){
-        if (!unidadeRepository.existsById(id)){
-            throw new UnidadeNãoEncontradaException();
-        }
-        Optional<Unidade> unidade = unidadeRepository.findById(id);
-        System.out.println(unidade.get());
-        return UnidadeMapper.toResponse(unidade.get());
+        Unidade unidade = unidadeRepository.findById(id)
+                .orElseThrow(UnidadeNãoEncontradaException::new);
+        return UnidadeMapper.toResponse(unidade);
     }
 
+    @Transactional
     public UnidadeResponseDto cadastrarUnidade(UnidadeCriacaoDto request, Integer idClube){
         Optional<Clube> clube = clubeRepository.findById(idClube);
         if (clube.isEmpty()){
@@ -62,30 +58,33 @@ public class UnidadeService {
         if (unidadeRepository.existsByClubeIdAndNome(idClube, request.getNome())){
             throw new UnidadeJácadastradaException();
         }
-        Unidade unidade = UnidadeMapper.toEntity(request,clube.get());
+        Unidade unidade = UnidadeMapper.toEntity(request, clube.get());
         unidadeRepository.save(unidade);
         return UnidadeMapper.toResponse(unidade);
     }
 
+    @Transactional
     public UnidadeResponseDto atualizarUnidade(UnidadeAtualizacaoDto request){
-        Optional<Unidade> unidade = unidadeRepository.findById(request.getIdUnidade());
-        if (unidade.isEmpty()){
-            throw new UnidadeNãoEncontradaException();
-        }
+        // Carrega a unidade existente e altera só o que veio no DTO. Construir uma
+        // entidade nova com o mesmo ID apagaria os campos ausentes na requisição.
+        Unidade unidade = unidadeRepository.findById(request.getIdUnidade())
+                .orElseThrow(UnidadeNãoEncontradaException::new);
 
-        if (unidadeRepository.existsByClubeIdAndNome(unidade.get().getClube().getId(),request.getNome()) && (request.getPontuacao() == null || request.getPontuacao().equals(unidade.get().getPontuacao())) ){
+        boolean nomeMudou = !unidade.getNome().equals(request.getNome());
+        if (nomeMudou && unidadeRepository.existsByClubeIdAndNome(unidade.getClube().getId(), request.getNome())){
             throw new UnidadeJácadastradaException();
         }
-        Unidade unidadeReplace = UnidadeMapper.toEntity(request);
-        Optional<Clube> clube = clubeRepository.findById(unidade.get().getClube().getId());
-        unidadeReplace.setClube(clube.get());
-        if (unidadeReplace.getPontuacao() == null){
-            unidadeReplace.setPontuacao(unidade.get().getPontuacao());
+
+        unidade.setNome(request.getNome());
+        if (request.getPontuacao() != null){
+            unidade.setPontuacao(request.getPontuacao());
         }
-        unidadeRepository.save(unidadeReplace);
-        return UnidadeMapper.toResponse(unidadeReplace);
+
+        unidadeRepository.save(unidade);
+        return UnidadeMapper.toResponse(unidade);
     }
 
+    @Transactional
     public void deletarUnidade(Integer idUnidade){
         if (!unidadeRepository.existsById(idUnidade)){
             throw new UnidadeNãoEncontradaException();

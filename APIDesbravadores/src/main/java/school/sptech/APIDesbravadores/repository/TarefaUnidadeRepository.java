@@ -5,9 +5,13 @@ import org.springframework.stereotype.Repository;
 import school.sptech.APIDesbravadores.domain.Tarefa;
 import school.sptech.APIDesbravadores.domain.TarefaUnidade;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
 public interface TarefaUnidadeRepository extends JpaRepository<TarefaUnidade, Integer> {
     Optional<TarefaUnidade> findByTarefaId(Integer tarefaId);
+
+    List<TarefaUnidade> findByTarefaIdIn(Collection<Integer> tarefaIds);
 }

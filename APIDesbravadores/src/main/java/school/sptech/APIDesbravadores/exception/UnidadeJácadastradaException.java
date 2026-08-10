@@ -5,4 +5,8 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 
 @ResponseStatus(code = HttpStatus.CONFLICT)
 public class UnidadeJácadastradaException extends RuntimeException{
+
+    public UnidadeJácadastradaException() {
+        super("Já existe uma unidade com esse nome neste clube");
+    }
 }

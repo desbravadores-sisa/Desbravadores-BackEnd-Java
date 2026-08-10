@@ -1,9 +1,7 @@
 package school.sptech.APIDesbravadores.mapper;
 
-import org.apache.coyote.Request;
 import school.sptech.APIDesbravadores.domain.Clube;
 import school.sptech.APIDesbravadores.domain.Unidade;
-import school.sptech.APIDesbravadores.dto.UnidadeAtualizacaoDto;
 import school.sptech.APIDesbravadores.dto.UnidadeCriacaoDto;
 import school.sptech.APIDesbravadores.dto.UnidadeResponseDto;
 
@@ -47,17 +45,6 @@ public class UnidadeMapper {
         unidade.setNome(request.getNome());
         unidade.setPontuacao(0);
         unidade.setClube(clube);
-        return unidade;
-    }
-
-    public static Unidade toEntity(UnidadeAtualizacaoDto request){
-        if (request == null){
-            return null;
-        }
-        Unidade unidade = new Unidade();
-        unidade.setNome(request.getNome());
-        unidade.setPontuacao(request.getPontuacao());
-        unidade.setId(request.getIdUnidade());
         return unidade;
     }
 }

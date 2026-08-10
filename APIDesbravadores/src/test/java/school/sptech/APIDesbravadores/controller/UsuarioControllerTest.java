@@ -52,8 +52,9 @@ class UsuarioControllerTest {
         usuario.setNome("Maria");
         usuario.setEmail("maria@email.com");
         usuario.setTipoConta("DIRETOR");
+        usuario.setSenha("$2a$10$hashBCryptQueNaoPodeVazar");
 
-        when(usuarioService.cadastarUsuario(any(UsuarioCriacaoDto.class))).thenReturn(usuario);
+        when(usuarioService.cadastrarUsuario(any(UsuarioCriacaoDto.class))).thenReturn(usuario);
 
         mockMvc.perform(post("/usuarios/cadastro")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -61,7 +62,8 @@ class UsuarioControllerTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.nome").value("Maria"))
-                .andExpect(jsonPath("$.email").value("maria@email.com"));
+                .andExpect(jsonPath("$.email").value("maria@email.com"))
+                .andExpect(jsonPath("$.senha").doesNotExist());
     }
 
     @Test
