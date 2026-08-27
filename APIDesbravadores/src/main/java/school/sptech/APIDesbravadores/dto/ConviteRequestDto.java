@@ -1,7 +1,5 @@
 package school.sptech.APIDesbravadores.dto;
 
-import jakarta.persistence.*;
-import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotBlank;
@@ -9,10 +7,8 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
-import school.sptech.APIDesbravadores.domain.Clube;
-import school.sptech.APIDesbravadores.domain.Unidade;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -28,7 +24,7 @@ public class ConviteRequestDto {
 
     @NotNull
     @Future
-    private LocalDate dataExpiracao;
+    private LocalDateTime dataExpiracao;
 
     private Integer idUnidade;
 

@@ -10,14 +10,17 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import school.sptech.APIDesbravadores.config.GerenciadorTokenJwt;
 import school.sptech.APIDesbravadores.domain.Clube;
+import school.sptech.APIDesbravadores.domain.Perfil;
 import school.sptech.APIDesbravadores.domain.Usuario;
 import school.sptech.APIDesbravadores.dto.UsuarioCriacaoDto;
 import school.sptech.APIDesbravadores.dto.UsuarioLoginDto;
 import school.sptech.APIDesbravadores.dto.UsuarioTokenDto;
 import school.sptech.APIDesbravadores.exception.ClubeNãoEncontradoException;
 import school.sptech.APIDesbravadores.exception.EmailJaCadastradoException;
+import school.sptech.APIDesbravadores.exception.EntidadeNaoEncontradaException;
 import school.sptech.APIDesbravadores.mapper.UsuarioMapper;
 import school.sptech.APIDesbravadores.repository.ClubeRepository;
+import school.sptech.APIDesbravadores.repository.PerfilRepository;
 import school.sptech.APIDesbravadores.repository.UsuarioRepository;
 
 import java.util.Optional;
@@ -30,13 +33,15 @@ public class UsuarioService {
     private final AuthenticationManager authenticationManager;
     private final PasswordEncoder passwordEncoder;
     private final ClubeRepository clubeRepository;
+    private final PerfilRepository perfilRepository;
 
-    public UsuarioService(UsuarioRepository usuarioRepository, GerenciadorTokenJwt gerenciadorTokenJwt, AuthenticationManager authenticationManager, PasswordEncoder passwordEncoder, ClubeRepository clubeRepository) {
+    public UsuarioService(UsuarioRepository usuarioRepository, GerenciadorTokenJwt gerenciadorTokenJwt, AuthenticationManager authenticationManager, PasswordEncoder passwordEncoder, ClubeRepository clubeRepository, PerfilRepository perfilRepository) {
         this.usuarioRepository = usuarioRepository;
         this.gerenciadorTokenJwt = gerenciadorTokenJwt;
         this.authenticationManager = authenticationManager;
         this.passwordEncoder = passwordEncoder;
         this.clubeRepository = clubeRepository;
+        this.perfilRepository = perfilRepository;
     }
 
     @Transactional
@@ -45,10 +50,12 @@ public class UsuarioService {
         if (clube.isEmpty()){
             throw new ClubeNãoEncontradoException();
         }
+        Perfil perfil = perfilRepository.findByNomeIgnoreCase(request.getTipoConta())
+                .orElseThrow(() -> new EntidadeNaoEncontradaException("Perfil não encontrado: " + request.getTipoConta()));
         if (!usuarioRepository.findByEmail(request.getEmail()).isEmpty()){
             throw new EmailJaCadastradoException();
         }
-        Usuario usuario = UsuarioMapper.toEntity(request);
+        Usuario usuario = UsuarioMapper.toEntity(request, perfil);
         String senhaCriptografada = passwordEncoder.encode(request.getSenha());
         usuario.setSenha(senhaCriptografada);
         usuario.setClube(clube.get());
@@ -68,7 +75,7 @@ public class UsuarioService {
                 usuarioAutenticado.getId(),
                 usuarioAutenticado.getNome(),
                 usuarioAutenticado.getEmail(),
-                usuarioAutenticado.getTipoConta(),
+                usuarioAutenticado.getPerfil() != null ? usuarioAutenticado.getPerfil().getNome() : null,
                 token
         );
     }

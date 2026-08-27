@@ -1,6 +1,7 @@
 package school.sptech.APIDesbravadores.mapper;
 
 import school.sptech.APIDesbravadores.domain.Convite;
+import school.sptech.APIDesbravadores.domain.Perfil;
 import school.sptech.APIDesbravadores.dto.ConviteRequestDto;
 import school.sptech.APIDesbravadores.dto.ConviteResponseDto;
 
@@ -14,7 +15,7 @@ public class ConviteMapper {
         dto.setId(convite.getId());
         dto.setEmail(convite.getEmail());
         dto.setDataExpiracao(convite.getDataExpiracao());
-        dto.setTipoConta(convite.getTipoConta());
+        dto.setTipoConta(convite.getPerfil() != null ? convite.getPerfil().getNome() : null);
         dto.setStatusConvite(convite.getStatusConvite());
         if (convite.getUnidade() != null){
             dto.setNomeUnidade(convite.getUnidade().getNome());
@@ -22,14 +23,14 @@ public class ConviteMapper {
         return dto;
     }
 
-    public static Convite toEntity(ConviteRequestDto requestDto){
+    public static Convite toEntity(ConviteRequestDto requestDto, Perfil perfil){
         if (requestDto == null){
             return null;
         }
         Convite convite = new Convite();
         convite.setEmail(requestDto.getEmail());
-        convite.setStatusConvite("pendente");
-        convite.setTipoConta(requestDto.getTipoConta());
+        convite.setStatusConvite("PENDENTE");
+        convite.setPerfil(perfil);
         convite.setDataExpiracao(requestDto.getDataExpiracao());
         return convite;
     }

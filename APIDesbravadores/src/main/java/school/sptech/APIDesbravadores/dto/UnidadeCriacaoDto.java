@@ -14,4 +14,10 @@ public class UnidadeCriacaoDto {
     @NotBlank
     @Size(max = 100)
     private String nome;
+
+    private String genero;
+
+    private Integer idadeMinima;
+
+    private Integer idadeMaxima;
 }

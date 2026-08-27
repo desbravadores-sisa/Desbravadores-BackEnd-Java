@@ -9,30 +9,19 @@ import lombok.ToString;
 @Getter
 @Setter
 @ToString
-public class Usuario {
+public class Caderno {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id_usuario")
+    @Column(name = "id_caderno")
     private Integer id;
-
-    private String nome;
-
-    private String email;
-
-    private String senha;
-
-    private Boolean ativo;
 
     @ManyToOne
     @JoinColumn(name = "id_clube")
     private Clube clube;
 
-    @ManyToOne
-    @JoinColumn(name = "id_perfil")
-    private Perfil perfil;
+    private String nome;
 
-    @ManyToOne
-    @JoinColumn(name = "id_unidade")
-    private Unidade unidade;
+    @Column(name = "idade_alvo")
+    private Integer idadeAlvo;
 }

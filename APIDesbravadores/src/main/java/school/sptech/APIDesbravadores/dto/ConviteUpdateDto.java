@@ -1,12 +1,11 @@
 package school.sptech.APIDesbravadores.dto;
 
 import jakarta.validation.constraints.Future;
-import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Setter
 @Getter
@@ -16,5 +15,5 @@ public class ConviteUpdateDto {
     private String statusConvite;
 
     @Future
-    private LocalDate dataExpiracao;
+    private LocalDateTime dataExpiracao;
 }

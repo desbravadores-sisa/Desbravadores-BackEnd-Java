@@ -1,7 +1,7 @@
 package school.sptech.APIDesbravadores.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 public class TarefaResponseDto {
 
@@ -14,20 +14,23 @@ public class TarefaResponseDto {
     @Schema(description = "ID da Unidade", example = "2")
     private Integer fkUnidade;
 
-    @Schema(description = "Nome da tarefa", example = "Comprar materiais")
-    private String nome;
+    @Schema(description = "ID do Caderno", example = "1")
+    private Integer fkCaderno;
+
+    @Schema(description = "Título da tarefa", example = "Comprar materiais")
+    private String titulo;
 
     @Schema(description = "Descrição da tarefa", example = "Comprar materiais para o acampamento")
     private String descricao;
 
+    @Schema(description = "Tipo da tarefa", example = "CLUBE")
+    private String tipoTarefa;
+
     @Schema(description = "Pontuação da tarefa", example = "10")
     private Integer pontuacao;
 
-    @Schema(description = "Prazo de entrega da tarefa", example = "2026-04-10T23:59:59")
-    private LocalDateTime prazoEntrega;
-
-    @Schema(description = "Data de criação da tarefa", example = "2026-04-07T10:00:00")
-    private LocalDateTime dataCriacao;
+    @Schema(description = "Prazo padrão da tarefa", example = "2026-04-10")
+    private LocalDate prazoPadrao;
 
     @Schema(description = "Status da tarefa no Kanban", example = "A FAZER")
     private String statusKanban;
@@ -59,12 +62,20 @@ public class TarefaResponseDto {
         this.fkUnidade = fkUnidade;
     }
 
-    public String getNome() {
-        return nome;
+    public Integer getFkCaderno() {
+        return fkCaderno;
     }
 
-    public void setNome(String nome) {
-        this.nome = nome;
+    public void setFkCaderno(Integer fkCaderno) {
+        this.fkCaderno = fkCaderno;
+    }
+
+    public String getTitulo() {
+        return titulo;
+    }
+
+    public void setTitulo(String titulo) {
+        this.titulo = titulo;
     }
 
     public String getDescricao() {
@@ -75,6 +86,14 @@ public class TarefaResponseDto {
         this.descricao = descricao;
     }
 
+    public String getTipoTarefa() {
+        return tipoTarefa;
+    }
+
+    public void setTipoTarefa(String tipoTarefa) {
+        this.tipoTarefa = tipoTarefa;
+    }
+
     public Integer getPontuacao() {
         return pontuacao;
     }
@@ -83,20 +102,12 @@ public class TarefaResponseDto {
         this.pontuacao = pontuacao;
     }
 
-    public LocalDateTime getPrazoEntrega() {
-        return prazoEntrega;
+    public LocalDate getPrazoPadrao() {
+        return prazoPadrao;
     }
 
-    public void setPrazoEntrega(LocalDateTime prazoEntrega) {
-        this.prazoEntrega = prazoEntrega;
-    }
-
-    public LocalDateTime getDataCriacao() {
-        return dataCriacao;
-    }
-
-    public void setDataCriacao(LocalDateTime dataCriacao) {
-        this.dataCriacao = dataCriacao;
+    public void setPrazoPadrao(LocalDate prazoPadrao) {
+        this.prazoPadrao = prazoPadrao;
     }
 
     public String getStatusKanban() {

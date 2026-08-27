@@ -3,19 +3,22 @@ package school.sptech.APIDesbravadores.service;
 import org.springframework.stereotype.Service;
 import school.sptech.APIDesbravadores.domain.Clube;
 import school.sptech.APIDesbravadores.domain.Convite;
+import school.sptech.APIDesbravadores.domain.Perfil;
 import school.sptech.APIDesbravadores.domain.Unidade;
 import school.sptech.APIDesbravadores.dto.ConviteRequestDto;
 import school.sptech.APIDesbravadores.dto.ConviteUpdateDto;
 import school.sptech.APIDesbravadores.exception.ClubeNãoEncontradoException;
 import school.sptech.APIDesbravadores.exception.ConviteNãoEncontradoException;
+import school.sptech.APIDesbravadores.exception.EntidadeNaoEncontradaException;
 import school.sptech.APIDesbravadores.exception.UnidadeNãoEncontradaException;
 import school.sptech.APIDesbravadores.mapper.ConviteMapper;
 import school.sptech.APIDesbravadores.repository.ClubeRepository;
 import school.sptech.APIDesbravadores.repository.ConviteRepository;
+import school.sptech.APIDesbravadores.repository.PerfilRepository;
 import school.sptech.APIDesbravadores.repository.UnidadeRepository;
 
 import java.security.SecureRandom;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Base64;
 
 import java.util.List;
@@ -24,15 +27,22 @@ import java.util.Optional;
 @Service
 public class ConviteService {
 
+    private static final String STATUS_PENDENTE = "PENDENTE";
+    private static final String STATUS_ACEITO = "ACEITO";
+    private static final String STATUS_REVOGADO = "REVOGADO";
+    private static final String STATUS_EXPIRADO = "EXPIRADO";
+
     private final ConviteRepository conviteRepository;
     private final ClubeRepository clubeRepository;
     private final UnidadeRepository unidadeRepository;
+    private final PerfilRepository perfilRepository;
     private final SecureRandom secureRandom = new SecureRandom();
 
-    public ConviteService(ConviteRepository conviteRepository, ClubeRepository clubeRepository, UnidadeRepository unidadeRepository) {
+    public ConviteService(ConviteRepository conviteRepository, ClubeRepository clubeRepository, UnidadeRepository unidadeRepository, PerfilRepository perfilRepository) {
         this.conviteRepository = conviteRepository;
         this.clubeRepository = clubeRepository;
         this.unidadeRepository = unidadeRepository;
+        this.perfilRepository = perfilRepository;
     }
 
     public List<Convite> listarConvites(Integer idClube){
@@ -54,7 +64,9 @@ public class ConviteService {
                 throw new UnidadeNãoEncontradaException();
             }
         }
-        Convite convite = ConviteMapper.toEntity(request);
+        Perfil perfil = perfilRepository.findByNomeIgnoreCase(request.getTipoConta())
+                .orElseThrow(() -> new EntidadeNaoEncontradaException("Perfil não encontrado: " + request.getTipoConta()));
+        Convite convite = ConviteMapper.toEntity(request, perfil);
         convite.setToken(gerarTokenBase64());
         Optional<Clube> clube = clubeRepository.findById(request.getIdClube());
         convite.setClube(clube.get());
@@ -76,11 +88,13 @@ public class ConviteService {
             throw new ConviteNãoEncontradoException();
         }
         Convite convite = conviteValidation.get();
-        if (convite.getDataExpiracao().isBefore(LocalDate.now()) && convite.getStatusConvite() != "aceito"){
-            convite.setStatusConvite("expirado");
+        if (convite.getDataExpiracao().isBefore(LocalDateTime.now()) && !STATUS_ACEITO.equalsIgnoreCase(convite.getStatusConvite())){
+            convite.setStatusConvite(STATUS_EXPIRADO);
             conviteRepository.save(convite);
         }
-        if (convite.getStatusConvite() == "expirado" || convite.getStatusConvite() == "revogado" || convite.getStatusConvite() == "aceito"){
+        if (STATUS_EXPIRADO.equalsIgnoreCase(convite.getStatusConvite())
+                || STATUS_REVOGADO.equalsIgnoreCase(convite.getStatusConvite())
+                || STATUS_ACEITO.equalsIgnoreCase(convite.getStatusConvite())){
             return false;
         }
         return true;

@@ -17,6 +17,9 @@ public class UnidadeAtualizacaoDto {
     @Size(max = 100)
     private String nome;
 
-    @PositiveOrZero
-    private Integer pontuacao;
+    private String genero;
+
+    private Integer idadeMinima;
+
+    private Integer idadeMaxima;
 }

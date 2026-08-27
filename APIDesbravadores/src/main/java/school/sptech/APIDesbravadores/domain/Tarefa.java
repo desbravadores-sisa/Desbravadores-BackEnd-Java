@@ -1,10 +1,7 @@
 package school.sptech.APIDesbravadores.domain;
 
 import jakarta.persistence.*;
-import org.hibernate.annotations.Generated;
-import org.hibernate.generator.EventType;
-
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 @Entity
 @Table(name = "tarefa")
@@ -15,23 +12,25 @@ public class Tarefa {
     @Column(name = "id_tarefa")
     private Integer id;
 
-    @Column(name = "fk_clube")
-    private Integer fkClube;
+    @ManyToOne
+    @JoinColumn(name = "id_clube")
+    private Clube clube;
 
-    private String nome;
+    @ManyToOne
+    @JoinColumn(name = "id_caderno")
+    private Caderno caderno;
+
+    private String titulo;
 
     private String descricao;
 
+    @Column(name = "tipo_tarefa")
+    private String tipoTarefa;
+
     private Integer pontuacao;
 
-    @Column(name = "prazo_entrega")
-    private LocalDateTime prazoEntrega;
-
-    // Quem preenche é o DEFAULT do banco. O @Generated faz o Hibernate reler o valor
-    // depois do INSERT, senão a resposta do POST sai com dataCriacao nula.
-    @Generated(event = EventType.INSERT)
-    @Column(name = "data_criacao", insertable = false, updatable = false)
-    private LocalDateTime dataCriacao;
+    @Column(name = "prazo_padrao")
+    private LocalDate prazoPadrao;
 
     public Tarefa() {
     }
@@ -44,20 +43,28 @@ public class Tarefa {
         this.id = id;
     }
 
-    public Integer getFkClube() {
-        return fkClube;
+    public Clube getClube() {
+        return clube;
     }
 
-    public void setFkClube(Integer fkClube) {
-        this.fkClube = fkClube;
+    public void setClube(Clube clube) {
+        this.clube = clube;
     }
 
-    public String getNome() {
-        return nome;
+    public Caderno getCaderno() {
+        return caderno;
     }
 
-    public void setNome(String nome) {
-        this.nome = nome;
+    public void setCaderno(Caderno caderno) {
+        this.caderno = caderno;
+    }
+
+    public String getTitulo() {
+        return titulo;
+    }
+
+    public void setTitulo(String titulo) {
+        this.titulo = titulo;
     }
 
     public String getDescricao() {
@@ -68,6 +75,14 @@ public class Tarefa {
         this.descricao = descricao;
     }
 
+    public String getTipoTarefa() {
+        return tipoTarefa;
+    }
+
+    public void setTipoTarefa(String tipoTarefa) {
+        this.tipoTarefa = tipoTarefa;
+    }
+
     public Integer getPontuacao() {
         return pontuacao;
     }
@@ -76,19 +91,11 @@ public class Tarefa {
         this.pontuacao = pontuacao;
     }
 
-    public LocalDateTime getPrazoEntrega() {
-        return prazoEntrega;
+    public LocalDate getPrazoPadrao() {
+        return prazoPadrao;
     }
 
-    public void setPrazoEntrega(LocalDateTime prazoEntrega) {
-        this.prazoEntrega = prazoEntrega;
-    }
-
-    public LocalDateTime getDataCriacao() {
-        return dataCriacao;
-    }
-
-    public void setDataCriacao(LocalDateTime dataCriacao) {
-        this.dataCriacao = dataCriacao;
+    public void setPrazoPadrao(LocalDate prazoPadrao) {
+        this.prazoPadrao = prazoPadrao;
     }
 }

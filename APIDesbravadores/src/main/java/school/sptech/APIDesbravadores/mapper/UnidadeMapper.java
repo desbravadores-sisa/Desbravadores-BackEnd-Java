@@ -16,16 +16,11 @@ public class UnidadeMapper {
         }
 
         UnidadeResponseDto dto = new UnidadeResponseDto();
-        /*
-        * dto = {
-        *  "id": null,
-        *  "nome": null,
-        *  "pontuacao": null
-        * }
-        * */
-        dto.setNome(unidade.getNome());
-        dto.setPontuacao(unidade.getPontuacao());
         dto.setId(unidade.getId());
+        dto.setNome(unidade.getNome());
+        dto.setGenero(unidade.getGenero());
+        dto.setIdadeMinima(unidade.getIdadeMinima());
+        dto.setIdadeMaxima(unidade.getIdadeMaxima());
 
         return dto;
 
@@ -43,7 +38,9 @@ public class UnidadeMapper {
         }
         Unidade unidade = new Unidade();
         unidade.setNome(request.getNome());
-        unidade.setPontuacao(0);
+        unidade.setGenero(request.getGenero());
+        unidade.setIdadeMinima(request.getIdadeMinima());
+        unidade.setIdadeMaxima(request.getIdadeMaxima());
         unidade.setClube(clube);
         return unidade;
     }

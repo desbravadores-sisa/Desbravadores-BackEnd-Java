@@ -5,7 +5,6 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -21,18 +20,25 @@ public class Convite {
 
     private String email;
 
-    @Column(columnDefinition = "CHAR(64)")
+    @Column(length = 128)
     private String token;
 
-    private String tipoConta;
-
-    private LocalDate dataExpiracao;
-
+    @Column(name = "status_convite")
     private String statusConvite;
+
+    @Column(name = "data_criacao", insertable = false, updatable = false)
+    private LocalDateTime dataCriacao;
+
+    @Column(name = "data_expiracao")
+    private LocalDateTime dataExpiracao;
 
     @ManyToOne
     @JoinColumn(name = "id_clube")
     private Clube clube;
+
+    @ManyToOne
+    @JoinColumn(name = "id_perfil")
+    private Perfil perfil;
 
     @ManyToOne
     @JoinColumn(name = "id_unidade")

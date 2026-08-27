@@ -18,7 +18,13 @@ public class Unidade {
 
     private String nome;
 
-    private Integer pontuacao;
+    private String genero;
+
+    @Column(name = "idade_minima")
+    private Integer idadeMinima;
+
+    @Column(name = "idade_maxima")
+    private Integer idadeMaxima;
 
     @ManyToOne
     @JoinColumn(name = "id_clube")
@@ -40,12 +46,28 @@ public class Unidade {
         this.nome = nome;
     }
 
-    public Integer getPontuacao() {
-        return pontuacao;
+    public String getGenero() {
+        return genero;
     }
 
-    public void setPontuacao(Integer pontuacao) {
-        this.pontuacao = pontuacao;
+    public void setGenero(String genero) {
+        this.genero = genero;
+    }
+
+    public Integer getIdadeMinima() {
+        return idadeMinima;
+    }
+
+    public void setIdadeMinima(Integer idadeMinima) {
+        this.idadeMinima = idadeMinima;
+    }
+
+    public Integer getIdadeMaxima() {
+        return idadeMaxima;
+    }
+
+    public void setIdadeMaxima(Integer idadeMaxima) {
+        this.idadeMaxima = idadeMaxima;
     }
 
     public Clube getClube() {
@@ -61,7 +83,7 @@ public class Unidade {
         return "Unidade{" +
                 "id=" + id +
                 ", nome='" + nome + '\'' +
-                ", pontuacao=" + pontuacao +
+                ", genero='" + genero + '\'' +
                 ", clube=" + clube +
                 '}';
     }
