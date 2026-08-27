@@ -1,10 +1,10 @@
 package school.sptech.APIDesbravadores.domain;
 
 public enum StatusKanban {
-    A_FAZER("A fazer"),
-    EM_ANDAMENTO("Em andamento"),
-    EM_REVISAO("Em revisão"),
-    CONCLUIDO("Concluído");
+    A_FAZER("A FAZER"),
+    EM_ANDAMENTO("EM ANDAMENTO"),
+    EM_REVISAO("EM REVISAO"),
+    CONCLUIDA("CONCLUIDA");
 
     private final String descricao;
 

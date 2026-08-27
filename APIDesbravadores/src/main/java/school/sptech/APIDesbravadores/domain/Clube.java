@@ -5,6 +5,8 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Getter
 @Setter
@@ -21,6 +23,9 @@ public class Clube {
     private String regiao;
 
     private String cidade;
+
+    @Column(name = "data_criacao", insertable = false, updatable = false)
+    private LocalDateTime dataCriacao;
 
     public Integer getId() {
         return id;

@@ -13,7 +13,11 @@ public class UnidadeResponseDto {
 
     private String nome;
 
-    private Integer pontuacao;
+    private String genero;
+
+    private Integer idadeMinima;
+
+    private Integer idadeMaxima;
 
     public Integer getId() {
         return id;
@@ -31,11 +35,27 @@ public class UnidadeResponseDto {
         this.nome = nome;
     }
 
-    public Integer getPontuacao() {
-        return pontuacao;
+    public String getGenero() {
+        return genero;
     }
 
-    public void setPontuacao(Integer pontuacao) {
-        this.pontuacao = pontuacao;
+    public void setGenero(String genero) {
+        this.genero = genero;
+    }
+
+    public Integer getIdadeMinima() {
+        return idadeMinima;
+    }
+
+    public void setIdadeMinima(Integer idadeMinima) {
+        this.idadeMinima = idadeMinima;
+    }
+
+    public Integer getIdadeMaxima() {
+        return idadeMaxima;
+    }
+
+    public void setIdadeMaxima(Integer idadeMaxima) {
+        this.idadeMaxima = idadeMaxima;
     }
 }

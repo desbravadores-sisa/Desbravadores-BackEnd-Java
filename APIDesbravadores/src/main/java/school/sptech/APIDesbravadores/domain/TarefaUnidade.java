@@ -2,24 +2,37 @@ package school.sptech.APIDesbravadores.domain;
 
 import jakarta.persistence.*;
 
+import java.time.LocalDateTime;
+
 @Entity
-@Table(name = "tarefa_unidade")
+@Table(name = "Unidade_Tarefa")
 public class TarefaUnidade {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id_tarefa_unidade")
+    @Column(name = "id_unidade_tarefa")
     private Integer id;
 
     @ManyToOne
-    @JoinColumn(name = "fk_tarefa")
+    @JoinColumn(name = "id_unidade")
+    private Unidade unidade;
+
+    @ManyToOne
+    @JoinColumn(name = "id_tarefa")
     private Tarefa tarefa;
 
-    @Column(name = "fk_unidade")
-    private Integer fkUnidade;
+    @ManyToOne
+    @JoinColumn(name = "id_ciclo")
+    private Ciclo ciclo;
 
     @Column(name = "status_kanban")
     private StatusKanban statusKanban;
+
+    @Column(name = "prazo_entrega")
+    private LocalDateTime prazoEntrega;
+
+    @Column(name = "data_conclusao")
+    private LocalDateTime dataConclusao;
 
     public TarefaUnidade() {
     }
@@ -32,6 +45,14 @@ public class TarefaUnidade {
         this.id = id;
     }
 
+    public Unidade getUnidade() {
+        return unidade;
+    }
+
+    public void setUnidade(Unidade unidade) {
+        this.unidade = unidade;
+    }
+
     public Tarefa getTarefa() {
         return tarefa;
     }
@@ -40,12 +61,12 @@ public class TarefaUnidade {
         this.tarefa = tarefa;
     }
 
-    public Integer getFkUnidade() {
-        return fkUnidade;
+    public Ciclo getCiclo() {
+        return ciclo;
     }
 
-    public void setFkUnidade(Integer fkUnidade) {
-        this.fkUnidade = fkUnidade;
+    public void setCiclo(Ciclo ciclo) {
+        this.ciclo = ciclo;
     }
 
     public StatusKanban getStatusKanban() {
@@ -54,5 +75,21 @@ public class TarefaUnidade {
 
     public void setStatusKanban(StatusKanban statusKanban) {
         this.statusKanban = statusKanban;
+    }
+
+    public LocalDateTime getPrazoEntrega() {
+        return prazoEntrega;
+    }
+
+    public void setPrazoEntrega(LocalDateTime prazoEntrega) {
+        this.prazoEntrega = prazoEntrega;
+    }
+
+    public LocalDateTime getDataConclusao() {
+        return dataConclusao;
+    }
+
+    public void setDataConclusao(LocalDateTime dataConclusao) {
+        this.dataConclusao = dataConclusao;
     }
 }

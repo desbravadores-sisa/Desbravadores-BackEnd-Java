@@ -1,12 +1,10 @@
 package school.sptech.APIDesbravadores.dto;
 
-import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
-import school.sptech.APIDesbravadores.domain.Unidade;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -19,7 +17,7 @@ public class ConviteResponseDto {
 
     private String tipoConta;
 
-    private LocalDate dataExpiracao;
+    private LocalDateTime dataExpiracao;
 
     private String statusConvite;
 

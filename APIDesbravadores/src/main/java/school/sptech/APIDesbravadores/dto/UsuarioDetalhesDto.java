@@ -36,7 +36,7 @@ public class UsuarioDetalhesDto implements UserDetails {
         this.nome = usuario.getNome();
         this.email = usuario.getEmail();
         this.senha = usuario.getSenha();
-        this.tipoConta = usuario.getTipoConta();
+        this.tipoConta = usuario.getPerfil() != null ? usuario.getPerfil().getNome() : null;
 
         if (usuario.getClube().getId() != null){
             this.idClube = usuario.getClube().getId();

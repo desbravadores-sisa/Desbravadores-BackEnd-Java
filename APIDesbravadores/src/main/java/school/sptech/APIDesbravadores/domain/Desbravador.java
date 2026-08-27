@@ -5,34 +5,37 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
 @Entity
 @Getter
 @Setter
 @ToString
-public class Usuario {
+public class Desbravador {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id_usuario")
+    @Column(name = "id_desbravador")
     private Integer id;
-
-    private String nome;
-
-    private String email;
-
-    private String senha;
-
-    private Boolean ativo;
 
     @ManyToOne
     @JoinColumn(name = "id_clube")
     private Clube clube;
 
     @ManyToOne
-    @JoinColumn(name = "id_perfil")
-    private Perfil perfil;
-
-    @ManyToOne
     @JoinColumn(name = "id_unidade")
     private Unidade unidade;
+
+    private String nome;
+
+    @Column(name = "data_nascimento")
+    private LocalDate dataNascimento;
+
+    private String genero;
+
+    @Column(name = "data_admissao", insertable = false, updatable = false)
+    private LocalDateTime dataAdmissao;
+
+    private Boolean ativo;
 }
