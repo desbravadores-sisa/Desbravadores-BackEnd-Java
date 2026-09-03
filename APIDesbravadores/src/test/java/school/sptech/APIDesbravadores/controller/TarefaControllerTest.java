@@ -15,7 +15,7 @@ import school.sptech.APIDesbravadores.exception.EntidadeNaoEncontradaException;
 import school.sptech.APIDesbravadores.exception.RequisicaoInvalidaException;
 import school.sptech.APIDesbravadores.service.TarefaService;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
@@ -49,10 +49,11 @@ class TarefaControllerTest {
         TarefaCreateDto request = new TarefaCreateDto();
         request.setFkClube(1);
         request.setFkUnidade(2);
-        request.setNome("Organizar reuniao");
+        request.setTitulo("Organizar reuniao");
+        request.setTipoTarefa("CLUBE");
         request.setDescricao("Preparar pauta");
         request.setPontuacao(10);
-        request.setPrazoEntrega(LocalDateTime.of(2026, 5, 10, 18, 0));
+        request.setPrazoPadrao(LocalDate.of(2026, 5, 10));
 
         when(tarefaService.create(any(TarefaCreateDto.class))).thenReturn(tarefaResponse());
 
@@ -61,7 +62,7 @@ class TarefaControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(1))
-                .andExpect(jsonPath("$.nome").value("Organizar reuniao"))
+                .andExpect(jsonPath("$.titulo").value("Organizar reuniao"))
                 .andExpect(jsonPath("$.statusKanban").value("A fazer"));
     }
 
@@ -72,7 +73,7 @@ class TarefaControllerTest {
         mockMvc.perform(get("/tarefas"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(1))
-                .andExpect(jsonPath("$[0].nome").value("Organizar reuniao"));
+                .andExpect(jsonPath("$[0].titulo").value("Organizar reuniao"));
     }
 
     @Test
@@ -95,13 +96,13 @@ class TarefaControllerTest {
     @Test
     void updateDeveAtualizarTarefa() throws Exception {
         TarefaUpdateDto request = new TarefaUpdateDto();
-        request.setNome("Organizar reuniao atualizada");
+        request.setTitulo("Organizar reuniao atualizada");
         request.setDescricao("Nova pauta");
         request.setPontuacao(15);
-        request.setPrazoEntrega(LocalDateTime.of(2026, 5, 11, 18, 0));
+        request.setPrazoPadrao(LocalDate.of(2026, 5, 11));
 
         TarefaResponseDto response = tarefaResponse();
-        response.setNome("Organizar reuniao atualizada");
+        response.setTitulo("Organizar reuniao atualizada");
         response.setPontuacao(15);
         when(tarefaService.update(eq(1), any(TarefaUpdateDto.class))).thenReturn(response);
 
@@ -109,7 +110,7 @@ class TarefaControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.nome").value("Organizar reuniao atualizada"))
+                .andExpect(jsonPath("$.titulo").value("Organizar reuniao atualizada"))
                 .andExpect(jsonPath("$.pontuacao").value(15));
     }
 
@@ -173,10 +174,10 @@ class TarefaControllerTest {
     void createDeveRetornarBadRequestComCamposQuandoPayloadForInvalido() throws Exception {
         mockMvc.perform(post("/tarefas")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"nome\":\"\"}"))
+                        .content("{\"titulo\":\"\"}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("Dados de entrada inválidos"))
-                .andExpect(jsonPath("$.campos.nome").exists())
+                .andExpect(jsonPath("$.campos.titulo").exists())
                 .andExpect(jsonPath("$.campos.fkClube").exists());
     }
 
@@ -202,11 +203,11 @@ class TarefaControllerTest {
         response.setId(1);
         response.setFkClube(1);
         response.setFkUnidade(2);
-        response.setNome("Organizar reuniao");
+        response.setTitulo("Organizar reuniao");
+        response.setTipoTarefa("CLUBE");
         response.setDescricao("Preparar pauta");
         response.setPontuacao(10);
-        response.setPrazoEntrega(LocalDateTime.of(2026, 5, 10, 18, 0));
-        response.setDataCriacao(LocalDateTime.of(2026, 5, 2, 12, 0));
+        response.setPrazoPadrao(LocalDate.of(2026, 5, 10));
         response.setStatusKanban("A fazer");
         return response;
     }

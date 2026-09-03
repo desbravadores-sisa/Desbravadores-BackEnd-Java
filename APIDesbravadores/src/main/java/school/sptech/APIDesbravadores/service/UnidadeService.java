@@ -76,9 +76,9 @@ public class UnidadeService {
         }
 
         unidade.setNome(request.getNome());
-        if (request.getPontuacao() != null){
-            unidade.setPontuacao(request.getPontuacao());
-        }
+        unidade.setGenero(request.getGenero());
+        unidade.setIdadeMinima(request.getIdadeMinima());
+        unidade.setIdadeMaxima(request.getIdadeMaxima());
 
         unidadeRepository.save(unidade);
         return UnidadeMapper.toResponse(unidade);

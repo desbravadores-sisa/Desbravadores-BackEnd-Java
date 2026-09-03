@@ -10,6 +10,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import school.sptech.APIDesbravadores.domain.Perfil;
 import school.sptech.APIDesbravadores.domain.Usuario;
 import school.sptech.APIDesbravadores.dto.UsuarioCriacaoDto;
 import school.sptech.APIDesbravadores.dto.UsuarioLoginDto;
@@ -51,7 +52,9 @@ class UsuarioControllerTest {
         usuario.setId(1);
         usuario.setNome("Maria");
         usuario.setEmail("maria@email.com");
-        usuario.setTipoConta("DIRETOR");
+        Perfil perfil = new Perfil();
+        perfil.setNome("DIRETOR");
+        usuario.setPerfil(perfil);
         usuario.setSenha("$2a$10$hashBCryptQueNaoPodeVazar");
 
         when(usuarioService.cadastrarUsuario(any(UsuarioCriacaoDto.class))).thenReturn(usuario);

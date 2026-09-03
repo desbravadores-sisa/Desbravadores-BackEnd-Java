@@ -11,7 +11,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import school.sptech.APIDesbravadores.dto.TarefaResponseDto;
 import school.sptech.APIDesbravadores.service.TarefaService;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.Map;
 
 import static org.mockito.Mockito.when;
@@ -69,11 +69,10 @@ class TarefaUnidadeControllerTest {
         response.setId(1);
         response.setFkClube(1);
         response.setFkUnidade(2);
-        response.setNome("Organizar reuniao");
+        response.setTitulo("Organizar reuniao");
         response.setDescricao("Preparar pauta");
         response.setPontuacao(10);
-        response.setPrazoEntrega(LocalDateTime.of(2026, 5, 10, 18, 0));
-        response.setDataCriacao(LocalDateTime.of(2026, 5, 2, 12, 0));
+        response.setPrazoPadrao(LocalDate.of(2026, 5, 10));
         response.setStatusKanban("A fazer");
         return response;
     }
