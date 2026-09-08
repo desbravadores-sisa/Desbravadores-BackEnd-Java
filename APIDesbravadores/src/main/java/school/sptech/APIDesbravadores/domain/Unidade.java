@@ -16,53 +16,20 @@ public class Unidade {
     @Column(name = "id_unidade")
     private Integer id;
 
+    @Column(name = "nome", length = 100, nullable = false)
     private String nome;
 
-    private Integer pontuacao;
+    @Column(name = "genero", length = 45)
+    private String genero;
+
+    @Column(name = "idade_minima")
+    private Integer idadeMinima;
+
+    @Column(name = "idade_maxima")
+    private Integer idadeMaxima;
 
     @ManyToOne
     @JoinColumn(name = "id_clube")
     private Clube clube;
 
-    public Integer getId() {
-        return id;
-    }
-
-    public void setId(Integer id) {
-        this.id = id;
-    }
-
-    public String getNome() {
-        return nome;
-    }
-
-    public void setNome(String nome) {
-        this.nome = nome;
-    }
-
-    public Integer getPontuacao() {
-        return pontuacao;
-    }
-
-    public void setPontuacao(Integer pontuacao) {
-        this.pontuacao = pontuacao;
-    }
-
-    public Clube getClube() {
-        return clube;
-    }
-
-    public void setClube(Clube clube) {
-        this.clube = clube;
-    }
-
-    @Override
-    public String toString() {
-        return "Unidade{" +
-                "id=" + id +
-                ", nome='" + nome + '\'' +
-                ", pontuacao=" + pontuacao +
-                ", clube=" + clube +
-                '}';
-    }
 }

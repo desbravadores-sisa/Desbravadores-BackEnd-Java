@@ -28,6 +28,8 @@ public class UsuarioController {
 
     @PostMapping("/cadastro")
     public ResponseEntity<Usuario> criarUsuario(@RequestBody @Valid UsuarioCriacaoDto request){
+        System.out.println("[DEBUG] - Iniciando Cadastro da API, Arquivo UsuarioController Function: criarUsuario");
+        System.out.println("[DEBUG] - Parametro recebido: \n" + request + "\n Arquivo UsuarioController Function: criarUsuario");
         return ResponseEntity.status(201).body(usuarioService.cadastarUsuario(request));
     }
 

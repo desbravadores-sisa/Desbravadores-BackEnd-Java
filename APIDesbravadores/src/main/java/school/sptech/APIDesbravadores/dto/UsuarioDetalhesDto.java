@@ -19,33 +19,22 @@ public class UsuarioDetalhesDto implements UserDetails {
 
     private final String senha;
 
-    private final String tipoConta;
+    private final String perfil;
 
-    private Integer idClube;
+    private final Integer idClube;
 
-    private Integer idUnidade;
+    private final Integer idUnidade;
 
-    public UsuarioDetalhesDto(String nome, String email, String senha, String tipoConta) {
-        this.nome = nome;
-        this.email = email;
-        this.senha = senha;
-        this.tipoConta = tipoConta;
-    }
 
     public UsuarioDetalhesDto(Usuario usuario) {
         this.nome = usuario.getNome();
         this.email = usuario.getEmail();
         this.senha = usuario.getSenha();
-        this.tipoConta = usuario.getTipoConta();
-
-        if (usuario.getClube().getId() != null){
-            this.idClube = usuario.getClube().getId();
-        }
-
-        if (usuario.getUnidade() != null && usuario.getUnidade().getId() != null){
-            this.idUnidade = usuario.getUnidade().getId();
-        }
+        this.perfil = usuario.getPerfil().getNome();
+        this.idClube = usuario.getClube().getId();
+        this.idUnidade = usuario.getUnidade() == null ? null : usuario.getUnidade().getId() ;
     }
+
 
     public Integer getIdClube() {
         return idClube;
@@ -63,12 +52,8 @@ public class UsuarioDetalhesDto implements UserDetails {
         return email;
     }
 
-    public String getSenha() {
-        return senha;
-    }
-
-    public String getTipoConta() {
-        return tipoConta;
+    public String getPerfil() {
+        return perfil;
     }
 
     @Override
@@ -85,11 +70,11 @@ public class UsuarioDetalhesDto implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority("ROLE_" + this.tipoConta.toUpperCase()));
+        return List.of(new SimpleGrantedAuthority("ROLE_" + this.perfil.toUpperCase()));
     }
 
     @Override
-    public @Nullable String getPassword() {return this.senha;}
+    public String getPassword() {return this.senha;}
 
     @Override
     public String getUsername() {return this.email;}

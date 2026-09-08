@@ -26,7 +26,7 @@ public class UnidadeMapper {
         * }
         * */
         dto.setNome(unidade.getNome());
-        dto.setPontuacao(unidade.getPontuacao());
+        //dto.setPontuacao(unidade.getPontuacao());
         dto.setId(unidade.getId());
 
         return dto;
@@ -45,7 +45,7 @@ public class UnidadeMapper {
         }
         Unidade unidade = new Unidade();
         unidade.setNome(request.getNome());
-        unidade.setPontuacao(0);
+       // unidade.setPontuacao(0);
         unidade.setClube(clube);
         return unidade;
     }
@@ -56,7 +56,7 @@ public class UnidadeMapper {
         }
         Unidade unidade = new Unidade();
         unidade.setNome(request.getNome());
-        unidade.setPontuacao(request.getPontuacao());
+        //unidade.setPontuacao(request.getPontuacao());
         unidade.setId(request.getIdUnidade());
         return unidade;
     }

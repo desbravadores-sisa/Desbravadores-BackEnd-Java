@@ -16,13 +16,17 @@ public class Usuario {
     @Column(name = "id_usuario")
     private Integer id;
 
+    @Column(name = "nome", length = 100, nullable = false)
     private String nome;
 
+    @Column(name = "email", length = 100, nullable = false)
     private String email;
 
+    @Column(name = "senha", length = 256, nullable = false)
     private String senha;
 
-    private String tipoConta;
+    @Column(name = "ativo")
+    private Boolean ativo;
 
     @ManyToOne
     @JoinColumn(name = "id_clube")
@@ -31,4 +35,8 @@ public class Usuario {
     @ManyToOne
     @JoinColumn(name = "id_unidade")
     private Unidade unidade;
+
+    @ManyToOne
+    @JoinColumn(name = "id_perfil")
+    private Perfil perfil;
 }

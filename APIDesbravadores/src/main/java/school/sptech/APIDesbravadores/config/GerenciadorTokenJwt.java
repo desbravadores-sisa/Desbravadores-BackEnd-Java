@@ -4,10 +4,12 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import jakarta.persistence.criteria.CriteriaBuilder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+import school.sptech.APIDesbravadores.dto.UsuarioDetalhesDto;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
@@ -28,9 +30,13 @@ public class GerenciadorTokenJwt {
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.joining(","));
 
+        UsuarioDetalhesDto usuarioDetalhes = (UsuarioDetalhesDto) authentication.getPrincipal();
+
         return Jwts.builder()
                 .subject(authentication.getName())
                 .claim("authorities", authorities)
+                .claim("idClube", usuarioDetalhes.getIdClube())
+                .claim("idUnidade", usuarioDetalhes.getIdUnidade())
                 .issuedAt(new Date(System.currentTimeMillis()))
                 .expiration(new Date(System.currentTimeMillis() + jwtTokenValidity * 1_000))
                 .signWith(parseSecret())
@@ -39,6 +45,14 @@ public class GerenciadorTokenJwt {
 
     public String getUsernameFromToken(String token) {
         return getClaimForToken(token, Claims::getSubject);
+    }
+
+    public Integer getIdClubeFromToken(String token){
+        return getClaimForToken(token, claims -> claims.get("idClube", Integer.class));
+    }
+
+    public Integer getIdUnidadeFromToken(String token){
+        return getClaimForToken(token, claims -> claims.get("idUnidade", Integer.class));
     }
 
     public Date getExpirationDateFromToken(String token) {

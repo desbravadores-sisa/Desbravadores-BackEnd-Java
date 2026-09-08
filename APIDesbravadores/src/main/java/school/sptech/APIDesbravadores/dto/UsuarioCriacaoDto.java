@@ -23,9 +23,9 @@ public class UsuarioCriacaoDto {
     @Size(max = 100)
     private String senha;
 
-    @NotBlank
-    @Size(max = 45)
-    private String tipoConta;
+    @NotNull
+    @Positive
+    private Integer idPerfil;
 
     @NotNull
     @Positive

@@ -13,7 +13,7 @@ public class UsuarioMapper {
         usuario.setNome(request.getNome());
         usuario.setSenha(request.getSenha());
         usuario.setEmail(request.getEmail());
-        usuario.setTipoConta(request.getTipoConta());
+        usuario.setAtivo(true);
         return usuario;
     }
 }

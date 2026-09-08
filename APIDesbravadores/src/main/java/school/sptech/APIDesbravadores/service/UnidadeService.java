@@ -73,15 +73,15 @@ public class UnidadeService {
             throw new UnidadeNãoEncontradaException();
         }
 
-        if (unidadeRepository.existsByClubeIdAndNome(unidade.get().getClube().getId(),request.getNome()) && (request.getPontuacao() == null || request.getPontuacao().equals(unidade.get().getPontuacao())) ){
-            throw new UnidadeJácadastradaException();
-        }
+       // if (unidadeRepository.existsByClubeIdAndNome(unidade.get().getClube().getId(),request.getNome()) && (request.getPontuacao() == null || request.getPontuacao().equals(unidade.get().getPontuacao())) ){
+       //     throw new UnidadeJácadastradaException();
+        //}
         Unidade unidadeReplace = UnidadeMapper.toEntity(request);
         Optional<Clube> clube = clubeRepository.findById(unidade.get().getClube().getId());
         unidadeReplace.setClube(clube.get());
-        if (unidadeReplace.getPontuacao() == null){
-            unidadeReplace.setPontuacao(unidade.get().getPontuacao());
-        }
+       // if (unidadeReplace.getPontuacao() == null){
+       //     unidadeReplace.setPontuacao(unidade.get().getPontuacao());
+       // }
         unidadeRepository.save(unidadeReplace);
         return UnidadeMapper.toResponse(unidadeReplace);
     }
