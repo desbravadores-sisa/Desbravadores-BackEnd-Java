@@ -45,7 +45,8 @@ public class SecurityConfiguracao {
             "/usuarios/login/**",
             "/h2-console/**",
             "/error/**",
-            "/swagger-ui.html"
+            "/swagger-ui.html",
+            "/perfil"
     };
 
     @Bean

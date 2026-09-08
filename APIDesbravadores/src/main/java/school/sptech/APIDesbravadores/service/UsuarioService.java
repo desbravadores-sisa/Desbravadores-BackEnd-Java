@@ -44,6 +44,8 @@ public class UsuarioService {
     }
 
     public Usuario cadastarUsuario(UsuarioCriacaoDto request){
+
+        // Validação Clube
         System.out.println("[DEBUG] - Iniciando validações para cadastro de usuario. Arquivo: UsuarioService Função: cadastarUsuario()");
         Optional<Clube> clube = clubeRepository.findById(request.getIdClube());
         System.out.println("[DEBUG] - O clube existe:" + (clube.isEmpty()?"Não":"Sim"));
@@ -51,22 +53,29 @@ public class UsuarioService {
             System.out.println("[ERROR] - O clube não existe, lançando ClubeNãoEncontradoException() ");
             throw new ClubeNãoEncontradoException();
         }
+
+        // Validação E-mail
         System.out.println("[DEBUG] - Validando duplicidade de Email, o email " + (usuarioRepository.findByEmail(request.getEmail()).isEmpty()?"não está duplicado":"está duplicado"));
         if (!usuarioRepository.findByEmail(request.getEmail()).isEmpty()){
             System.out.println("[ERROR] - O usuário está informou um e-mail duplicado, lançado EmailJaCadastradoException()");
             throw new EmailJaCadastradoException();
         }
+
+        // Validação Perfil
         System.out.println("[DEBUG] - Validando o perfil de usuário, o Perfil " + (perfilRepository.findById(request.getIdPerfil()).isEmpty()?"não existe":"existe") );
         Optional<Perfil> perfil = perfilRepository.findById(request.getIdPerfil());
         if (perfil.isEmpty()){
             System.out.println("[ERROR] - O perfil não foi encontrado, lançado PerfilNaoEncontradoException()");
             throw new PerfilNaoEncontradoException();
         }
+
+
         Usuario usuario = UsuarioMapper.toEntity(request);
         String senhaCriptografada = passwordEncoder.encode(request.getSenha());
         usuario.setSenha(senhaCriptografada);
         usuario.setClube(clube.get());
         usuario.setPerfil(perfil.get());
+
         usuarioRepository.save(usuario);
         return usuario;
     }

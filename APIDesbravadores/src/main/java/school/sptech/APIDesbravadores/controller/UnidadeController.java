@@ -29,7 +29,7 @@ public class UnidadeController {
     * =========================================================================
     * */
     @GetMapping("/diretor")
-    @PreAuthorize("hasRole('DIRETOR')")
+    @PreAuthorize("hasRole('DIRETORIA')")
     public ResponseEntity<List<UnidadeResponseDto>> listarUnidades(@AuthenticationPrincipal UsuarioDetalhesDto usuariologado){
         Integer idClube = usuariologado.getIdClube();
         return ResponseEntity.ok(unidadeService.listaUnidade(idClube));
@@ -37,20 +37,20 @@ public class UnidadeController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('DIRETOR')")
+    @PreAuthorize("hasRole('DIRETORIA')")
     public ResponseEntity<UnidadeResponseDto> cadastrarUnidade(@RequestBody @Valid UnidadeCriacaoDto request, @AuthenticationPrincipal UsuarioDetalhesDto usuariologado){
         Integer idClube = usuariologado.getIdClube();
         return ResponseEntity.status(201).body(unidadeService.cadastrarUnidade(request,idClube));
     }
 
     @PutMapping
-    @PreAuthorize("hasRole('DIRETOR')")
+    @PreAuthorize("hasRole('DIRETORIA')")
     public ResponseEntity<UnidadeResponseDto> atualizarUnidade(@RequestBody @Valid UnidadeAtualizacaoDto request){
         return ResponseEntity.ok(unidadeService.atualizarUnidade(request));
     }
 
     @DeleteMapping("/{idUnidade}")
-    @PreAuthorize("hasRole('DIRETOR')")
+    @PreAuthorize("hasRole('DIRETORIA')")
     public ResponseEntity<Void> deletarUnidade(@PathVariable Integer idUnidade){
         System.out.println("Cai no método");
         unidadeService.deletarUnidade(idUnidade);
