@@ -12,37 +12,35 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
+import java.time.LocalDateTime;
+
 @Entity
-@Table(name = "Unidade_Tarefa")
+@Table(name = "Execucao_Caderno")
 @Getter
 @Setter
 @ToString
-public class TarefaUnidade {
+public class ExecucaoCaderno {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id_unidade_tarefa")
+    @Column(name = "id_execucao_caderno")
     private Integer id;
-
-    @ManyToOne
-    @JoinColumn(name = "id_tarefa", nullable = false)
-    private Tarefa tarefa;
 
     @ManyToOne
     @JoinColumn(name = "id_unidade", nullable = false)
     private Unidade unidade;
 
     @ManyToOne
+    @JoinColumn(name = "id_tarefa", nullable = false)
+    private Tarefa tarefa;
+
+    @ManyToOne
     @JoinColumn(name = "id_ciclo", nullable = false)
     private Ciclo ciclo;
 
-    @Column(name = "status_kanban")
+    @Column(name = "status_kanban", length = 45)
     private StatusKanban statusKanban;
 
-    @Column(name = "prazo_entrega")
-    private java.time.LocalDateTime prazoEntrega;
-
     @Column(name = "data_conclusao")
-    private java.time.LocalDateTime dataConclusao;
-
+    private LocalDateTime dataConclusao;
 }

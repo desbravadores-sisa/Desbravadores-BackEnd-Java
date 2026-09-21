@@ -1,10 +1,10 @@
 package school.sptech.APIDesbravadores.domain;
 
 public enum StatusKanban {
-    A_FAZER("A fazer"),
-    EM_ANDAMENTO("Em andamento"),
-    EM_REVISAO("Em revisão"),
-    CONCLUIDO("Concluído");
+    A_FAZER("A FAZER"),
+    EM_ANDAMENTO("EM ANDAMENTO"),
+    EM_REVISAO("EM REVISAO"),
+    CONCLUIDO("CONCLUIDA");
 
     private final String descricao;
 
@@ -18,7 +18,9 @@ public enum StatusKanban {
 
     public static StatusKanban fromString(String text) {
         for (StatusKanban b : StatusKanban.values()) {
-            if (b.descricao.equalsIgnoreCase(text)) {
+                if (b.descricao.equalsIgnoreCase(text)
+                    || b.name().replace('_', ' ').equalsIgnoreCase(text)
+                    || (b == CONCLUIDO && "CONCLUIDO".equalsIgnoreCase(text))) {
                 return b;
             }
         }

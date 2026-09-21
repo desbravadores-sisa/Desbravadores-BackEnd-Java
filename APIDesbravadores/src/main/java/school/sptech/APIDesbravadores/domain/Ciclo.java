@@ -1,7 +1,6 @@
 package school.sptech.APIDesbravadores.domain;
 
 import jakarta.persistence.Column;
-import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -13,40 +12,33 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 @Entity
-@Table(name = "Tarefa")
+@Table(name = "Ciclo")
 @Getter
 @Setter
 @ToString
-public class Tarefa {
+public class Ciclo {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id_tarefa")
+    @Column(name = "id_ciclo")
     private Integer id;
 
     @ManyToOne
     @JoinColumn(name = "id_clube", nullable = false)
     private Clube clube;
 
-    @Column(name = "titulo", length = 150, nullable = false)
+    @Column(name = "nome",nullable = false, length = 45)
     private String nome;
 
-    private String descricao;
+    @Column(name = "data_inicio")
+    private LocalDate dataInicio;
 
-    @Column(name = "tipo_tarefa", length = 20, nullable = false)
-    private String tipoTarefa;
+    @Column(name = "data_fim")
+    private LocalDate dataFim;
 
-    private Integer pontuacao;
-
-    @Convert(converter = LocalDateTimeToLocalDateConverter.class)
-    @Column(name = "prazo_padrao")
-    private LocalDateTime prazoEntrega;
-
-    @ManyToOne
-    @JoinColumn(name = "id_caderno")
-    private Caderno caderno;
-
+    @Column(name = "ativo",nullable = false)
+    private Boolean ativo = true;
 }

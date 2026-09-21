@@ -12,37 +12,41 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
 @Entity
-@Table(name = "Unidade_Tarefa")
+@Table(name = "Desbravador")
 @Getter
 @Setter
 @ToString
-public class TarefaUnidade {
+public class Desbravador {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id_unidade_tarefa")
+    @Column(name = "id_desbravador")
     private Integer id;
 
     @ManyToOne
-    @JoinColumn(name = "id_tarefa", nullable = false)
-    private Tarefa tarefa;
+    @JoinColumn(name = "id_clube", nullable = false)
+    private Clube clube;
 
     @ManyToOne
     @JoinColumn(name = "id_unidade", nullable = false)
     private Unidade unidade;
 
-    @ManyToOne
-    @JoinColumn(name = "id_ciclo", nullable = false)
-    private Ciclo ciclo;
+    @Column(nullable = false, length = 100)
+    private String nome;
 
-    @Column(name = "status_kanban")
-    private StatusKanban statusKanban;
+    @Column(name = "data_nascimento", nullable = false)
+    private LocalDate dataNascimento;
 
-    @Column(name = "prazo_entrega")
-    private java.time.LocalDateTime prazoEntrega;
+    @Column(length = 45)
+    private String genero;
 
-    @Column(name = "data_conclusao")
-    private java.time.LocalDateTime dataConclusao;
+    @Column(name = "data_admissao", insertable = false, updatable = false)
+    private LocalDateTime dataAdmissao;
 
+    @Column(nullable = false)
+    private Boolean ativo = true;
 }

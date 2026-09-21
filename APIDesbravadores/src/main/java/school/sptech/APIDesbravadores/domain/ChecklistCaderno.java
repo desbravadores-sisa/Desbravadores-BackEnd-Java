@@ -15,31 +15,28 @@ import lombok.ToString;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "Evidencia")
+@Table(name = "Checklist_Caderno")
 @Getter
 @Setter
 @ToString
-public class Evidencia {
+public class ChecklistCaderno {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id_evidencia")
+    @Column(name = "id_checklist")
     private Integer id;
 
     @ManyToOne
-    @JoinColumn(name = "id_tarefa_unidade")
-    private TarefaUnidade tarefaUnidade;
+    @JoinColumn(name = "id_execucao_caderno", nullable = false)
+    private ExecucaoCaderno execucaoCaderno;
 
-    @Transient
-    private String nome;
+    @ManyToOne
+    @JoinColumn(name = "id_desbravador", nullable = false)
+    private Desbravador desbravador;
 
-    @Column(name = "url_s3", length = 500, nullable = false)
-    private String urlAnexo;
+    @Column(name = "concluiu_tarefa", nullable = false)
+    private Boolean concluiuTarefa = false;
 
-    @Column(name = "comentario_feedback")
-    private String comentarioFeedback;
-
-    @Column(name = "data_envio", insertable = false, updatable = false)
-    private LocalDateTime dataUpload;
-
+    @Column(name = "data_marcacao")
+    private LocalDateTime dataMarcacao;
 }

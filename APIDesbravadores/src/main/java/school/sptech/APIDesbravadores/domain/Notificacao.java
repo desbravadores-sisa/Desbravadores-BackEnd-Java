@@ -1,7 +1,6 @@
 package school.sptech.APIDesbravadores.domain;
 
 import jakarta.persistence.Column;
-import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -16,37 +15,40 @@ import lombok.ToString;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "Tarefa")
+@Table(name = "Notificacao")
 @Getter
 @Setter
 @ToString
-public class Tarefa {
+public class Notificacao {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id_tarefa")
+    @Column(name = "id_notificacao")
     private Integer id;
+
+    @ManyToOne
+    @JoinColumn(name = "id_usuario", nullable = false)
+    private Usuario usuario;
 
     @ManyToOne
     @JoinColumn(name = "id_clube", nullable = false)
     private Clube clube;
 
-    @Column(name = "titulo", length = 150, nullable = false)
-    private String nome;
+    @Column(nullable = false, length = 150)
+    private String titulo;
 
-    private String descricao;
+    @Column(nullable = false)
+    private String mensagem;
 
-    @Column(name = "tipo_tarefa", length = 20, nullable = false)
-    private String tipoTarefa;
+    @Column(name = "tipo_referencia", length = 45)
+    private String tipoReferencia;
 
-    private Integer pontuacao;
+    @Column(name = "id_referencia")
+    private Integer idReferencia;
 
-    @Convert(converter = LocalDateTimeToLocalDateConverter.class)
-    @Column(name = "prazo_padrao")
-    private LocalDateTime prazoEntrega;
+    @Column(nullable = false)
+    private Boolean lida = false;
 
-    @ManyToOne
-    @JoinColumn(name = "id_caderno")
-    private Caderno caderno;
-
+    @Column(name = "data_criacao", insertable = false, updatable = false)
+    private LocalDateTime dataCriacao;
 }

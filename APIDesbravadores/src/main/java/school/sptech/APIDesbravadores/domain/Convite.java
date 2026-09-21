@@ -9,6 +9,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
+@Table(name = "Convite")
 @Getter
 @Setter
 @ToString
@@ -21,17 +22,28 @@ public class Convite {
 
     private String email;
 
-    @Column(columnDefinition = "CHAR(64)")
+    @Column(length = 128, nullable = false, unique = true)
     private String token;
 
+    @Transient
     private String tipoConta;
 
-    private LocalDate dataExpiracao;
+    @ManyToOne
+    @JoinColumn(name = "id_perfil", nullable = false)
+    private Perfil perfil;
 
+    @Column(name = "status_convite", length = 20)
     private String statusConvite;
 
+    @Column(name = "data_criacao", insertable = false, updatable = false)
+    private LocalDateTime dataCriacao;
+
+    @Convert(converter = LocalDateToLocalDateTimeConverter.class)
+    @Column(name = "data_expiracao", nullable = false)
+    private LocalDate dataExpiracao;
+
     @ManyToOne
-    @JoinColumn(name = "id_clube")
+    @JoinColumn(name = "id_clube", nullable = false)
     private Clube clube;
 
     @ManyToOne

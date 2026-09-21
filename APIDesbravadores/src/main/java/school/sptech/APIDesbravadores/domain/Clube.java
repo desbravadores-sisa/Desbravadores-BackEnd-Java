@@ -9,6 +9,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import java.time.LocalDateTime;
 
 @Entity
+@Table(name = "Clube")
 @Getter
 @Setter
 @ToString
