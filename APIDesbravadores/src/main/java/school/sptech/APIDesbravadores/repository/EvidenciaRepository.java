@@ -9,9 +9,5 @@ import java.util.Optional;
 
 @Repository
 public interface EvidenciaRepository extends JpaRepository<Evidencia, Integer> {
-    List<Evidencia> findAllByTarefaUnidadeTarefaFkClube(Integer fkClube);
 
-    List<Evidencia> findAllByTarefaUnidadeFkUnidade(Integer fkUnidade);
-
-    Optional<Evidencia> findByIdAndTarefaUnidadeFkUnidade(Integer id, Integer fkUnidade);
 }

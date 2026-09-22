@@ -30,7 +30,7 @@ public class Evidencia {
     @JoinColumn(name = "id_tarefa_unidade")
     private TarefaUnidade tarefaUnidade;
 
-    @Transient
+    @Column(name = "nome")
     private String nome;
 
     @Column(name = "url_s3", length = 500, nullable = false)

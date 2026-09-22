@@ -34,7 +34,7 @@ public class EvidenciaMapper {
         TarefaUnidade tarefaUnidade = evidencia.getTarefaUnidade();
         if (tarefaUnidade != null) {
             dto.setIdTarefaUnidade(tarefaUnidade.getId());
-            dto.setIdUnidade(tarefaUnidade.getFkUnidade());
+            //dto.setIdUnidade(tarefaUnidade.getFkUnidade());
             if (tarefaUnidade.getTarefa() != null) {
                 dto.setIdTarefa(tarefaUnidade.getTarefa().getId());
             }

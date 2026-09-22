@@ -36,80 +36,80 @@ public class TarefaService {
 
         TarefaUnidade tu = new TarefaUnidade();
         tu.setTarefa(savedTarefa);
-        tu.setFkUnidade(dto.getFkUnidade());
+        //tu.setFkUnidade(dto.getFkUnidade());
         tu.setStatusKanban(StatusKanban.A_FAZER);
         tarefaUnidadeRepository.save(tu);
 
         return TarefaMapper.toResponseDto(savedTarefa, tu);
     }
 
-    public List<TarefaResponseDto> findAll() {
-        return tarefaRepository.findAll().stream()
-                .map(t -> {
-                    TarefaUnidade tu = tarefaUnidadeRepository.findByTarefaId(t.getId()).orElse(null);
-                    return TarefaMapper.toResponseDto(t, tu);
-                })
-                .collect(Collectors.toList());
-    }
+//    public List<TarefaResponseDto> findAll() {
+//        return tarefaRepository.findAll().stream()
+//                .map(t -> {
+//                    TarefaUnidade tu = tarefaUnidadeRepository.findByTarefaId(t.getId()).orElse(null);
+//                    return TarefaMapper.toResponseDto(t, tu);
+//                })
+//                .collect(Collectors.toList());
+//    }
+//
+//    public TarefaResponseDto findById(Integer id) {
+//        Tarefa t = tarefaRepository.findById(id)
+//                .orElseThrow(() -> new EntidadeNaoEncontradaException("Tarefa não encontrada com ID: " + id));
+//        TarefaUnidade tu = tarefaUnidadeRepository.findByTarefaId(t.getId()).orElse(null);
+//        return TarefaMapper.toResponseDto(t, tu);
+//    }
 
-    public TarefaResponseDto findById(Integer id) {
-        Tarefa t = tarefaRepository.findById(id)
-                .orElseThrow(() -> new EntidadeNaoEncontradaException("Tarefa não encontrada com ID: " + id));
-        TarefaUnidade tu = tarefaUnidadeRepository.findByTarefaId(t.getId()).orElse(null);
-        return TarefaMapper.toResponseDto(t, tu);
-    }
+//    @Transactional
+//    public TarefaResponseDto update(Integer id, TarefaUpdateDto dto) {
+//        Tarefa t = tarefaRepository.findById(id)
+//                .orElseThrow(() -> new EntidadeNaoEncontradaException("Tarefa não encontrada com ID: " + id));
+//        TarefaMapper.updateEntity(dto, t);
+//        Tarefa saved = tarefaRepository.save(t);
+//        TarefaUnidade tu = tarefaUnidadeRepository.findByTarefaId(saved.getId()).orElse(null);
+//        return TarefaMapper.toResponseDto(saved, tu);
+//    }
+//
+//    @Transactional
+//    public void delete(Integer id) {
+//        Tarefa t = tarefaRepository.findById(id)
+//                .orElseThrow(() -> new EntidadeNaoEncontradaException("Tarefa não encontrada com ID: " + id));
+//
+//        tarefaUnidadeRepository.deleteByTarefaId(t.getId());
+//        tarefaRepository.delete(t);
+//    }
 
-    @Transactional
-    public TarefaResponseDto update(Integer id, TarefaUpdateDto dto) {
-        Tarefa t = tarefaRepository.findById(id)
-                .orElseThrow(() -> new EntidadeNaoEncontradaException("Tarefa não encontrada com ID: " + id));
-        TarefaMapper.updateEntity(dto, t);
-        Tarefa saved = tarefaRepository.save(t);
-        TarefaUnidade tu = tarefaUnidadeRepository.findByTarefaId(saved.getId()).orElse(null);
-        return TarefaMapper.toResponseDto(saved, tu);
-    }
-
-    @Transactional
-    public void delete(Integer id) {
-        Tarefa t = tarefaRepository.findById(id)
-                .orElseThrow(() -> new EntidadeNaoEncontradaException("Tarefa não encontrada com ID: " + id));
-
-        tarefaUnidadeRepository.deleteByTarefaId(t.getId());
-        tarefaRepository.delete(t);
-    }
-
-    public TarefaResponseDto findStatusByTarefaId(Integer id) {
-        Tarefa t = tarefaRepository.findById(id)
-                .orElseThrow(() -> new EntidadeNaoEncontradaException("Tarefa não encontrada com ID: " + id));
-
-        TarefaUnidade tu = tarefaUnidadeRepository.findByTarefaId(t.getId())
-                .orElseThrow(() -> new EntidadeNaoEncontradaException("TarefaUnidade não encontrada para Tarefa ID: " + id));
-
-        return TarefaMapper.toResponseDto(t, tu);
-    }
-
-    @Transactional
-    public TarefaResponseDto updateStatus(Integer id, String statusStr) {
-        Tarefa t = tarefaRepository.findById(id)
-                .orElseThrow(() -> new EntidadeNaoEncontradaException("Tarefa não encontrada com ID: " + id));
-
-        TarefaUnidade tu = tarefaUnidadeRepository.findByTarefaId(t.getId())
-                .orElseThrow(() -> new EntidadeNaoEncontradaException("TarefaUnidade não encontrada para Tarefa ID: " + id));
-
-        StatusKanban status = StatusKanban.fromString(statusStr);
-        if (status == null) {
-            throw new RequisicaoInvalidaException("Status inválido: " + statusStr);
-        }
-
-        tu.setStatusKanban(status);
-        tarefaUnidadeRepository.save(tu);
-
-        return TarefaMapper.toResponseDto(t, tu);
-    }
-
-    public Map<String, List<TarefaResponseDto>> getKanban() {
-        List<TarefaResponseDto> all = findAll();
-        return all.stream()
-                .collect(Collectors.groupingBy(TarefaResponseDto::getStatusKanban));
-    }
+//    public TarefaResponseDto findStatusByTarefaId(Integer id) {
+//        Tarefa t = tarefaRepository.findById(id)
+//                .orElseThrow(() -> new EntidadeNaoEncontradaException("Tarefa não encontrada com ID: " + id));
+//
+//        TarefaUnidade tu = tarefaUnidadeRepository.findByTarefaId(t.getId())
+//                .orElseThrow(() -> new EntidadeNaoEncontradaException("TarefaUnidade não encontrada para Tarefa ID: " + id));
+//
+//        return TarefaMapper.toResponseDto(t, tu);
+//    }
+//
+//    @Transactional
+//    public TarefaResponseDto updateStatus(Integer id, String statusStr) {
+//        Tarefa t = tarefaRepository.findById(id)
+//                .orElseThrow(() -> new EntidadeNaoEncontradaException("Tarefa não encontrada com ID: " + id));
+//
+//        TarefaUnidade tu = tarefaUnidadeRepository.findByTarefaId(t.getId())
+//                .orElseThrow(() -> new EntidadeNaoEncontradaException("TarefaUnidade não encontrada para Tarefa ID: " + id));
+//
+//        StatusKanban status = StatusKanban.fromString(statusStr);
+//        if (status == null) {
+//            throw new RequisicaoInvalidaException("Status inválido: " + statusStr);
+//        }
+//
+//        tu.setStatusKanban(status);
+//        tarefaUnidadeRepository.save(tu);
+//
+//        return TarefaMapper.toResponseDto(t, tu);
+//    }
+//
+//    public Map<String, List<TarefaResponseDto>> getKanban() {
+//        List<TarefaResponseDto> all = findAll();
+//        return all.stream()
+//                .collect(Collectors.groupingBy(TarefaResponseDto::getStatusKanban));
+//    }
 }

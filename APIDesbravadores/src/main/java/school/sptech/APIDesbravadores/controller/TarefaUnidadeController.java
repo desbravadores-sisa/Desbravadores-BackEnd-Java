@@ -28,26 +28,26 @@ public class TarefaUnidadeController {
         this.tarefaService = tarefaService;
     }
 
-    @GetMapping("/{idTarefa}")
-    @Operation(summary = "Visualizar status da tarefa", description = "Retorna o vínculo da tarefa com a unidade e seu status atual")
-    @ApiResponse(responseCode = "200", description = "Status retornado com sucesso")
-    @ApiResponse(responseCode = "404", description = "Tarefa ou vínculo com unidade não encontrado")
-    public ResponseEntity<TarefaResponseDto> findStatusByTarefaId(
-            @Parameter(description = "ID da tarefa", example = "1") @PathVariable Integer idTarefa) {
-        TarefaResponseDto response = tarefaService.findStatusByTarefaId(idTarefa);
-        return ResponseEntity.ok(response);
-    }
-
-    @PutMapping("/{idTarefa}/status")
-    @Operation(summary = "Mover status da tarefa", description = "Altera o status da tarefa no quadro Kanban")
-    @ApiResponse(responseCode = "200", description = "Status atualizado com sucesso")
-    @ApiResponse(responseCode = "400", description = "Status inválido ou não fornecido")
-    @ApiResponse(responseCode = "404", description = "Tarefa ou vínculo com unidade não encontrado")
-    @PreAuthorize("hasRole('CONSELHEIRO')")
-    public ResponseEntity<TarefaResponseDto> updateStatus(
-            @Parameter(description = "ID da tarefa", example = "1") @PathVariable Integer idTarefa,
-            @RequestBody @Valid TarefaStatusUpdateDto dto) {
-        TarefaResponseDto response = tarefaService.updateStatus(idTarefa, dto.getStatus());
-        return ResponseEntity.ok(response);
-    }
+//    @GetMapping("/{idTarefa}")
+//    @Operation(summary = "Visualizar status da tarefa", description = "Retorna o vínculo da tarefa com a unidade e seu status atual")
+//    @ApiResponse(responseCode = "200", description = "Status retornado com sucesso")
+//    @ApiResponse(responseCode = "404", description = "Tarefa ou vínculo com unidade não encontrado")
+//    public ResponseEntity<TarefaResponseDto> findStatusByTarefaId(
+//            @Parameter(description = "ID da tarefa", example = "1") @PathVariable Integer idTarefa) {
+//        TarefaResponseDto response = tarefaService.findStatusByTarefaId(idTarefa);
+//        return ResponseEntity.ok(response);
+//    }
+//
+//    @PutMapping("/{idTarefa}/status")
+//    @Operation(summary = "Mover status da tarefa", description = "Altera o status da tarefa no quadro Kanban")
+//    @ApiResponse(responseCode = "200", description = "Status atualizado com sucesso")
+//    @ApiResponse(responseCode = "400", description = "Status inválido ou não fornecido")
+//    @ApiResponse(responseCode = "404", description = "Tarefa ou vínculo com unidade não encontrado")
+//    @PreAuthorize("hasRole('CONSELHEIRO')")
+//    public ResponseEntity<TarefaResponseDto> updateStatus(
+//            @Parameter(description = "ID da tarefa", example = "1") @PathVariable Integer idTarefa,
+//            @RequestBody @Valid TarefaStatusUpdateDto dto) {
+//        TarefaResponseDto response = tarefaService.updateStatus(idTarefa, dto.getStatus());
+//        return ResponseEntity.ok(response);
+//    }
 }

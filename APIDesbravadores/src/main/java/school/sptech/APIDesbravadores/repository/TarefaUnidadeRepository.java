@@ -9,9 +9,5 @@ import java.util.Optional;
 
 @Repository
 public interface TarefaUnidadeRepository extends JpaRepository<TarefaUnidade, Integer> {
-    Optional<TarefaUnidade> findByTarefaId(Integer tarefaId);
 
-    Optional<TarefaUnidade> findByTarefaIdAndFkUnidade(Integer tarefaId, Integer fkUnidade);
-
-    void deleteByTarefaId(Integer tarefaId);
 }
