@@ -39,13 +39,13 @@ public class ConviteController {
 
     @GetMapping("/validar")
     public ResponseEntity<Boolean> validarConvite(Integer idConvite){
-        return ResponseEntity.ok(conviteService.validarConvite(idConvite));
+        return null; // ResponseEntity.ok(conviteService.validarConvite(idConvite));
     }
 
-    @PutMapping("/{id}")
-    @PreAuthorize("hasRole('DIRETOR')")
-    public ResponseEntity<ConviteResponseDto> atualizarConvite(@RequestBody @Valid ConviteUpdateDto updateDto, @PathVariable Integer idConvite){
-        return ResponseEntity.ok(ConviteMapper.toResponse(conviteService.atualizarConvite(updateDto,idConvite)));
+    @GetMapping("/teste/{token}")
+    public ResponseEntity<Void> teste(@PathVariable String token){
+        conviteService.validarConvite(token);
+        return ResponseEntity.ok().build();
     }
 
 }

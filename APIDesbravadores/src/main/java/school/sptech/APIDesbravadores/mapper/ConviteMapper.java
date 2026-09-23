@@ -14,7 +14,7 @@ public class ConviteMapper {
         dto.setId(convite.getId());
         dto.setEmail(convite.getEmail());
         dto.setDataExpiracao(convite.getDataExpiracao());
-        dto.setTipoConta(convite.getTipoConta());
+        //dto.setTipoConta(convite.getTipoConta());
         dto.setStatusConvite(convite.getStatusConvite());
         if (convite.getUnidade() != null){
             dto.setNomeUnidade(convite.getUnidade().getNome());
@@ -29,7 +29,7 @@ public class ConviteMapper {
         Convite convite = new Convite();
         convite.setEmail(requestDto.getEmail());
         convite.setStatusConvite("pendente");
-        convite.setTipoConta(requestDto.getTipoConta());
+        //convite.setTipoConta(requestDto.getTipoConta());
         convite.setDataExpiracao(requestDto.getDataExpiracao());
         return convite;
     }

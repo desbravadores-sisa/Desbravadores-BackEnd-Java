@@ -20,13 +20,11 @@ public class Convite {
     @Column(name = "id_convite")
     private Integer id;
 
+    @Column(name = "email")
     private String email;
 
-    @Column(length = 128, nullable = false, unique = true)
+    @Column(name = "token", length = 128, nullable = false, unique = true)
     private String token;
-
-    @Transient
-    private String tipoConta;
 
     @ManyToOne
     @JoinColumn(name = "id_perfil", nullable = false)
@@ -38,9 +36,8 @@ public class Convite {
     @Column(name = "data_criacao", insertable = false, updatable = false)
     private LocalDateTime dataCriacao;
 
-    @Convert(converter = LocalDateToLocalDateTimeConverter.class)
     @Column(name = "data_expiracao", nullable = false)
-    private LocalDate dataExpiracao;
+    private LocalDateTime dataExpiracao;
 
     @ManyToOne
     @JoinColumn(name = "id_clube", nullable = false)

@@ -13,6 +13,7 @@ import school.sptech.APIDesbravadores.domain.Clube;
 import school.sptech.APIDesbravadores.domain.Unidade;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -28,7 +29,7 @@ public class ConviteRequestDto {
 
     @NotNull
     @Future
-    private LocalDate dataExpiracao;
+    private LocalDateTime dataExpiracao;
 
     private Integer idUnidade;
 
