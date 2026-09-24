@@ -7,6 +7,7 @@ import school.sptech.APIDesbravadores.domain.Perfil;
 import school.sptech.APIDesbravadores.domain.Unidade;
 import school.sptech.APIDesbravadores.dto.ConviteCriacaoRequestDto;
 import school.sptech.APIDesbravadores.dto.ConviteRequestDto;
+import school.sptech.APIDesbravadores.dto.ConviteResponseDto;
 import school.sptech.APIDesbravadores.dto.ConviteUpdateDto;
 import school.sptech.APIDesbravadores.exception.*;
 import school.sptech.APIDesbravadores.mapper.ConviteMapper;
@@ -18,6 +19,7 @@ import school.sptech.APIDesbravadores.repository.UnidadeRepository;
 import java.security.SecureRandom;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Base64;
 
 import java.util.List;
@@ -76,14 +78,17 @@ public class ConviteService {
     }
 
 
-    public List<Convite> listarConvites(Integer idClube){
-        System.out.println("IdClube na Service:" + idClube);
-        if (!clubeRepository.existsById(idClube)){
-            throw  new ClubeNãoEncontradoException();
+    public List<ConviteResponseDto> listarConvites(Integer idClube, String statusConvite){
+        validacaoClube(idClube);
+        List<Convite> convites = new ArrayList<>();
+        if (statusConvite != null && !statusConvite.isBlank()){
+            convites = conviteRepository.findByClubeIdAndStatusConviteIgnoreCase(idClube,statusConvite);
+        } else {
+            convites = conviteRepository.findByClubeId(idClube);
         }
-        List<Convite> convites = conviteRepository.findByClubeId(idClube);
-        System.out.println(convites);
-        return convites;
+        return convites.stream()
+                .map(ConviteMapper::toResponse)
+                .toList();
     }
 
     public Convite criarConvite(ConviteCriacaoRequestDto request, Integer idClubeLogado){

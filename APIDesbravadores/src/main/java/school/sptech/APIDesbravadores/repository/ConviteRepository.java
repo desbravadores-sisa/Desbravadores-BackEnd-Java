@@ -15,4 +15,6 @@ public interface ConviteRepository extends JpaRepository<Convite, Integer> {
     Optional<Convite> findByToken(String token);
 
     Boolean existsByEmailAndStatusConvite(String email, String statusConvite);
+
+    List<Convite> findByClubeIdAndStatusConviteIgnoreCase (Integer idClube, String statusConvite);
 }

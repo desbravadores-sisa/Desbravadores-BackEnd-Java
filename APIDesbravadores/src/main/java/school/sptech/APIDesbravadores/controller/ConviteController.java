@@ -23,29 +23,20 @@ public class ConviteController {
     }
 
     @GetMapping("")
-    @PreAuthorize("hasRole('DIRETOR')")
-    public ResponseEntity<List<ConviteResponseDto>> listarUnidades(@AuthenticationPrincipal UsuarioDetalhesDto usuariologado){
+    @PreAuthorize("hasRole('DIRETORIA')")
+    public ResponseEntity<List<ConviteResponseDto>> listarUnidades(@AuthenticationPrincipal UsuarioDetalhesDto usuariologado, @RequestParam(required = false) String statusConvite){
         Integer idClube = usuariologado.getIdClube();
-        System.out.println("IdClube na Controller" + idClube);
-        return ResponseEntity.ok(conviteService.listarConvites(idClube).stream().map((item) -> ConviteMapper.toResponse(item)).toList());
+        List<ConviteResponseDto> response = conviteService.listarConvites(idClube,statusConvite);
+        return response.isEmpty() ? ResponseEntity.noContent().build() : ResponseEntity.ok(response);
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('DIRETOR')")
-    public ResponseEntity<ConviteResponseDto> criarConvite(@AuthenticationPrincipal UsuarioDetalhesDto usuariologado, @RequestBody @Valid ConviteRequestDto request){
+    @PreAuthorize("hasRole('DIRETORIA')")
+    public ResponseEntity<ConviteResponseDto> criarConvite(@AuthenticationPrincipal UsuarioDetalhesDto usuariologado, @RequestBody @Valid ConviteCriacaoRequestDto request){
         Integer idClube = usuariologado.getIdClube();
-        return ResponseEntity.status(201).body(ConviteMapper.toResponse(conviteService.criarConvite(request)));
+        return ResponseEntity.status(201).body(ConviteMapper.toResponse(conviteService.criarConvite(request,idClube)));
     }
 
-    @GetMapping("/validar")
-    public ResponseEntity<Boolean> validarConvite(Integer idConvite){
-        return null; // ResponseEntity.ok(conviteService.validarConvite(idConvite));
-    }
 
-    @GetMapping("/teste/{token}")
-    public ResponseEntity<Void> teste(@PathVariable String token){
-        conviteService.validarConvite(token);
-        return ResponseEntity.ok().build();
-    }
 
 }
