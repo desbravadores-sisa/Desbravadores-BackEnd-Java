@@ -12,12 +12,14 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import school.sptech.APIDesbravadores.dto.*;
 import school.sptech.APIDesbravadores.mapper.UsuarioMapper;
 import school.sptech.APIDesbravadores.service.UsuarioService;
 
 import java.time.Duration;
+import java.util.List;
 
 @Tag(name = "Usuários", description = "Endpoints para gerenciamento e cadastro de usuários")
 @RestController
@@ -103,14 +105,9 @@ public class UsuarioController {
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping("/painel-diretoria")
-    @PreAuthorize("hasRole('DIRETORIA')") // O Spring Security vai olhar a pulseira antes de rodar essa linha
-    public ResponseEntity<String> painelExclusivo() {
-        return ResponseEntity.ok("Sucesso! Você entrou no camarote dos Diretores.");
-    }
-
-    @GetMapping("/testes")
-    public ResponseEntity<String> testeIntegracao(){
-        return ResponseEntity.ok("Boa");
-    }
+   @GetMapping("")
+   @PreAuthorize("hasRole('DIRETORIA')")
+    public ResponseEntity<List<UsuarioResponseDto>> listarUsuarios(@AuthenticationPrincipal UsuarioDetalhesDto usuariologado){
+        return ResponseEntity.ok(UsuarioMapper.toResponse(usuarioService.listarUsuario(usuariologado.getIdClube())));
+   }
 }

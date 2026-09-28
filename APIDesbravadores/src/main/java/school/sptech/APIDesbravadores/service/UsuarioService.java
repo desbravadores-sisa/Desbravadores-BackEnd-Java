@@ -18,6 +18,7 @@ import school.sptech.APIDesbravadores.mapper.UsuarioMapper;
 import school.sptech.APIDesbravadores.repository.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 public class UsuarioService {
@@ -40,6 +41,15 @@ public class UsuarioService {
         this.perfilRepository = perfilRepository;
         this.unidadeRepository = unidadeRepository;
         this.conviteRepository = conviteRepository;
+    }
+
+    public List<Usuario> listarUsuario(Integer idClube){
+        if (idClube == null){
+            throw new RegraNegocioException("");
+        }
+        validacaoClube(idClube);
+        List<Usuario> usuarios =  usuarioRepository.findByClubeIdAndAtivo(idClube,true);
+        return usuarios;
     }
 
     public void validacaoClube(Integer idClube){

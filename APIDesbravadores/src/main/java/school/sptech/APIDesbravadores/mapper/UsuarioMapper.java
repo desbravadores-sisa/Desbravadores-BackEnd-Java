@@ -4,6 +4,9 @@ import school.sptech.APIDesbravadores.domain.Usuario;
 import school.sptech.APIDesbravadores.dto.UsuarioCriacaoDto;
 import school.sptech.APIDesbravadores.dto.UsuarioResponseDto;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class UsuarioMapper {
 
     public static Usuario toEntity(UsuarioCriacaoDto request){
@@ -34,6 +37,17 @@ public class UsuarioMapper {
         }
         if (usuario.getPerfil() != null) {
             dto.setNomePerfil(usuario.getPerfil().getNome());
+        }
+        return dto;
+    }
+
+    public static List<UsuarioResponseDto> toResponse(List<Usuario> usuarios){
+        if (usuarios == null){
+            return null;
+        }
+        List<UsuarioResponseDto> dto = new ArrayList<>();
+        for (Usuario usuario : usuarios) {
+            dto.add(toResponse(usuario));
         }
         return dto;
     }
