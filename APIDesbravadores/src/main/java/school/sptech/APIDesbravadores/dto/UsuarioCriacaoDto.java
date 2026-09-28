@@ -23,11 +23,8 @@ public class UsuarioCriacaoDto {
     @Size(max = 100)
     private String senha;
 
-    @NotNull
-    @Positive
-    private Integer idPerfil;
+    @NotBlank
+    @Size(max = 128)
+    private String token;
 
-    @NotNull
-    @Positive
-    private Integer idClube;
 }

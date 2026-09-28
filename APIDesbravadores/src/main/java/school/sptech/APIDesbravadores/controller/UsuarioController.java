@@ -1,5 +1,11 @@
 package school.sptech.APIDesbravadores.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpHeaders;
@@ -7,15 +13,13 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import school.sptech.APIDesbravadores.domain.Usuario;
-import school.sptech.APIDesbravadores.dto.UsuarioCriacaoDto;
-import school.sptech.APIDesbravadores.dto.UsuarioLoginDto;
-import school.sptech.APIDesbravadores.dto.UsuarioSessaoDto;
-import school.sptech.APIDesbravadores.dto.UsuarioTokenDto;
+import school.sptech.APIDesbravadores.dto.*;
+import school.sptech.APIDesbravadores.mapper.UsuarioMapper;
 import school.sptech.APIDesbravadores.service.UsuarioService;
 
 import java.time.Duration;
 
+@Tag(name = "Usuários", description = "Endpoints para gerenciamento e cadastro de usuários")
 @RestController
 @RequestMapping("/usuarios")
 public class UsuarioController {
@@ -26,11 +30,26 @@ public class UsuarioController {
         this.usuarioService = usuarioService;
     }
 
+    @Operation(summary = "Cadastrar usuário via Convite",
+            description = "Cria uma nova conta de usuário utilizando um token de convite válido. O e-mail deve corresponder ao do convite.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Usuário cadastrado com sucesso",
+                    content = @Content(schema = @Schema(implementation = UsuarioResponseDto.class))),
+            @ApiResponse(responseCode = "400", description = "Erro de validação nos campos (JSON inválido)",
+                    content = @Content),
+            @ApiResponse(responseCode = "404", description = "Token de convite não encontrado",
+                    content = @Content),
+            @ApiResponse(responseCode = "409", description = "Conflito: E-mail já cadastrado ou Convite já utilizado/revogado",
+                    content = @Content),
+            @ApiResponse(responseCode = "410", description = "Gone: O convite está expirado ou aceito", content = @Content),
+            @ApiResponse(responseCode = "422", description = "Regra de Negócio: Convite expirado ou e-mail divergente do convite",
+                    content = @Content)
+    })
     @PostMapping("/cadastro")
-    public ResponseEntity<Usuario> criarUsuario(@RequestBody @Valid UsuarioCriacaoDto request){
+    public ResponseEntity<UsuarioResponseDto> criarUsuario(@RequestBody @Valid UsuarioCriacaoDto request){
         System.out.println("[DEBUG] - Iniciando Cadastro da API, Arquivo UsuarioController Function: criarUsuario");
         System.out.println("[DEBUG] - Parametro recebido: \n" + request + "\n Arquivo UsuarioController Function: criarUsuario");
-        return ResponseEntity.status(201).body(usuarioService.cadastarUsuario(request));
+        return ResponseEntity.status(201).body(UsuarioMapper.toResponse(usuarioService.cadastrarUsuario(request)));
     }
 
     @PostMapping("/login")
@@ -85,8 +104,13 @@ public class UsuarioController {
     }
 
     @GetMapping("/painel-diretoria")
-    @PreAuthorize("hasRole('DIRETOR')") // O Spring Security vai olhar a pulseira antes de rodar essa linha
+    @PreAuthorize("hasRole('DIRETORIA')") // O Spring Security vai olhar a pulseira antes de rodar essa linha
     public ResponseEntity<String> painelExclusivo() {
         return ResponseEntity.ok("Sucesso! Você entrou no camarote dos Diretores.");
+    }
+
+    @GetMapping("/testes")
+    public ResponseEntity<String> testeIntegracao(){
+        return ResponseEntity.ok("Boa");
     }
 }

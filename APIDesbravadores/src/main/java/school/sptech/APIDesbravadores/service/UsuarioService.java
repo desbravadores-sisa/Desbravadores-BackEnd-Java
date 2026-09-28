@@ -8,21 +8,16 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import school.sptech.APIDesbravadores.config.GerenciadorTokenJwt;
-import school.sptech.APIDesbravadores.domain.Clube;
-import school.sptech.APIDesbravadores.domain.Perfil;
+import school.sptech.APIDesbravadores.domain.Convite;
 import school.sptech.APIDesbravadores.domain.Usuario;
 import school.sptech.APIDesbravadores.dto.UsuarioCriacaoDto;
 import school.sptech.APIDesbravadores.dto.UsuarioLoginDto;
 import school.sptech.APIDesbravadores.dto.UsuarioTokenDto;
-import school.sptech.APIDesbravadores.exception.ClubeNãoEncontradoException;
-import school.sptech.APIDesbravadores.exception.EmailJaCadastradoException;
-import school.sptech.APIDesbravadores.exception.PerfilNaoEncontradoException;
+import school.sptech.APIDesbravadores.exception.*;
 import school.sptech.APIDesbravadores.mapper.UsuarioMapper;
-import school.sptech.APIDesbravadores.repository.ClubeRepository;
-import school.sptech.APIDesbravadores.repository.PerfilRepository;
-import school.sptech.APIDesbravadores.repository.UsuarioRepository;
+import school.sptech.APIDesbravadores.repository.*;
 
-import java.util.Optional;
+import java.time.LocalDateTime;
 
 @Service
 public class UsuarioService {
@@ -33,28 +28,69 @@ public class UsuarioService {
     private final PasswordEncoder passwordEncoder;
     private final ClubeRepository clubeRepository;
     private final PerfilRepository perfilRepository;
+    private final UnidadeRepository unidadeRepository;
+    private final ConviteRepository conviteRepository;
 
-    public UsuarioService(UsuarioRepository usuarioRepository, GerenciadorTokenJwt gerenciadorTokenJwt, AuthenticationManager authenticationManager, PasswordEncoder passwordEncoder, ClubeRepository clubeRepository, PerfilRepository perfilRepository) {
+    public UsuarioService(UsuarioRepository usuarioRepository, GerenciadorTokenJwt gerenciadorTokenJwt, AuthenticationManager authenticationManager, PasswordEncoder passwordEncoder, ClubeRepository clubeRepository, PerfilRepository perfilRepository, UnidadeRepository unidadeRepository, ConviteRepository conviteRepository) {
         this.usuarioRepository = usuarioRepository;
         this.gerenciadorTokenJwt = gerenciadorTokenJwt;
         this.authenticationManager = authenticationManager;
         this.passwordEncoder = passwordEncoder;
         this.clubeRepository = clubeRepository;
         this.perfilRepository = perfilRepository;
+        this.unidadeRepository = unidadeRepository;
+        this.conviteRepository = conviteRepository;
     }
 
-    public Usuario cadastarUsuario(UsuarioCriacaoDto request){
-
-        // Validação Clube
-        System.out.println("[DEBUG] - Iniciando validações para cadastro de usuario. Arquivo: UsuarioService Função: cadastarUsuario()");
-        Optional<Clube> clube = clubeRepository.findById(request.getIdClube());
-        System.out.println("[DEBUG] - O clube existe:" + (clube.isEmpty()?"Não":"Sim"));
-        if (clube.isEmpty()){
-            System.out.println("[ERROR] - O clube não existe, lançando ClubeNãoEncontradoException() ");
+    public void validacaoClube(Integer idClube){
+        if (!clubeRepository.existsById(idClube)){
             throw new ClubeNãoEncontradoException();
         }
+    }
+
+    public void validacaoUnidade(Integer idUnidade){
+        if (!unidadeRepository.existsById(idUnidade)){
+            throw new UnidadeNãoEncontradaException();
+        }
+    }
+
+    public void validacaoPerfil(Integer idPerfil){
+        if (!perfilRepository.existsById(idPerfil)){
+            throw new PerfilNaoEncontradoException();
+        }
+    }
+
+    public Convite validarConvite(String token){
+        Convite convite = conviteRepository.findByToken(token).orElseThrow(ConviteNãoEncontradoException::new);
+        String status = convite.getStatusConvite();
+
+        validacaoClube(convite.getClube().getId());
+        if (!convite.getPerfil().getNome().equalsIgnoreCase("DIRETORIA")){
+            validacaoUnidade(convite.getUnidade().getId());
+        }
+
+        if (convite.getDataExpiracao().isBefore(LocalDateTime.now()) && status.equalsIgnoreCase("pendente")){
+            convite.setStatusConvite("EXPIRADO");
+            status = "EXPIRADO";
+            conviteRepository.save(convite);
+        }
+        if (status.equalsIgnoreCase("EXPIRADO")){
+            throw new ConviteExpiradoException("Este convite já consta como expirado no sistema.");
+        }
+        if (status.equalsIgnoreCase("REVOGADO") || status.equalsIgnoreCase("ACEITO")){
+            throw new ConviteConflitoEstadoException("Este convite já foi utilizado ou revogado pela diretoria.");
+        }
+
+        return convite;
+    }
+
+    public Usuario cadastrarUsuario(UsuarioCriacaoDto request){
+        Convite convite = validarConvite(request.getToken());
 
         // Validação E-mail
+        if (!convite.getEmail().equals(request.getEmail())){
+            throw new RegraNegocioException("O e-mail informado no cadastro não corresponde ao e-mail autorizado neste convite.");
+        }
         System.out.println("[DEBUG] - Validando duplicidade de Email, o email " + (usuarioRepository.findByEmail(request.getEmail()).isEmpty()?"não está duplicado":"está duplicado"));
         if (!usuarioRepository.findByEmail(request.getEmail()).isEmpty()){
             System.out.println("[ERROR] - O usuário está informou um e-mail duplicado, lançado EmailJaCadastradoException()");
@@ -62,21 +98,18 @@ public class UsuarioService {
         }
 
         // Validação Perfil
-        System.out.println("[DEBUG] - Validando o perfil de usuário, o Perfil " + (perfilRepository.findById(request.getIdPerfil()).isEmpty()?"não existe":"existe") );
-        Optional<Perfil> perfil = perfilRepository.findById(request.getIdPerfil());
-        if (perfil.isEmpty()){
-            System.out.println("[ERROR] - O perfil não foi encontrado, lançado PerfilNaoEncontradoException()");
-            throw new PerfilNaoEncontradoException();
-        }
-
+        validacaoPerfil(convite.getPerfil().getId());
 
         Usuario usuario = UsuarioMapper.toEntity(request);
         String senhaCriptografada = passwordEncoder.encode(request.getSenha());
         usuario.setSenha(senhaCriptografada);
-        usuario.setClube(clube.get());
-        usuario.setPerfil(perfil.get());
+        usuario.setClube(convite.getClube());
+        usuario.setPerfil(convite.getPerfil());
+        usuario.setUnidade(convite.getUnidade());
 
         usuarioRepository.save(usuario);
+        convite.setStatusConvite("ACEITO");
+        conviteRepository.save(convite);
         return usuario;
     }
 

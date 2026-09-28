@@ -53,7 +53,7 @@ class UsuarioControllerTest {
         usuario.setEmail("maria@email.com");
         usuario.setTipoConta("DIRETOR");
 
-        when(usuarioService.cadastarUsuario(any(UsuarioCriacaoDto.class))).thenReturn(usuario);
+        when(usuarioService.cadastrarUsuario(any(UsuarioCriacaoDto.class))).thenReturn(usuario);
 
         mockMvc.perform(post("/usuarios/cadastro")
                         .contentType(MediaType.APPLICATION_JSON)
