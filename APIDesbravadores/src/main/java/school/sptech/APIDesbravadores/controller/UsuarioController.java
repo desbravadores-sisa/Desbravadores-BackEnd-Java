@@ -75,7 +75,6 @@ public class UsuarioController {
                 .maxAge(Duration.ofHours(2)) // Cookie dura 2 horas
                 .build();
 
-        System.out.println(cookie);
 
         // Cola o Cookie no Cabeçalho da resposta
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
@@ -110,4 +109,11 @@ public class UsuarioController {
     public ResponseEntity<List<UsuarioResponseDto>> listarUsuarios(@AuthenticationPrincipal UsuarioDetalhesDto usuariologado){
         return ResponseEntity.ok(UsuarioMapper.toResponse(usuarioService.listarUsuario(usuariologado.getIdClube())));
    }
+
+    @DeleteMapping("")
+    @PreAuthorize("hasRole('DIRETORIA')")
+    public ResponseEntity<Void> inativarUsuario(@AuthenticationPrincipal UsuarioDetalhesDto usuariologado, @RequestParam Integer idUsuario){
+        usuarioService.inativarUsuario(usuariologado.getIdClube(),idUsuario,usuariologado.getIdUsuario());
+        return ResponseEntity.noContent().build();
+    }
 }

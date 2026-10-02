@@ -13,6 +13,8 @@ import java.util.List;
 @ToString
 public class UsuarioDetalhesDto implements UserDetails {
 
+    private final Integer idUsuario;
+
     private final String nome;
 
     private final String email;
@@ -26,15 +28,27 @@ public class UsuarioDetalhesDto implements UserDetails {
     private final Integer idUnidade;
 
 
+    public UsuarioDetalhesDto(Integer idUsuario, String nome, String email, String senha, String perfil, Integer idClube, Integer idUnidade) {
+        this.idUsuario = idUsuario;
+        this.nome = nome;
+        this.email = email;
+        this.senha = senha;
+        this.perfil = perfil;
+        this.idClube = idClube;
+        this.idUnidade = idUnidade;
+    }
+
     public UsuarioDetalhesDto(Usuario usuario) {
+        this.idUsuario = usuario.getId();
         this.nome = usuario.getNome();
         this.email = usuario.getEmail();
         this.senha = usuario.getSenha();
         this.perfil = usuario.getPerfil().getNome();
         this.idClube = usuario.getClube().getId();
-        this.idUnidade = usuario.getUnidade() == null ? null : usuario.getUnidade().getId() ;
+        this.idUnidade = usuario.getUnidade() != null ? usuario.getUnidade().getId() : null;
     }
 
+    public Integer getIdUsuario() {return idUsuario;}
 
     public Integer getIdClube() {
         return idClube;

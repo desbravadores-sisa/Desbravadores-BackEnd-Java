@@ -130,6 +130,14 @@ public class ConviteService {
         return convite;
     }
 
+    public void excluirConvite(Integer idClube, Integer idConvite){
+        validacaoClube(idClube);
+        Convite convite = conviteRepository.findById(idConvite).orElseThrow(ConviteNãoEncontradoException::new);
+        if (!idClube.equals(convite.getClube().getId())){
+            throw new AcessoNegadoException("Ação não permitida: O convite informado pertence a outro clube.");
+        }
+        conviteRepository.delete(convite);
+    }
 
     private String gerarTokenBase64() {
         byte[] bytes = new byte[48];

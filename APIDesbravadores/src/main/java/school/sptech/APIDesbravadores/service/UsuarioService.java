@@ -1,5 +1,6 @@
 package school.sptech.APIDesbravadores.service;
 
+import jakarta.persistence.criteria.CriteriaBuilder;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -19,6 +20,7 @@ import school.sptech.APIDesbravadores.repository.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class UsuarioService {
@@ -101,16 +103,28 @@ public class UsuarioService {
         if (!convite.getEmail().equals(request.getEmail())){
             throw new RegraNegocioException("O e-mail informado no cadastro não corresponde ao e-mail autorizado neste convite.");
         }
-        System.out.println("[DEBUG] - Validando duplicidade de Email, o email " + (usuarioRepository.findByEmail(request.getEmail()).isEmpty()?"não está duplicado":"está duplicado"));
-        if (!usuarioRepository.findByEmail(request.getEmail()).isEmpty()){
-            System.out.println("[ERROR] - O usuário está informou um e-mail duplicado, lançado EmailJaCadastradoException()");
-            throw new EmailJaCadastradoException();
-        }
-
         // Validação Perfil
         validacaoPerfil(convite.getPerfil().getId());
 
-        Usuario usuario = UsuarioMapper.toEntity(request);
+        Optional<Usuario> usuarioInativo = usuarioRepository.findByEmail(request.getEmail());
+        Usuario usuario;
+        if (usuarioInativo.isPresent()){
+            usuario  = usuarioInativo.get();
+
+            if (usuario.getAtivo()){
+                throw new EmailJaCadastradoException();
+            }
+
+            if (!usuario.getClube().getId().equals(convite.getClube().getId())){
+                throw new RegraNegocioException("Há um usuário ativo com o e-mail em outra unidade");
+            }
+
+            usuario.setAtivo(true);
+            usuario.setNome(request.getNome());
+        } else {
+            usuario = UsuarioMapper.toEntity(request);
+        }
+
         String senhaCriptografada = passwordEncoder.encode(request.getSenha());
         usuario.setSenha(senhaCriptografada);
         usuario.setClube(convite.getClube());
@@ -138,5 +152,32 @@ public class UsuarioService {
                 usuarioAutenticado.getPerfil().getNome(),
                 token
         );
+    }
+
+    public void inativarUsuario(Integer idClube, Integer idUsuario, Integer idUsuarioLogado){
+
+        if (idUsuario.equals(idUsuarioLogado)){
+            throw new AcessoNegadoException("O usuário não pode inativar do sistema");
+        }
+        validacaoClube(idClube);
+        Usuario usuarioLogado = usuarioRepository.findById(idUsuarioLogado).orElseThrow(() -> new UsuarioNaoEncontradoException());
+        Usuario usuarioExclusao = usuarioRepository.findById(idUsuario).orElseThrow(() -> new UsuarioNaoEncontradoException());
+        if (!usuarioLogado.getClube().getId().equals(idClube)){
+            throw new AcessoNegadoException("O usuário não tem acesso, para inativar usuários desse clube");
+        }
+
+        if (!usuarioExclusao.getClube().getId().equals(idClube)) {
+            throw new AcessoNegadoException("O usuário a ser inativado não pertence a este clube.");
+        }
+
+        if (usuarioExclusao.getPerfil().getNome().equalsIgnoreCase("DIRETORIA")){
+            List<Usuario> usuarioAtivos = usuarioRepository.findByClubeIdAndAtivoAndPerfilNome(idClube,true,"DIRETORIA");
+            if (usuarioAtivos.size() < 2){
+                throw new RegraNegocioException("Não é possível inativar o último usuário com cargo de diretoria neste clube.");
+            }
+        }
+
+        usuarioExclusao.setAtivo(false);
+        usuarioRepository.save(usuarioExclusao);
     }
 }

@@ -15,4 +15,6 @@ public interface UsuarioRepository extends JpaRepository<Usuario,Integer> {
     List<Usuario> findByUnidadeId(Integer id);
 
     List<Usuario> findByClubeIdAndAtivo(Integer id, Boolean ativo);
+
+    List<Usuario> findByClubeIdAndAtivoAndPerfilNome(Integer id, Boolean ativo, String nomePerfil);
 }
