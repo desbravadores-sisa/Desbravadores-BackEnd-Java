@@ -180,4 +180,9 @@ public class UsuarioService {
         usuarioExclusao.setAtivo(false);
         usuarioRepository.save(usuarioExclusao);
     }
+
+    public Usuario buscarDadosUsuario(Integer idUsuario){
+        Usuario usuario = usuarioRepository.findById(idUsuario).orElseThrow(UsuarioNaoEncontradoException::new);
+        return usuario;
+    }
 }

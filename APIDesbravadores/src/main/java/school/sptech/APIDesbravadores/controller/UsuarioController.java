@@ -116,4 +116,9 @@ public class UsuarioController {
         usuarioService.inativarUsuario(usuariologado.getIdClube(),idUsuario,usuariologado.getIdUsuario());
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/buscarUsuario")
+    public ResponseEntity<UsuarioSessaoDto> buscarUsuario(@AuthenticationPrincipal UsuarioDetalhesDto usuariologado){
+        return ResponseEntity.ok(UsuarioMapper.toSession(usuarioService.buscarDadosUsuario(usuariologado.getIdUsuario())));
+    }
 }

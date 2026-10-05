@@ -3,6 +3,7 @@ package school.sptech.APIDesbravadores.mapper;
 import school.sptech.APIDesbravadores.domain.Usuario;
 import school.sptech.APIDesbravadores.dto.UsuarioCriacaoDto;
 import school.sptech.APIDesbravadores.dto.UsuarioResponseDto;
+import school.sptech.APIDesbravadores.dto.UsuarioSessaoDto;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -49,6 +50,14 @@ public class UsuarioMapper {
         for (Usuario usuario : usuarios) {
             dto.add(toResponse(usuario));
         }
+        return dto;
+    }
+
+    public static UsuarioSessaoDto toSession(Usuario usuario){
+        if (usuario == null){
+            return null;
+        }
+        UsuarioSessaoDto dto = new UsuarioSessaoDto(usuario.getId(), usuario.getNome(), usuario.getEmail(), usuario.getPerfil().getNome());
         return dto;
     }
 }
