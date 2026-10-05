@@ -11,9 +11,7 @@ import org.springframework.web.server.ResponseStatusException;
 import school.sptech.APIDesbravadores.config.GerenciadorTokenJwt;
 import school.sptech.APIDesbravadores.domain.Convite;
 import school.sptech.APIDesbravadores.domain.Usuario;
-import school.sptech.APIDesbravadores.dto.UsuarioCriacaoDto;
-import school.sptech.APIDesbravadores.dto.UsuarioLoginDto;
-import school.sptech.APIDesbravadores.dto.UsuarioTokenDto;
+import school.sptech.APIDesbravadores.dto.*;
 import school.sptech.APIDesbravadores.exception.*;
 import school.sptech.APIDesbravadores.mapper.UsuarioMapper;
 import school.sptech.APIDesbravadores.repository.*;
@@ -193,9 +191,12 @@ public class UsuarioService {
         return usuario;
     }
 
-    public Usuario alterarSenhaUsuario(Integer idUsuario,String senha){
+    public Usuario alterarSenhaUsuario(Integer idUsuario, UsuarioAlteracaoSenhaDto dto){
         Usuario usuario = usuarioRepository.findById(idUsuario).orElseThrow(UsuarioNaoEncontradoException::new);
-        String senhaCriptografada = passwordEncoder.encode(senha);
+        if (passwordEncoder.encode(dto.getSenhaAtual()).equals(usuario.getSenha())){
+            throw new RegraNegocioException("A senha atual");
+        }
+        String senhaCriptografada = passwordEncoder.encode(dto.getSenhaNova());
         usuario.setSenha(senhaCriptografada);
         usuarioRepository.save(usuario);
         return usuario;

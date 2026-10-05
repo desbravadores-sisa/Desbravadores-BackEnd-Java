@@ -129,6 +129,6 @@ public class UsuarioController {
 
     @PatchMapping("/senha")
     public ResponseEntity<UsuarioSessaoDto> alterarSenhaUsuario(@AuthenticationPrincipal UsuarioDetalhesDto usuarioLogado, @RequestBody @Valid UsuarioAlteracaoSenhaDto senhaDto){
-        return ResponseEntity.ok(UsuarioMapper.toSession(usuarioService.alterarSenhaUsuario(usuarioLogado.getIdUsuario(),senhaDto.getSenha())));
+        return ResponseEntity.ok(UsuarioMapper.toSession(usuarioService.alterarSenhaUsuario(usuarioLogado.getIdUsuario(),senhaDto)));
     }
 }

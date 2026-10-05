@@ -13,5 +13,9 @@ public class UsuarioAlteracaoSenhaDto {
 
     @NotBlank
     @Size(max = 50)
-    private String senha;
+    private String senhaAtual;
+
+    @NotBlank
+    @Size(max = 50)
+    private String senhaNova;
 }
