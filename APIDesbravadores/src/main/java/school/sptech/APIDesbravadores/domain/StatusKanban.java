@@ -17,6 +17,9 @@ public enum StatusKanban {
     }
 
     public static StatusKanban fromString(String text) {
+        if (text == null) return null;
+        text = java.text.Normalizer.normalize(text, java.text.Normalizer.Form.NFD)
+                .replaceAll("\\p{M}", "").replace('_', ' ');
         for (StatusKanban b : StatusKanban.values()) {
                 if (b.descricao.equalsIgnoreCase(text)
                     || b.name().replace('_', ' ').equalsIgnoreCase(text)

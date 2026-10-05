@@ -24,11 +24,13 @@ public class UnidadeService {
     private final UnidadeRepository unidadeRepository;
     private final ClubeRepository clubeRepository;
     private final UsuarioRepository usuarioRepository;
+    private final school.sptech.APIDesbravadores.repository.TarefaUnidadeRepository tarefasUnidades;
 
-    public UnidadeService(UnidadeRepository unidadeRepository, ClubeRepository clubeRepository, UsuarioRepository usuarioRepository) {
+    public UnidadeService(UnidadeRepository unidadeRepository, ClubeRepository clubeRepository, UsuarioRepository usuarioRepository, school.sptech.APIDesbravadores.repository.TarefaUnidadeRepository tarefasUnidades) {
         this.unidadeRepository = unidadeRepository;
         this.clubeRepository = clubeRepository;
         this.usuarioRepository = usuarioRepository;
+        this.tarefasUnidades = tarefasUnidades;
     }
 
     public List<UnidadeResponseDto> listaUnidade(Integer idClube){
@@ -42,7 +44,7 @@ public class UnidadeService {
             throw new UnidadeNãoEncontradaException();
         }
 
-        return UnidadeMapper.toResponse(unidades);
+        return unidades.stream().map(this::resumo).toList();
     }
 
     public UnidadeResponseDto buscarUnidadePorId(Integer id){
@@ -51,7 +53,19 @@ public class UnidadeService {
         }
         Optional<Unidade> unidade = unidadeRepository.findById(id);
         System.out.println(unidade.get());
-        return UnidadeMapper.toResponse(unidade.get());
+        return resumo(unidade.get());
+    }
+
+    private UnidadeResponseDto resumo(Unidade unidade) {
+        var dto = UnidadeMapper.toResponse(unidade);
+        dto.setPontuacao(tarefasUnidades.pontuacaoUnidade(unidade.getId()));
+        var tarefas = tarefasUnidades.findAllByUnidadeIdAndCicloAtivoTrue(unidade.getId());
+        dto.setTotalTarefas(tarefas.size());
+        dto.setTarefasConcluidas((int) tarefas.stream().filter(t -> t.getStatusKanban() == school.sptech.APIDesbravadores.domain.StatusKanban.CONCLUIDO).count());
+        dto.setNomeConselheiro(usuarioRepository.findByUnidadeId(unidade.getId()).stream()
+                .filter(u -> Boolean.TRUE.equals(u.getAtivo()) && u.getPerfil() != null && "CONSELHEIRO".equalsIgnoreCase(u.getPerfil().getNome()))
+                .map(Usuario::getNome).collect(java.util.stream.Collectors.joining(", ")));
+        return dto;
     }
 
     public UnidadeResponseDto cadastrarUnidade(UnidadeCriacaoDto request, Integer idClube){

@@ -44,14 +44,14 @@ class UsuarioControllerTest {
         request.setNome("Maria");
         request.setEmail("maria@email.com");
         request.setSenha("senha123");
-        request.setTipoConta("DIRETOR");
-        request.setIdClube(1);
+        request.setToken("convite-token");
+
 
         Usuario usuario = new Usuario();
         usuario.setId(1);
         usuario.setNome("Maria");
         usuario.setEmail("maria@email.com");
-        usuario.setTipoConta("DIRETOR");
+        var perfil = new school.sptech.APIDesbravadores.domain.Perfil(); perfil.setNome("DIRETOR"); usuario.setPerfil(perfil);
 
         when(usuarioService.cadastrarUsuario(any(UsuarioCriacaoDto.class))).thenReturn(usuario);
 
@@ -93,9 +93,13 @@ class UsuarioControllerTest {
     }
 
     @Test
-    void painelDiretoriaDeveRetornarMensagemQuandoUsuarioForDiretor() throws Exception {
-        mockMvc.perform(get("/usuarios/painel-diretoria").with(user("diretor").roles("DIRETOR")))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$").value("Sucesso! Você entrou no camarote dos Diretores."));
+    void buscarUsuarioDeveRetornarSessaoSemToken() throws Exception {
+        var principal = new school.sptech.APIDesbravadores.dto.UsuarioDetalhesDto(1, "Maria", "maria@email.com", "senha", "DIRETORIA", 1, null);
+        org.springframework.security.core.context.SecurityContextHolder.getContext().setAuthentication(
+                new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities()));
+        try { mockMvc.perform(get("/usuarios/buscarUsuario"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.nome").value("Maria"))
+                .andExpect(jsonPath("$.token").doesNotExist());
+        } finally { org.springframework.security.core.context.SecurityContextHolder.clearContext(); }
     }
 }

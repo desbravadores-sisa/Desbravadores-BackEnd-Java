@@ -4,6 +4,19 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDateTime;
 
 public class TarefaResponseDto {
+    @lombok.Getter @lombok.Setter private Integer idTarefaUnidade;
+    @lombok.Getter @lombok.Setter private String nomeUnidade;
+    @lombok.Getter @lombok.Setter private String tipoTarefa;
+    @lombok.Getter @lombok.Setter private Integer idCaderno;
+    @lombok.Getter @lombok.Setter private String nomeCaderno;
+    @lombok.Getter @lombok.Setter private Integer idCiclo;
+    @lombok.Getter @lombok.Setter private String instrucoesEvidencia;
+    @lombok.Getter @lombok.Setter private java.time.LocalDate dataInicio;
+    @lombok.Getter @lombok.Setter private java.util.List<Integer> unidadeIds;
+    @lombok.Getter @lombok.Setter private Integer totalUnidades;
+    @lombok.Getter @lombok.Setter private Long entregas;
+    @lombok.Getter @lombok.Setter private Integer pontuacaoConcedida;
+    @lombok.Getter @lombok.Setter private String comentarioFeedback;
 
     @Schema(description = "ID da tarefa", example = "1")
     private Integer id;

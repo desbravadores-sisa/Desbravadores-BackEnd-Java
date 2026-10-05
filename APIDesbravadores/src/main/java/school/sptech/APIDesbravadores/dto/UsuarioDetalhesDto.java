@@ -26,6 +26,7 @@ public class UsuarioDetalhesDto implements UserDetails {
     private final Integer idClube;
 
     private final Integer idUnidade;
+    private final boolean ativo;
 
 
     public UsuarioDetalhesDto(Integer idUsuario, String nome, String email, String senha, String perfil, Integer idClube, Integer idUnidade) {
@@ -36,6 +37,7 @@ public class UsuarioDetalhesDto implements UserDetails {
         this.perfil = perfil;
         this.idClube = idClube;
         this.idUnidade = idUnidade;
+        this.ativo = true;
     }
 
     public UsuarioDetalhesDto(Usuario usuario) {
@@ -46,6 +48,7 @@ public class UsuarioDetalhesDto implements UserDetails {
         this.perfil = usuario.getPerfil().getNome();
         this.idClube = usuario.getClube().getId();
         this.idUnidade = usuario.getUnidade() != null ? usuario.getUnidade().getId() : null;
+        this.ativo = Boolean.TRUE.equals(usuario.getAtivo());
     }
 
     public Integer getIdUsuario() {return idUsuario;}
@@ -80,7 +83,7 @@ public class UsuarioDetalhesDto implements UserDetails {
     public boolean isCredentialsNonExpired() {return true;}
 
     @Override
-    public boolean isEnabled() {return true;}
+    public boolean isEnabled() {return ativo;}
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

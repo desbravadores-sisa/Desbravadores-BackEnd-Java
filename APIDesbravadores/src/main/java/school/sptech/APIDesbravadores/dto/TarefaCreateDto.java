@@ -1,81 +1,23 @@
 package school.sptech.APIDesbravadores.dto;
-
-import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import java.time.LocalDateTime;
-
+import jakarta.validation.constraints.*;
+import lombok.Getter;
+import lombok.Setter;
+import java.time.*;
+import java.util.List;
+@Getter @Setter
 public class TarefaCreateDto {
-
-    @NotNull
-    @Schema(description = "ID do Clube", example = "1")
+    @Pattern(regexp = "[0-9a-fA-F-]{36}") private String requestId;
     private Integer fkClube;
-
-    @NotNull
-    @Schema(description = "ID da Unidade", example = "2")
     private Integer fkUnidade;
-
-    @NotBlank
-    @Schema(description = "Nome da tarefa", example = "Comprar materiais")
-    private String nome;
-
-    @Schema(description = "Descrição da tarefa", example = "Comprar materiais para o acampamento")
+    private List<@NotNull Integer> unidadeIds;
+    private Boolean todasUnidades = false;
+    private Integer idCiclo;
+    private Integer idCaderno;
+    private String tipoTarefa = "GERAL";
+    @NotBlank @Size(max = 150) private String nome;
     private String descricao;
-
-    @Schema(description = "Pontuação da tarefa", example = "10")
-    private Integer pontuacao;
-
-    @Schema(description = "Prazo de entrega da tarefa", example = "2026-04-10T23:59:59")
+    private String instrucoesEvidencia;
+    @PositiveOrZero private Integer pontuacao;
+    private LocalDate dataInicio;
     private LocalDateTime prazoEntrega;
-
-    public TarefaCreateDto() {
-    }
-
-    public Integer getFkClube() {
-        return fkClube;
-    }
-
-    public void setFkClube(Integer fkClube) {
-        this.fkClube = fkClube;
-    }
-
-    public Integer getFkUnidade() {
-        return fkUnidade;
-    }
-
-    public void setFkUnidade(Integer fkUnidade) {
-        this.fkUnidade = fkUnidade;
-    }
-
-    public String getNome() {
-        return nome;
-    }
-
-    public void setNome(String nome) {
-        this.nome = nome;
-    }
-
-    public String getDescricao() {
-        return descricao;
-    }
-
-    public void setDescricao(String descricao) {
-        this.descricao = descricao;
-    }
-
-    public Integer getPontuacao() {
-        return pontuacao;
-    }
-
-    public void setPontuacao(Integer pontuacao) {
-        this.pontuacao = pontuacao;
-    }
-
-    public LocalDateTime getPrazoEntrega() {
-        return prazoEntrega;
-    }
-
-    public void setPrazoEntrega(LocalDateTime prazoEntrega) {
-        this.prazoEntrega = prazoEntrega;
-    }
 }

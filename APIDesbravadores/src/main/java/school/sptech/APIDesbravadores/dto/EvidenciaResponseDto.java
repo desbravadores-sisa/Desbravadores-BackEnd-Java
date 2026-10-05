@@ -5,6 +5,13 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDateTime;
 
 public class EvidenciaResponseDto {
+    @lombok.Getter @lombok.Setter private String nomeTarefa;
+    @lombok.Getter @lombok.Setter private String nomeUnidade;
+    @lombok.Getter @lombok.Setter private Integer pontuacao;
+    @lombok.Getter @lombok.Setter private Integer pontuacaoConcedida;
+    @lombok.Getter @lombok.Setter private String comentarioFeedback;
+    @lombok.Getter @lombok.Setter private Integer revisorId;
+    @lombok.Getter @lombok.Setter private java.time.LocalDateTime dataAnalise;
 
     @Schema(description = "ID da evidência", example = "1")
     private Integer id;

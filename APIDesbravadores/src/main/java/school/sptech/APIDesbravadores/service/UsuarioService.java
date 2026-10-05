@@ -77,7 +77,7 @@ public class UsuarioService {
         String status = convite.getStatusConvite();
 
         validacaoClube(convite.getClube().getId());
-        if (!convite.getPerfil().getNome().equalsIgnoreCase("DIRETORIA")){
+        if (convite.getPerfil().getNome().equalsIgnoreCase("CONSELHEIRO")){
             validacaoUnidade(convite.getUnidade().getId());
         }
 

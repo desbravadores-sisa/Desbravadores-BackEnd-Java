@@ -45,6 +45,7 @@ public class UnidadeMapper {
         }
         Unidade unidade = new Unidade();
         unidade.setNome(request.getNome());
+        unidade.setIdadeMinima(request.getIdadeMinima());
        // unidade.setPontuacao(0);
         unidade.setClube(clube);
         return unidade;

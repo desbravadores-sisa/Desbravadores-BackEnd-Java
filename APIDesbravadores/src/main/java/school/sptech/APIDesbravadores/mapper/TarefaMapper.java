@@ -32,7 +32,14 @@ public class TarefaMapper {
         if (entity == null) return null;
         TarefaResponseDto dto = new TarefaResponseDto();
         dto.setId(entity.getId());
-       // dto.setFkClube(entity.getFkClube());
+        dto.setFkClube(entity.getClube().getId());
+        dto.setTipoTarefa(entity.getTipoTarefa());
+        dto.setInstrucoesEvidencia(entity.getInstrucoesEvidencia());
+        dto.setDataInicio(entity.getDataInicio());
+        if (entity.getCaderno() != null) {
+            dto.setIdCaderno(entity.getCaderno().getId());
+            dto.setNomeCaderno(entity.getCaderno().getNome());
+        }
         dto.setNome(entity.getNome());
         dto.setDescricao(entity.getDescricao());
         dto.setPontuacao(entity.getPontuacao());
@@ -40,7 +47,11 @@ public class TarefaMapper {
         //dto.setDataCriacao(entity.getDataCriacao());
 
         if (tu != null) {
-            //dto.setFkUnidade(tu.getFkUnidade());
+            dto.setIdTarefaUnidade(tu.getId());
+            dto.setFkUnidade(tu.getUnidade().getId());
+            dto.setNomeUnidade(tu.getUnidade().getNome());
+            dto.setIdCiclo(tu.getCiclo().getId());
+            dto.setPontuacaoConcedida(tu.getPontuacaoConcedida());
             if (tu.getStatusKanban() != null) {
                 dto.setStatusKanban(tu.getStatusKanban().getDescricao());
             }

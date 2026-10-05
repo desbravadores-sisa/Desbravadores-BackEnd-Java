@@ -33,8 +33,16 @@ public class Tarefa {
 
     @Column(name = "titulo", length = 150, nullable = false)
     private String nome;
+    @Column(name = "request_id", length = 36, unique = true)
+    private String requestId;
 
     private String descricao;
+
+    @Column(name = "instrucoes_evidencia", columnDefinition = "TEXT")
+    private String instrucoesEvidencia;
+
+    @Column(name = "data_inicio")
+    private java.time.LocalDate dataInicio;
 
     @Column(name = "tipo_tarefa", length = 20, nullable = false)
     private String tipoTarefa;

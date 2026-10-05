@@ -79,7 +79,7 @@ public class AutenticacaoFilter extends OncePerRequestFilter {
     private void registrarAutenticacaoNoContexto(HttpServletRequest request, String username, String jwtToken) {
         UserDetails userDetails = autenticacaoService.loadUserByUsername(username);
 
-        if (jwtTokenManager.validateToken(jwtToken, userDetails)) {
+        if (userDetails.isEnabled() && jwtTokenManager.validateToken(jwtToken, userDetails)) {
 
             UsernamePasswordAuthenticationToken autenticacao = new UsernamePasswordAuthenticationToken(
                     userDetails, null, userDetails.getAuthorities());

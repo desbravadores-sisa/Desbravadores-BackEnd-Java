@@ -45,4 +45,11 @@ public class TarefaUnidade {
     @Column(name = "data_conclusao")
     private java.time.LocalDateTime dataConclusao;
 
+    @Column(name = "pontuacao_concedida")
+    private Integer pontuacaoConcedida;
+
+    @ManyToOne
+    @JoinColumn(name = "id_revisor")
+    private Usuario revisor;
+
 }

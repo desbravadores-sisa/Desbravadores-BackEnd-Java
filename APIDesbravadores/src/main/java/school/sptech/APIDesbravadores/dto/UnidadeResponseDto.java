@@ -8,6 +8,9 @@ import lombok.ToString;
 @Setter
 @ToString
 public class UnidadeResponseDto {
+    private String nomeConselheiro;
+    private Integer tarefasConcluidas;
+    private Integer totalTarefas;
 
     private Integer id;
 

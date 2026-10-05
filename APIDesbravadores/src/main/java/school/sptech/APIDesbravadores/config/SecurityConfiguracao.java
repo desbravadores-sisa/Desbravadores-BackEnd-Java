@@ -57,8 +57,6 @@ public class SecurityConfiguracao {
                 .csrf(CsrfConfigurer<HttpSecurity>::disable)
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/tarefas/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/tarefas-unidades/**").permitAll()
                         .requestMatchers(URLS_PERMITIDAS).permitAll()
                         .anyRequest().authenticated()
                 )

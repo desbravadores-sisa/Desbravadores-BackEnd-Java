@@ -30,13 +30,20 @@ public class EvidenciaMapper {
         dto.setNome(evidencia.getNome());
         dto.setUrlAnexo(evidencia.getUrlAnexo());
         dto.setDataUpload(evidencia.getDataUpload());
+        dto.setComentarioFeedback(evidencia.getComentarioFeedback());
+        dto.setDataAnalise(evidencia.getDataAnalise());
+        dto.setRevisorId(evidencia.getRevisor() == null ? null : evidencia.getRevisor().getId());
 
         TarefaUnidade tarefaUnidade = evidencia.getTarefaUnidade();
         if (tarefaUnidade != null) {
             dto.setIdTarefaUnidade(tarefaUnidade.getId());
-            //dto.setIdUnidade(tarefaUnidade.getFkUnidade());
+            dto.setIdUnidade(tarefaUnidade.getUnidade().getId());
+            dto.setNomeUnidade(tarefaUnidade.getUnidade().getNome());
+            dto.setPontuacaoConcedida(tarefaUnidade.getPontuacaoConcedida());
             if (tarefaUnidade.getTarefa() != null) {
                 dto.setIdTarefa(tarefaUnidade.getTarefa().getId());
+                dto.setNomeTarefa(tarefaUnidade.getTarefa().getNome());
+                dto.setPontuacao(tarefaUnidade.getTarefa().getPontuacao());
             }
             if (tarefaUnidade.getStatusKanban() != null) {
                 dto.setStatusKanban(tarefaUnidade.getStatusKanban().getDescricao());

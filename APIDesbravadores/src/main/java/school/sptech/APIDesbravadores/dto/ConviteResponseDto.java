@@ -13,6 +13,7 @@ import java.time.LocalDateTime;
 @Setter
 @ToString
 public class ConviteResponseDto {
+    private String link;
 
     private Integer id;
 

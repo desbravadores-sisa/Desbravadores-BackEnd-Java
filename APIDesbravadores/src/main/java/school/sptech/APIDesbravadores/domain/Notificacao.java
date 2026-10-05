@@ -37,8 +37,14 @@ public class Notificacao {
     @Column(nullable = false, length = 150)
     private String titulo;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String mensagem;
+
+    @Column(length = 45)
+    private String tipo;
+
+    @Column(name = "url_destino", length = 500)
+    private String urlDestino;
 
     @Column(name = "tipo_referencia", length = 45)
     private String tipoReferencia;
@@ -49,6 +55,6 @@ public class Notificacao {
     @Column(nullable = false)
     private Boolean lida = false;
 
-    @Column(name = "data_criacao", insertable = false, updatable = false)
-    private LocalDateTime dataCriacao;
+    @Column(name = "data_criacao", updatable = false)
+    private LocalDateTime dataCriacao = LocalDateTime.now();
 }

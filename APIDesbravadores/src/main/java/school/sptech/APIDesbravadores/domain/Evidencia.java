@@ -26,7 +26,7 @@ public class Evidencia {
     @Column(name = "id_evidencia")
     private Integer id;
 
-    @ManyToOne
+    @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
     @JoinColumn(name = "id_tarefa_unidade")
     private TarefaUnidade tarefaUnidade;
 
@@ -36,8 +36,15 @@ public class Evidencia {
     @Column(name = "url_s3", length = 500, nullable = false)
     private String urlAnexo;
 
-    @Column(name = "comentario_feedback")
+    @Column(name = "comentario_feedback", columnDefinition = "TEXT")
     private String comentarioFeedback;
+
+    @ManyToOne
+    @JoinColumn(name = "id_revisor")
+    private Usuario revisor;
+
+    @Column(name = "data_analise")
+    private LocalDateTime dataAnalise;
 
     @Column(name = "data_envio", insertable = false, updatable = false)
     private LocalDateTime dataUpload;

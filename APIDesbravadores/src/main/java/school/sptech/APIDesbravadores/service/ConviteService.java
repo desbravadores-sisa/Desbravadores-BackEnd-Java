@@ -32,13 +32,17 @@ public class ConviteService {
     private final ClubeRepository clubeRepository;
     private final UnidadeRepository unidadeRepository;
     private final PerfilRepository perfilRepository;
+    private final EmailService emailService;
+    private final AcessoService acesso;
     private final SecureRandom secureRandom = new SecureRandom();
 
-    public ConviteService(ConviteRepository conviteRepository, ClubeRepository clubeRepository, UnidadeRepository unidadeRepository, PerfilRepository perfilRepository) {
+    public ConviteService(ConviteRepository conviteRepository, ClubeRepository clubeRepository, UnidadeRepository unidadeRepository, PerfilRepository perfilRepository, EmailService emailService, AcessoService acesso) {
         this.conviteRepository = conviteRepository;
         this.clubeRepository = clubeRepository;
         this.unidadeRepository = unidadeRepository;
         this.perfilRepository = perfilRepository;
+        this.emailService = emailService;
+        this.acesso = acesso;
     }
 
     public void validacaoClube(Integer idClube){
@@ -58,7 +62,7 @@ public class ConviteService {
         String status = convite.getStatusConvite();
 
         validacaoClube(convite.getClube().getId());
-        if (!convite.getPerfil().getNome().equalsIgnoreCase("DIRETORIA")){
+        if (convite.getPerfil().getNome().equalsIgnoreCase("CONSELHEIRO")){
             validacaoUnidade(convite.getUnidade().getId());
         }
 
@@ -79,6 +83,7 @@ public class ConviteService {
 
 
     public List<ConviteResponseDto> listarConvites(Integer idClube, String statusConvite){
+        acesso.exigirDiretoria(); acesso.validarClube(idClube);
         validacaoClube(idClube);
         List<Convite> convites = new ArrayList<>();
         if (statusConvite != null && !statusConvite.isBlank()){
@@ -91,11 +96,16 @@ public class ConviteService {
                 .toList();
     }
 
+    @org.springframework.transaction.annotation.Transactional
     public Convite criarConvite(ConviteCriacaoRequestDto request, Integer idClubeLogado){
+        acesso.exigirDiretoria(); acesso.validarClube(idClubeLogado);
         // Regra 1: O clube do usuário deve existir e ser o mesmo do usuário
-        Clube clube = clubeRepository.findById(idClubeLogado).orElseThrow(ClubeNãoEncontradoException::new);
+        Clube clube = clubeRepository.buscarBloqueado(idClubeLogado).orElseThrow(ClubeNãoEncontradoException::new);
 
         Perfil perfil = perfilRepository.findById(request.getIdPerfil()).orElseThrow(PerfilNaoEncontradoException::new);
+        if (!perfil.getNome().equalsIgnoreCase("CONSELHEIRO") && !AcessoService.perfilDiretoria(perfil.getNome())) {
+            throw new RegraNegocioException("Perfil não permitido para convites.");
+        }
 
         // Regra 2: Unidade deve existir e pertencer ao clube(se informada)
         Unidade unidade = null;
@@ -126,11 +136,13 @@ public class ConviteService {
         convite.setDataExpiracao(LocalDateTime.now().plusDays(14));
 
         conviteRepository.save(convite);
+        emailService.sendInvitationEmail(convite);
 
         return convite;
     }
 
     public void excluirConvite(Integer idClube, Integer idConvite){
+        acesso.exigirDiretoria(); acesso.validarClube(idClube);
         validacaoClube(idClube);
         Convite convite = conviteRepository.findById(idConvite).orElseThrow(ConviteNãoEncontradoException::new);
         if (!idClube.equals(convite.getClube().getId())){

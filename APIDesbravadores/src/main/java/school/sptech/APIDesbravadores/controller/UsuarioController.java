@@ -50,7 +50,6 @@ public class UsuarioController {
     @PostMapping("/cadastro")
     public ResponseEntity<UsuarioResponseDto> criarUsuario(@RequestBody @Valid UsuarioCriacaoDto request){
         System.out.println("[DEBUG] - Iniciando Cadastro da API, Arquivo UsuarioController Function: criarUsuario");
-        System.out.println("[DEBUG] - Parametro recebido: \n" + request + "\n Arquivo UsuarioController Function: criarUsuario");
         return ResponseEntity.status(201).body(UsuarioMapper.toResponse(usuarioService.cadastrarUsuario(request)));
     }
 
@@ -64,7 +63,6 @@ public class UsuarioController {
         // Manda o email e senha pra Service e recebe o Token de volta
         UsuarioTokenDto autenticado = this.usuarioService.autenticar(usuarioLoginDto);
 
-        System.out.println(autenticado);
 
         // AQUI ESTÁ O SEGREDO DO COOKIE: Amarra a pulseira no pulso do cliente!
         ResponseCookie cookie = ResponseCookie.from("authToken", autenticado.getToken())
@@ -104,14 +102,19 @@ public class UsuarioController {
         return ResponseEntity.ok().build();
     }
 
+    @GetMapping("/buscarUsuario")
+    public UsuarioSessaoDto sessao(@AuthenticationPrincipal UsuarioDetalhesDto usuario) {
+        return new UsuarioSessaoDto(usuario.getIdUsuario(), usuario.getNome(), usuario.getEmail(), usuario.getPerfil());
+    }
+
    @GetMapping("")
-   @PreAuthorize("hasRole('DIRETORIA')")
+   @PreAuthorize("@acesso.diretoria()")
     public ResponseEntity<List<UsuarioResponseDto>> listarUsuarios(@AuthenticationPrincipal UsuarioDetalhesDto usuariologado){
         return ResponseEntity.ok(UsuarioMapper.toResponse(usuarioService.listarUsuario(usuariologado.getIdClube())));
    }
 
     @DeleteMapping("")
-    @PreAuthorize("hasRole('DIRETORIA')")
+    @PreAuthorize("@acesso.diretoria()")
     public ResponseEntity<Void> inativarUsuario(@AuthenticationPrincipal UsuarioDetalhesDto usuariologado, @RequestParam Integer idUsuario){
         usuarioService.inativarUsuario(usuariologado.getIdClube(),idUsuario,usuariologado.getIdUsuario());
         return ResponseEntity.noContent().build();

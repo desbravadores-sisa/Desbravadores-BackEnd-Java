@@ -26,13 +26,7 @@ public class AutenticacaoProvider implements AuthenticationProvider {
 
         UserDetails userDetails = this.usuarioAutorizacaoService.loadUserByUsername(username);
 
-        System.out.println("====== RAIO-X DA AUTENTICAÇÃO ======");
-        System.out.println("E-mail procurado: [" + username + "]");
-        System.out.println("Senha que veio do Banco: [" + userDetails.getPassword() + "]");
-        System.out.println("Tamanho da senha do Banco: " + userDetails.getPassword().length() + " caracteres");
-        System.out.println("====================================");
-
-        if (this.passwordEncoder.matches(password, userDetails.getPassword())) {
+        if (userDetails.isEnabled() && this.passwordEncoder.matches(password, userDetails.getPassword())) {
 
             return new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
         } else {

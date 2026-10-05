@@ -21,13 +21,15 @@ import java.util.List;
 public class ConviteController {
 
     private final ConviteService conviteService;
+    private final school.sptech.APIDesbravadores.service.EmailService emailService;
 
-    public ConviteController(ConviteService conviteService) {
+    public ConviteController(ConviteService conviteService, school.sptech.APIDesbravadores.service.EmailService emailService) {
         this.conviteService = conviteService;
+        this.emailService = emailService;
     }
 
     @GetMapping("")
-    @PreAuthorize("hasRole('DIRETORIA')")
+    @PreAuthorize("@acesso.diretoria()")
     public ResponseEntity<List<ConviteResponseDto>> listarUnidades(@AuthenticationPrincipal UsuarioDetalhesDto usuariologado, @RequestParam(required = false) String statusConvite){
         Integer idClube = usuariologado.getIdClube();
         List<ConviteResponseDto> response = conviteService.listarConvites(idClube,statusConvite);
@@ -35,10 +37,13 @@ public class ConviteController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('DIRETORIA')")
+    @PreAuthorize("@acesso.diretoria()")
     public ResponseEntity<ConviteResponseDto> criarConvite(@AuthenticationPrincipal UsuarioDetalhesDto usuariologado, @RequestBody @Valid ConviteCriacaoRequestDto request){
         Integer idClube = usuariologado.getIdClube();
-        return ResponseEntity.status(201).body(ConviteMapper.toResponse(conviteService.criarConvite(request,idClube)));
+        var convite = conviteService.criarConvite(request, idClube);
+        var response = ConviteMapper.toResponse(convite);
+        response.setLink(emailService.linkConvite(convite));
+        return ResponseEntity.status(201).body(response);
     }
 
     @Operation(summary = "Excluir um convite",
@@ -54,7 +59,7 @@ public class ConviteController {
                     content = @Content)
     })
     @DeleteMapping()
-    @PreAuthorize("hasRole('DIRETORIA')")
+    @PreAuthorize("@acesso.diretoria()")
     public ResponseEntity<Void> deletarConvite(@AuthenticationPrincipal UsuarioDetalhesDto usuariologado, @RequestParam Integer idConvite){
         conviteService.excluirConvite(usuariologado.getIdClube(),idConvite);
         return ResponseEntity.noContent().build();

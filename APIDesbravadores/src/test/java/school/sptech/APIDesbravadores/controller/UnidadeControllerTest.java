@@ -145,7 +145,7 @@ class UnidadeControllerTest {
         usuario.setNome("Usuario Teste");
         usuario.setEmail("teste@email.com");
         usuario.setSenha("senha");
-        usuario.setTipoConta(tipoConta);
+        var perfil = new school.sptech.APIDesbravadores.domain.Perfil(); perfil.setNome(tipoConta); usuario.setPerfil(perfil);
         usuario.setClube(clube);
         usuario.setUnidade(unidade);
 

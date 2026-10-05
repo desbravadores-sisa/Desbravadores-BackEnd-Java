@@ -9,5 +9,10 @@ import java.util.Optional;
 
 @Repository
 public interface EvidenciaRepository extends JpaRepository<Evidencia, Integer> {
+    boolean existsByTarefaUnidadeId(Integer id);
+    Optional<Evidencia> findFirstByTarefaUnidadeIdOrderByIdDesc(Integer id);
+    List<Evidencia> findAllByTarefaUnidadeTarefaClubeId(Integer idClube);
+    List<Evidencia> findAllByTarefaUnidadeUnidadeId(Integer idUnidade);
+    Optional<Evidencia> findByIdAndTarefaUnidadeUnidadeId(Integer id, Integer idUnidade);
 
 }

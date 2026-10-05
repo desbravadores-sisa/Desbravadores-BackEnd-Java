@@ -14,4 +14,7 @@ public class UnidadeCriacaoDto {
     @NotBlank
     @Size(max = 100)
     private String nome;
+    @jakarta.validation.constraints.Min(1)
+    @jakarta.validation.constraints.Max(100)
+    private Integer idadeMinima;
 }

@@ -187,7 +187,7 @@ class EvidenciaControllerTest {
         usuario.setNome("Maria");
         usuario.setEmail("maria@email.com");
         usuario.setSenha("senha123");
-        usuario.setTipoConta(tipoConta);
+        var perfil = new school.sptech.APIDesbravadores.domain.Perfil(); perfil.setNome(tipoConta); usuario.setPerfil(perfil);
         usuario.setClube(clube);
         usuario.setUnidade(unidade);
         return usuario;
