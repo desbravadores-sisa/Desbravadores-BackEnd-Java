@@ -185,4 +185,19 @@ public class UsuarioService {
         Usuario usuario = usuarioRepository.findById(idUsuario).orElseThrow(UsuarioNaoEncontradoException::new);
         return usuario;
     }
+
+    public Usuario alterarNomeUsuario(Integer idUsuario, String nome){
+        Usuario usuario = usuarioRepository.findById(idUsuario).orElseThrow(UsuarioNaoEncontradoException::new);
+        usuario.setNome(nome);
+        usuarioRepository.save(usuario);
+        return usuario;
+    }
+
+    public Usuario alterarSenhaUsuario(Integer idUsuario,String senha){
+        Usuario usuario = usuarioRepository.findById(idUsuario).orElseThrow(UsuarioNaoEncontradoException::new);
+        String senhaCriptografada = passwordEncoder.encode(senha);
+        usuario.setSenha(senhaCriptografada);
+        usuarioRepository.save(usuario);
+        return usuario;
+    }
 }

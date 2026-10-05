@@ -121,4 +121,14 @@ public class UsuarioController {
     public ResponseEntity<UsuarioSessaoDto> buscarUsuario(@AuthenticationPrincipal UsuarioDetalhesDto usuariologado){
         return ResponseEntity.ok(UsuarioMapper.toSession(usuarioService.buscarDadosUsuario(usuariologado.getIdUsuario())));
     }
+
+    @PatchMapping("/nome")
+    public ResponseEntity<UsuarioSessaoDto> alterarNomeUsuario(@AuthenticationPrincipal UsuarioDetalhesDto usuarioLogado, @RequestBody @Valid UsuarioAlteracaoNomeDto alteracaoNomeDto){
+        return ResponseEntity.ok(UsuarioMapper.toSession(usuarioService.alterarNomeUsuario(usuarioLogado.getIdUsuario(),alteracaoNomeDto.getNome())));
+    }
+
+    @PatchMapping("/senha")
+    public ResponseEntity<UsuarioSessaoDto> alterarSenhaUsuario(@AuthenticationPrincipal UsuarioDetalhesDto usuarioLogado, @RequestBody @Valid UsuarioAlteracaoSenhaDto senhaDto){
+        return ResponseEntity.ok(UsuarioMapper.toSession(usuarioService.alterarSenhaUsuario(usuarioLogado.getIdUsuario(),senhaDto.getSenha())));
+    }
 }
