@@ -20,6 +20,10 @@ public class Caderno {
     @JoinColumn(name = "id_clube")
     private Clube clube;
 
+    @ManyToOne
+    @JoinColumn(name = "id_ciclo")
+    private Ciclo ciclo;
+
     private String nome;
 
     @Column(name = "idade_alvo")

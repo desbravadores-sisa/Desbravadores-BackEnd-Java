@@ -19,6 +19,14 @@ public class UnidadeResponseDto {
 
     private Integer idadeMaxima;
 
+    private Integer pontuacao;
+
+    private String nomeConselheiro;
+
+    private Integer tarefasConcluidas;
+
+    private Integer totalTarefas;
+
     public Integer getId() {
         return id;
     }
@@ -57,5 +65,37 @@ public class UnidadeResponseDto {
 
     public void setIdadeMaxima(Integer idadeMaxima) {
         this.idadeMaxima = idadeMaxima;
+    }
+
+    public Integer getPontuacao() {
+        return pontuacao;
+    }
+
+    public void setPontuacao(Integer pontuacao) {
+        this.pontuacao = pontuacao;
+    }
+
+    public String getNomeConselheiro() {
+        return nomeConselheiro;
+    }
+
+    public void setNomeConselheiro(String nomeConselheiro) {
+        this.nomeConselheiro = nomeConselheiro;
+    }
+
+    public Integer getTarefasConcluidas() {
+        return tarefasConcluidas;
+    }
+
+    public void setTarefasConcluidas(Integer tarefasConcluidas) {
+        this.tarefasConcluidas = tarefasConcluidas;
+    }
+
+    public Integer getTotalTarefas() {
+        return totalTarefas;
+    }
+
+    public void setTotalTarefas(Integer totalTarefas) {
+        this.totalTarefas = totalTarefas;
     }
 }

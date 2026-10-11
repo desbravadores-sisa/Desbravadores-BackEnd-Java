@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import school.sptech.APIDesbravadores.dto.CadernoAtualizacaoDto;
 import school.sptech.APIDesbravadores.dto.CadernoCriacaoDto;
 import school.sptech.APIDesbravadores.dto.CadernoResponseDto;
+import school.sptech.APIDesbravadores.dto.GrupoCadernoDto;
 import school.sptech.APIDesbravadores.service.CadernoService;
 
 import java.util.List;
@@ -46,6 +47,17 @@ public class CadernoController {
         if (response.isEmpty()) {
             return ResponseEntity.status(204).build();
         }
+        return ResponseEntity.status(200).body(response);
+    }
+
+    @GetMapping("/resumo")
+    @Operation(summary = "Listar resumos de cadernos por grupo", description = "Retorna cadernos agrupados por grupo com dados enriquecidos da view")
+    @ApiResponse(responseCode = "200", description = "Resumo retornado com sucesso")
+    @ApiResponse(responseCode = "404", description = "Clube não encontrado")
+    public ResponseEntity<List<GrupoCadernoDto>> listarResumos(
+            @Parameter(description = "ID do clube para filtrar os cadernos", example = "1")
+            @RequestParam Integer idClube) {
+        List<GrupoCadernoDto> response = cadernoService.listarResumosCadernos(idClube);
         return ResponseEntity.status(200).body(response);
     }
 

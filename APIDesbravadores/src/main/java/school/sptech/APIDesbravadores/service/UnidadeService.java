@@ -3,6 +3,7 @@ package school.sptech.APIDesbravadores.service;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import school.sptech.APIDesbravadores.domain.Clube;
+import school.sptech.APIDesbravadores.domain.ResumoUnidadeView;
 import school.sptech.APIDesbravadores.domain.Unidade;
 import school.sptech.APIDesbravadores.domain.Usuario;
 import school.sptech.APIDesbravadores.dto.UnidadeAtualizacaoDto;
@@ -13,6 +14,7 @@ import school.sptech.APIDesbravadores.exception.UnidadeJácadastradaException;
 import school.sptech.APIDesbravadores.exception.UnidadeNãoEncontradaException;
 import school.sptech.APIDesbravadores.mapper.UnidadeMapper;
 import school.sptech.APIDesbravadores.repository.ClubeRepository;
+import school.sptech.APIDesbravadores.repository.ResumoUnidadeViewRepository;
 import school.sptech.APIDesbravadores.repository.UnidadeRepository;
 import school.sptech.APIDesbravadores.repository.UsuarioRepository;
 
@@ -25,11 +27,13 @@ public class UnidadeService {
     private final UnidadeRepository unidadeRepository;
     private final ClubeRepository clubeRepository;
     private final UsuarioRepository usuarioRepository;
+    private final ResumoUnidadeViewRepository resumoUnidadeViewRepository;
 
-    public UnidadeService(UnidadeRepository unidadeRepository, ClubeRepository clubeRepository, UsuarioRepository usuarioRepository) {
+    public UnidadeService(UnidadeRepository unidadeRepository, ClubeRepository clubeRepository, UsuarioRepository usuarioRepository, ResumoUnidadeViewRepository resumoUnidadeViewRepository) {
         this.unidadeRepository = unidadeRepository;
         this.clubeRepository = clubeRepository;
         this.usuarioRepository = usuarioRepository;
+        this.resumoUnidadeViewRepository = resumoUnidadeViewRepository;
     }
 
     @Transactional(readOnly = true)
@@ -38,15 +42,31 @@ public class UnidadeService {
             throw new ClubeNãoEncontradoException();
         }
 
-        // Clube sem unidades não é erro: devolve lista vazia e o controller responde 204.
-        return UnidadeMapper.toResponse(unidadeRepository.findByClubeId(idClube));
+        List<ResumoUnidadeView> unidades = resumoUnidadeViewRepository.findByIdClubeOrderByPontuacaoDesc(idClube);
+
+        if (unidades.isEmpty()){
+            throw new UnidadeNãoEncontradaException();
+        }
+
+        return unidades.stream().map(this::toResponse).toList();
     }
 
     @Transactional(readOnly = true)
     public UnidadeResponseDto buscarUnidadePorId(Integer id){
-        Unidade unidade = unidadeRepository.findById(id)
+        ResumoUnidadeView unidade = resumoUnidadeViewRepository.findByIdUnidade(id)
                 .orElseThrow(UnidadeNãoEncontradaException::new);
-        return UnidadeMapper.toResponse(unidade);
+        return toResponse(unidade);
+    }
+
+    private UnidadeResponseDto toResponse(ResumoUnidadeView view){
+        UnidadeResponseDto dto = new UnidadeResponseDto();
+        dto.setId(view.getIdUnidade());
+        dto.setNome(view.getNomeUnidade());
+        dto.setPontuacao(view.getPontuacao());
+        dto.setNomeConselheiro(view.getNomeConselheiro());
+        dto.setTarefasConcluidas(view.getTarefasConcluidas());
+        dto.setTotalTarefas(view.getTotalTarefas());
+        return dto;
     }
 
     @Transactional
@@ -65,8 +85,6 @@ public class UnidadeService {
 
     @Transactional
     public UnidadeResponseDto atualizarUnidade(UnidadeAtualizacaoDto request){
-        // Carrega a unidade existente e altera só o que veio no DTO. Construir uma
-        // entidade nova com o mesmo ID apagaria os campos ausentes na requisição.
         Unidade unidade = unidadeRepository.findById(request.getIdUnidade())
                 .orElseThrow(UnidadeNãoEncontradaException::new);
 
