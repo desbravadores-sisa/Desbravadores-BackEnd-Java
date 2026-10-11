@@ -5,6 +5,7 @@ import school.sptech.APIDesbravadores.domain.Clube;
 import school.sptech.APIDesbravadores.domain.Convite;
 import school.sptech.APIDesbravadores.domain.Perfil;
 import school.sptech.APIDesbravadores.domain.Unidade;
+import school.sptech.APIDesbravadores.dto.ConviteCriacaoDto;
 import school.sptech.APIDesbravadores.dto.ConviteRequestDto;
 import school.sptech.APIDesbravadores.dto.ConviteUpdateDto;
 import school.sptech.APIDesbravadores.exception.ClubeNãoEncontradoException;
@@ -55,8 +56,8 @@ public class ConviteService {
         return convites;
     }
 
-    public Convite criarConvite(ConviteRequestDto request){
-        if (!clubeRepository.existsById(request.getIdClube())){
+    public Convite criarConvite(ConviteCriacaoDto request, Integer idClube){
+        if (!clubeRepository.existsById(idClube)){
             throw new ClubeNãoEncontradoException();
         }
         if (request.getIdUnidade() != null){
@@ -66,17 +67,17 @@ public class ConviteService {
         }
         Perfil perfil = perfilRepository.findByNomeIgnoreCase(request.getTipoConta())
                 .orElseThrow(() -> new EntidadeNaoEncontradaException("Perfil não encontrado: " + request.getTipoConta()));
-        Convite convite = ConviteMapper.toEntity(request, perfil);
+        Convite convite = new Convite();
+        convite.setEmail(request.getEmail());
+        convite.setPerfil(perfil);
         convite.setToken(gerarTokenBase64());
-        Optional<Clube> clube = clubeRepository.findById(request.getIdClube());
+        convite.setStatusConvite(STATUS_PENDENTE);
+        convite.setDataExpiracao(LocalDateTime.now().plusDays(7));
+        Optional<Clube> clube = clubeRepository.findById(idClube);
         convite.setClube(clube.get());
-        System.out.println("Após o settar o clube");
-        System.out.println("Como está o IdUnidade:" + request.getIdUnidade());
         if (request.getIdUnidade() != null){
             Optional<Unidade> unidade = unidadeRepository.findById(request.getIdUnidade());
-            if (!unidade.isEmpty()){
-                convite.setUnidade(unidade.get());
-            }
+            unidade.ifPresent(convite::setUnidade);
         }
         conviteRepository.save(convite);
         return convite;
@@ -114,6 +115,13 @@ public class ConviteService {
         }
         conviteRepository.save(convite);
         return convite;
+    }
+
+    public void deletarConvite(Integer idConvite){
+        if (!conviteRepository.existsById(idConvite)){
+            throw new ConviteNãoEncontradoException();
+        }
+        conviteRepository.deleteById(idConvite);
     }
 
     private String gerarTokenBase64() {

@@ -14,6 +14,7 @@ import school.sptech.APIDesbravadores.domain.Perfil;
 import school.sptech.APIDesbravadores.domain.Usuario;
 import school.sptech.APIDesbravadores.dto.UsuarioCriacaoDto;
 import school.sptech.APIDesbravadores.dto.UsuarioLoginDto;
+import school.sptech.APIDesbravadores.dto.UsuarioResponseDto;
 import school.sptech.APIDesbravadores.dto.UsuarioTokenDto;
 import school.sptech.APIDesbravadores.service.UsuarioService;
 
@@ -98,9 +99,8 @@ class UsuarioControllerTest {
     }
 
     @Test
-    void painelDiretoriaDeveRetornarMensagemQuandoUsuarioForDiretor() throws Exception {
+    void painelDiretoriaDeveRetornar401QuandoUsuarioNaoAutenticado() throws Exception {
         mockMvc.perform(get("/usuarios/painel-diretoria").with(user("diretor").roles("DIRETOR")))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$").value("Sucesso! Você entrou no camarote dos Diretores."));
+                .andExpect(status().isUnauthorized());
     }
 }

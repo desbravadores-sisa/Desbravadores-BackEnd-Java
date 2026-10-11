@@ -32,9 +32,9 @@ public class ConviteController {
 
     @PostMapping
     @PreAuthorize("hasRole('DIRETOR')")
-    public ResponseEntity<ConviteResponseDto> criarConvite(@AuthenticationPrincipal UsuarioDetalhesDto usuariologado, @RequestBody @Valid ConviteRequestDto request){
+    public ResponseEntity<ConviteResponseDto> criarConvite(@AuthenticationPrincipal UsuarioDetalhesDto usuariologado, @RequestBody @Valid ConviteCriacaoDto request){
         Integer idClube = usuariologado.getIdClube();
-        return ResponseEntity.status(201).body(ConviteMapper.toResponse(conviteService.criarConvite(request)));
+        return ResponseEntity.status(201).body(ConviteMapper.toResponse(conviteService.criarConvite(request, idClube)));
     }
 
     @GetMapping("/validar")
@@ -44,8 +44,15 @@ public class ConviteController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('DIRETOR')")
-    public ResponseEntity<ConviteResponseDto> atualizarConvite(@RequestBody @Valid ConviteUpdateDto updateDto, @PathVariable Integer idConvite){
-        return ResponseEntity.ok(ConviteMapper.toResponse(conviteService.atualizarConvite(updateDto,idConvite)));
+    public ResponseEntity<ConviteResponseDto> atualizarConvite(@RequestBody @Valid ConviteUpdateDto updateDto, @PathVariable Integer id){
+        return ResponseEntity.ok(ConviteMapper.toResponse(conviteService.atualizarConvite(updateDto, id)));
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('DIRETOR')")
+    public ResponseEntity<Void> deletarConvite(@PathVariable Integer id){
+        conviteService.deletarConvite(id);
+        return ResponseEntity.noContent().build();
     }
 
 }

@@ -1,5 +1,6 @@
 package school.sptech.APIDesbravadores.service;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -14,6 +15,9 @@ import school.sptech.APIDesbravadores.domain.Perfil;
 import school.sptech.APIDesbravadores.domain.Usuario;
 import school.sptech.APIDesbravadores.dto.UsuarioCriacaoDto;
 import school.sptech.APIDesbravadores.dto.UsuarioLoginDto;
+import school.sptech.APIDesbravadores.dto.UsuarioPerfilUpdateDto;
+import school.sptech.APIDesbravadores.dto.UsuarioResponseDto;
+import school.sptech.APIDesbravadores.dto.UsuarioSenhaUpdateDto;
 import school.sptech.APIDesbravadores.dto.UsuarioTokenDto;
 import school.sptech.APIDesbravadores.exception.ClubeNãoEncontradoException;
 import school.sptech.APIDesbravadores.exception.EmailJaCadastradoException;
@@ -68,7 +72,7 @@ public class UsuarioService {
                 new UsernamePasswordAuthenticationToken(loginDto.getEmail(), loginDto.getSenha());
         final Authentication authentication = this.authenticationManager.authenticate(credentials);
         Usuario usuarioAutenticado = usuarioRepository.findByEmail(loginDto.getEmail())
-                .orElseThrow(() -> new ResponseStatusException(404, "Usuário não cadastrado", null));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuário não cadastrado", null));
         SecurityContextHolder.getContext().setAuthentication(authentication);
         final String token = gerenciadorTokenJwt.generateToken(authentication);
         return new UsuarioTokenDto(
@@ -78,5 +82,39 @@ public class UsuarioService {
                 usuarioAutenticado.getPerfil() != null ? usuarioAutenticado.getPerfil().getNome() : null,
                 token
         );
+    }
+
+    public UsuarioResponseDto buscarPerfil(String email) {
+        Usuario usuario = usuarioRepository.findByEmail(email)
+                .orElseThrow(() -> new EntidadeNaoEncontradaException("Usuário não encontrado"));
+        UsuarioResponseDto dto = new UsuarioResponseDto();
+        dto.setId(usuario.getId());
+        dto.setNome(usuario.getNome());
+        dto.setEmail(usuario.getEmail());
+        dto.setTipoConta(usuario.getPerfil() != null ? usuario.getPerfil().getNome() : null);
+        dto.setIdClube(usuario.getClube() != null ? usuario.getClube().getId() : null);
+        dto.setIdUnidade(usuario.getUnidade() != null ? usuario.getUnidade().getId() : null);
+        return dto;
+    }
+
+    @Transactional
+    public UsuarioResponseDto atualizarPerfil(String emailLogado, UsuarioPerfilUpdateDto dto) {
+        Usuario usuario = usuarioRepository.findByEmail(emailLogado)
+                .orElseThrow(() -> new EntidadeNaoEncontradaException("Usuário não encontrado"));
+        usuario.setNome(dto.getNome());
+        usuario.setEmail(dto.getEmail());
+        usuarioRepository.save(usuario);
+        return buscarPerfil(dto.getEmail());
+    }
+
+    @Transactional
+    public void alterarSenha(String emailLogado, UsuarioSenhaUpdateDto dto) {
+        Usuario usuario = usuarioRepository.findByEmail(emailLogado)
+                .orElseThrow(() -> new EntidadeNaoEncontradaException("Usuário não encontrado"));
+        if (!passwordEncoder.matches(dto.getSenhaAtual(), usuario.getSenha())) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Senha atual incorreta");
+        }
+        usuario.setSenha(passwordEncoder.encode(dto.getNovaSenha()));
+        usuarioRepository.save(usuario);
     }
 }

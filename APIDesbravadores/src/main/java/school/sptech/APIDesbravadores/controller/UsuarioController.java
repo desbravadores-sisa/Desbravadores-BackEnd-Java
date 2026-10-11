@@ -10,10 +10,14 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import school.sptech.APIDesbravadores.dto.UsuarioCriacaoDto;
+import school.sptech.APIDesbravadores.dto.UsuarioDetalhesDto;
 import school.sptech.APIDesbravadores.dto.UsuarioLoginDto;
+import school.sptech.APIDesbravadores.dto.UsuarioPerfilUpdateDto;
 import school.sptech.APIDesbravadores.dto.UsuarioResponseDto;
+import school.sptech.APIDesbravadores.dto.UsuarioSenhaUpdateDto;
 import school.sptech.APIDesbravadores.dto.UsuarioSessaoDto;
 import school.sptech.APIDesbravadores.dto.UsuarioTokenDto;
 import school.sptech.APIDesbravadores.mapper.UsuarioMapper;
@@ -103,7 +107,46 @@ public class UsuarioController {
     @ApiResponse(responseCode = "200", description = "Acesso liberado")
     @ApiResponse(responseCode = "401", description = "Usuário não autenticado")
     @ApiResponse(responseCode = "403", description = "Usuário não possui a permissão DIRETOR")
-    public ResponseEntity<String> painelExclusivo() {
-        return ResponseEntity.ok("Sucesso! Você entrou no camarote dos Diretores.");
+    public ResponseEntity<UsuarioResponseDto> painelExclusivo(@AuthenticationPrincipal UsuarioDetalhesDto usuarioLogado) {
+        if (usuarioLogado == null) {
+            return ResponseEntity.status(401).build();
+        }
+        return ResponseEntity.ok(usuarioService.buscarPerfil(usuarioLogado.getEmail()));
+    }
+
+    @GetMapping("/perfil")
+    @Operation(summary = "Buscar dados do perfil do usuário logado", description = "Retorna os dados do usuário autenticado")
+    @ApiResponse(responseCode = "200", description = "Dados do perfil retornados com sucesso")
+    public ResponseEntity<UsuarioResponseDto> buscarPerfil(@AuthenticationPrincipal UsuarioDetalhesDto usuarioLogado) {
+        if (usuarioLogado == null) {
+            return ResponseEntity.status(401).build();
+        }
+        return ResponseEntity.ok(usuarioService.buscarPerfil(usuarioLogado.getEmail()));
+    }
+
+    @PutMapping("/perfil")
+    @Operation(summary = "Atualizar dados do perfil", description = "Atualiza nome e email do usuário autenticado")
+    @ApiResponse(responseCode = "200", description = "Perfil atualizado com sucesso")
+    public ResponseEntity<UsuarioResponseDto> atualizarPerfil(
+            @AuthenticationPrincipal UsuarioDetalhesDto usuarioLogado,
+            @RequestBody @Valid UsuarioPerfilUpdateDto dto) {
+        if (usuarioLogado == null) {
+            return ResponseEntity.status(401).build();
+        }
+        return ResponseEntity.ok(usuarioService.atualizarPerfil(usuarioLogado.getEmail(), dto));
+    }
+
+    @PutMapping("/senha")
+    @Operation(summary = "Alterar senha", description = "Altera a senha do usuário autenticado")
+    @ApiResponse(responseCode = "200", description = "Senha alterada com sucesso")
+    @ApiResponse(responseCode = "401", description = "Senha atual incorreta")
+    public ResponseEntity<Void> alterarSenha(
+            @AuthenticationPrincipal UsuarioDetalhesDto usuarioLogado,
+            @RequestBody @Valid UsuarioSenhaUpdateDto dto) {
+        if (usuarioLogado == null) {
+            return ResponseEntity.status(401).build();
+        }
+        usuarioService.alterarSenha(usuarioLogado.getEmail(), dto);
+        return ResponseEntity.ok().build();
     }
 }
