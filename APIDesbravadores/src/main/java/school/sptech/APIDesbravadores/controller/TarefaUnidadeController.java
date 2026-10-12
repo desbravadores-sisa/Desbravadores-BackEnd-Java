@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import school.sptech.APIDesbravadores.dto.TarefaResponseDto;
 import school.sptech.APIDesbravadores.dto.TarefaStatusUpdateDto;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import school.sptech.APIDesbravadores.dto.UsuarioDetalhesDto;
 import school.sptech.APIDesbravadores.service.TarefaService;
 
 @RestController
@@ -46,8 +48,12 @@ public class TarefaUnidadeController {
     @PreAuthorize("hasRole('CONSELHEIRO')")
     public ResponseEntity<TarefaResponseDto> updateStatus(
             @Parameter(description = "ID da tarefa", example = "1") @PathVariable Integer idTarefa,
-            @RequestBody @Valid TarefaStatusUpdateDto dto) {
-        TarefaResponseDto response = tarefaService.updateStatus(idTarefa, dto.getStatus());
+            @RequestBody @Valid TarefaStatusUpdateDto dto,
+            @AuthenticationPrincipal UsuarioDetalhesDto usuarioLogado) {
+        if (usuarioLogado == null) {
+            return ResponseEntity.status(401).build();
+        }
+        TarefaResponseDto response = tarefaService.updateStatusDaUnidade(idTarefa, usuarioLogado.getIdUnidade(), dto.getStatus());
         return ResponseEntity.ok(response);
     }
 }

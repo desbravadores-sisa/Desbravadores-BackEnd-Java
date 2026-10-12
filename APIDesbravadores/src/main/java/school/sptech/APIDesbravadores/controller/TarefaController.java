@@ -101,20 +101,26 @@ public class TarefaController {
     @PreAuthorize("hasRole('CONSELHEIRO')")
     public ResponseEntity<TarefaResponseDto> updateStatus(
             @Parameter(description = "ID da tarefa a ter o status alterado", example = "1") @PathVariable Integer id,
-            @RequestBody @Valid TarefaStatusUpdateDto dto) {
-        TarefaResponseDto response = tarefaService.updateStatus(id, dto.getStatus());
+            @RequestBody @Valid TarefaStatusUpdateDto dto,
+            @AuthenticationPrincipal UsuarioDetalhesDto usuarioLogado) {
+        if (usuarioLogado == null) {
+            return ResponseEntity.status(401).build();
+        }
+        TarefaResponseDto response = tarefaService.updateStatusDaUnidade(id, usuarioLogado.getIdUnidade(), dto.getStatus());
         return ResponseEntity.status(200).body(response);
     }
 
     @GetMapping("/kanban")
-    @Operation(summary = "Listar tarefas agrupadas por status", description = "Retorna as tarefas organizadas pelas colunas do Kanban")
+    @Operation(summary = "Kanban da unidade do conselheiro", description = "Tarefas da unidade do conselheiro logado no ciclo ativo, agrupadas por status (A FAZER, EM ANDAMENTO, EM REVISAO, CONCLUIDA). Colunas vazias vêm como lista vazia.")
     @ApiResponse(responseCode = "200", description = "Quadro Kanban retornado com sucesso")
-    @ApiResponse(responseCode = "204", description = "Nenhuma tarefa encontrada para o Kanban")
-    public ResponseEntity<Map<String, List<TarefaResponseDto>>> getKanban() {
-        Map<String, List<TarefaResponseDto>> response = tarefaService.getKanban();
-        if (response.isEmpty()) {
-            return ResponseEntity.status(204).build();
+    @ApiResponse(responseCode = "401", description = "Usuário não autenticado")
+    @ApiResponse(responseCode = "403", description = "Usuário não é conselheiro")
+    @PreAuthorize("hasRole('CONSELHEIRO')")
+    public ResponseEntity<Map<String, List<TarefaResponseDto>>> getKanban(
+            @AuthenticationPrincipal UsuarioDetalhesDto usuarioLogado) {
+        if (usuarioLogado == null) {
+            return ResponseEntity.status(401).build();
         }
-        return ResponseEntity.status(200).body(response);
+        return ResponseEntity.ok(tarefaService.getKanbanDaUnidade(usuarioLogado.getIdUnidade(), usuarioLogado.getIdClube()));
     }
 }

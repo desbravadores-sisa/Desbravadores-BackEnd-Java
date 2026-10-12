@@ -44,6 +44,8 @@ public class TarefaMapper {
         dto.setPrazoPadrao(entity.getPrazoPadrao());
 
         if (tu != null) {
+            dto.setIdUnidadeTarefa(tu.getId());
+            dto.setPrazoEntrega(tu.getPrazoEntrega() != null ? tu.getPrazoEntrega().toLocalDate() : entity.getPrazoPadrao());
             dto.setFkUnidade(tu.getUnidade() != null ? tu.getUnidade().getId() : null);
             if (tu.getStatusKanban() != null) {
                 dto.setStatusKanban(tu.getStatusKanban().getDescricao());

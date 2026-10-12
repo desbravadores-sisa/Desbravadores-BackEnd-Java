@@ -46,15 +46,42 @@ class TarefaUnidadeControllerTest {
     @Test
     void updateStatusDeveMoverStatusDaTarefa() throws Exception {
         TarefaResponseDto response = tarefaResponse();
-        response.setStatusKanban("Concluído");
-        when(tarefaService.updateStatus(1, "Concluído")).thenReturn(response);
+        response.setStatusKanban("EM REVISAO");
+        when(tarefaService.updateStatusDaUnidade(1, 2, "Em revisão")).thenReturn(response);
+        autenticarConselheiro();
 
         mockMvc.perform(put("/tarefas-unidades/{idTarefa}/status", 1)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(Map.of("status", "Concluído"))))
+                        .content(objectMapper.writeValueAsString(Map.of("status", "Em revisão"))))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.statusKanban").value("Concluído"));
+                .andExpect(jsonPath("$.statusKanban").value("EM REVISAO"));
     }
+
+    @org.junit.jupiter.api.AfterEach
+    void limparContexto() {
+        org.springframework.security.core.context.SecurityContextHolder.clearContext();
+    }
+
+    /** Conselheiro da unidade 2, clube 10. */
+    private void autenticarConselheiro() {
+        school.sptech.APIDesbravadores.domain.Clube clube = new school.sptech.APIDesbravadores.domain.Clube();
+        clube.setId(10);
+        school.sptech.APIDesbravadores.domain.Unidade unidade = new school.sptech.APIDesbravadores.domain.Unidade();
+        unidade.setId(2);
+        school.sptech.APIDesbravadores.domain.Perfil perfil = new school.sptech.APIDesbravadores.domain.Perfil();
+        perfil.setNome("CONSELHEIRO");
+        school.sptech.APIDesbravadores.domain.Usuario usuario = new school.sptech.APIDesbravadores.domain.Usuario();
+        usuario.setNome("Conselheiro Teste");
+        usuario.setEmail("conselheiro@teste.com");
+        usuario.setSenha("x");
+        usuario.setPerfil(perfil);
+        usuario.setClube(clube);
+        usuario.setUnidade(unidade);
+        school.sptech.APIDesbravadores.dto.UsuarioDetalhesDto detalhes = new school.sptech.APIDesbravadores.dto.UsuarioDetalhesDto(usuario);
+        org.springframework.security.core.context.SecurityContextHolder.getContext().setAuthentication(
+                new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(detalhes, null, detalhes.getAuthorities()));
+    }
+
 
     @Test
     void updateStatusDeveRetornarBadRequestQuandoStatusNaoForEnviado() throws Exception {

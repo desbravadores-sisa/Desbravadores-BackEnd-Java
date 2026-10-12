@@ -128,7 +128,8 @@ class TarefaControllerTest {
     void updateStatusDeveAtualizarStatusDaTarefa() throws Exception {
         TarefaResponseDto response = tarefaResponse();
         response.setStatusKanban("Em andamento");
-        when(tarefaService.updateStatus(1, "Em andamento")).thenReturn(response);
+        when(tarefaService.updateStatusDaUnidade(1, 2, "Em andamento")).thenReturn(response);
+        autenticarConselheiro();
 
         mockMvc.perform(patch("/tarefas/{id}/status", 1)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -147,8 +148,9 @@ class TarefaControllerTest {
 
     @Test
     void updateStatusDeveRetornarBadRequestComMotivoQuandoStatusForInvalido() throws Exception {
-        when(tarefaService.updateStatus(1, "Concluido!"))
+        when(tarefaService.updateStatusDaUnidade(1, 2, "Concluido!"))
                 .thenThrow(new RequisicaoInvalidaException("Status inválido: Concluido!"));
+        autenticarConselheiro();
 
         mockMvc.perform(patch("/tarefas/{id}/status", 1)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -182,21 +184,46 @@ class TarefaControllerTest {
     }
 
     @Test
-    void getKanbanDeveListarTarefasAgrupadasPorStatus() throws Exception {
-        when(tarefaService.getKanban()).thenReturn(Map.of("A fazer", List.of(tarefaResponse())));
+    void getKanbanDeveListarTarefasDaUnidadeDoConselheiro() throws Exception {
+        when(tarefaService.getKanbanDaUnidade(2, 10)).thenReturn(Map.of("A FAZER", List.of(tarefaResponse())));
+        autenticarConselheiro();
 
         mockMvc.perform(get("/tarefas/kanban"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$['A fazer'][0].id").value(1));
+                .andExpect(jsonPath("$['A FAZER'][0].id").value(1));
     }
 
     @Test
-    void getKanbanDeveRetornarNoContentQuandoNaoExistiremTarefas() throws Exception {
-        when(tarefaService.getKanban()).thenReturn(Map.of());
-
+    void getKanbanSemUsuarioLogadoDeveRetornarUnauthorized() throws Exception {
         mockMvc.perform(get("/tarefas/kanban"))
-                .andExpect(status().isNoContent());
+                .andExpect(status().isUnauthorized());
     }
+
+    @org.junit.jupiter.api.AfterEach
+    void limparContexto() {
+        org.springframework.security.core.context.SecurityContextHolder.clearContext();
+    }
+
+    /** Conselheiro da unidade 2, clube 10. */
+    private void autenticarConselheiro() {
+        school.sptech.APIDesbravadores.domain.Clube clube = new school.sptech.APIDesbravadores.domain.Clube();
+        clube.setId(10);
+        school.sptech.APIDesbravadores.domain.Unidade unidade = new school.sptech.APIDesbravadores.domain.Unidade();
+        unidade.setId(2);
+        school.sptech.APIDesbravadores.domain.Perfil perfil = new school.sptech.APIDesbravadores.domain.Perfil();
+        perfil.setNome("CONSELHEIRO");
+        school.sptech.APIDesbravadores.domain.Usuario usuario = new school.sptech.APIDesbravadores.domain.Usuario();
+        usuario.setNome("Conselheiro Teste");
+        usuario.setEmail("conselheiro@teste.com");
+        usuario.setSenha("x");
+        usuario.setPerfil(perfil);
+        usuario.setClube(clube);
+        usuario.setUnidade(unidade);
+        school.sptech.APIDesbravadores.dto.UsuarioDetalhesDto detalhes = new school.sptech.APIDesbravadores.dto.UsuarioDetalhesDto(usuario);
+        org.springframework.security.core.context.SecurityContextHolder.getContext().setAuthentication(
+                new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(detalhes, null, detalhes.getAuthorities()));
+    }
+
 
     private TarefaResponseDto tarefaResponse() {
         TarefaResponseDto response = new TarefaResponseDto();

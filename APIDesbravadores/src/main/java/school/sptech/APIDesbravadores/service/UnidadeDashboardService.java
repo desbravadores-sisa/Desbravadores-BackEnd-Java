@@ -5,7 +5,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import school.sptech.APIDesbravadores.domain.Caderno;
 import school.sptech.APIDesbravadores.domain.Ciclo;
-import school.sptech.APIDesbravadores.domain.Desbravador;
 import school.sptech.APIDesbravadores.domain.StatusKanban;
 import school.sptech.APIDesbravadores.domain.Tarefa;
 import school.sptech.APIDesbravadores.domain.TarefaUnidade;
@@ -26,7 +25,6 @@ import school.sptech.APIDesbravadores.repository.UnidadeRepository;
 import java.time.Clock;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
-import java.time.Period;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
@@ -145,16 +143,14 @@ public class UnidadeDashboardService {
                 : (int) evidenciaRepository.countByUnidadeTarefaIdIn(idsEmRevisao);
 
         // ---- Atividades abertas (regra do protótipo para tarefas de caderno) ----
-        Set<Integer> idadesDaUnidade = desbravadorRepository.findByUnidadeId(idUnidade).stream()
-                .filter(d -> !Boolean.FALSE.equals(d.getAtivo()) && d.getDataNascimento() != null)
-                .map(d -> Period.between(d.getDataNascimento(), hoje).getYears())
-                .collect(Collectors.toSet());
+        Set<Integer> idadesDaUnidade = RegraVisibilidadeCaderno.idadesDaUnidade(
+                desbravadorRepository.findByUnidadeId(idUnidade), hoje);
         Map<Integer, Caderno> cadernos = cadernoRepository.findByClubeId(idClubeUsuario).stream()
                 .collect(Collectors.toMap(Caderno::getId, Function.identity(), (a, b) -> a));
 
         List<Atividade> atividades = vinculos.stream()
                 .filter(tu -> tu.getStatusKanban() != StatusKanban.CONCLUIDA)
-                .filter(tu -> visivelParaUnidade(tu.getTarefa(), cadernos, idadesDaUnidade))
+                .filter(tu -> RegraVisibilidadeCaderno.visivel(tu.getTarefa(), cadernos, idadesDaUnidade))
                 .sorted(Comparator.comparing(UnidadeDashboardService::prazo, Comparator.nullsLast(Comparator.naturalOrder()))
                         .thenComparing(TarefaUnidade::getId))
                 .map(tu -> new Atividade(
@@ -190,17 +186,5 @@ public class UnidadeDashboardService {
         }
         int i = (int) (dias / 7);
         return i < SEMANAS ? i : -1;
-    }
-
-    /** Tarefa de caderno só aparece se a unidade tiver um desbravador com a idade-alvo do caderno. */
-    private static boolean visivelParaUnidade(Tarefa t, Map<Integer, Caderno> cadernos, Set<Integer> idades) {
-        if (!"CADERNO".equalsIgnoreCase(t.getTipoTarefa())) {
-            return true;
-        }
-        if (t.getCaderno() == null) {
-            return false;
-        }
-        Caderno c = cadernos.getOrDefault(t.getCaderno().getId(), t.getCaderno());
-        return c.getIdadeAlvo() != null && idades.contains(c.getIdadeAlvo());
     }
 }

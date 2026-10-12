@@ -35,7 +35,40 @@ public class TarefaResponseDto {
     @Schema(description = "Status da tarefa no Kanban", example = "A FAZER")
     private String statusKanban;
 
+    @Schema(description = "ID do vínculo tarefa↔unidade (Unidade_Tarefa)", example = "7")
+    private Integer idUnidadeTarefa;
+
+    @Schema(description = "Prazo de entrega da unidade (ou o prazo padrão da tarefa)", example = "2026-04-10")
+    private LocalDate prazoEntrega;
+
+    @Schema(description = "Indica se a unidade já enviou evidência para esta tarefa (preenchido no Kanban)", example = "false")
+    private Boolean possuiEvidencia;
+
     public TarefaResponseDto() {
+    }
+
+    public Integer getIdUnidadeTarefa() {
+        return idUnidadeTarefa;
+    }
+
+    public void setIdUnidadeTarefa(Integer idUnidadeTarefa) {
+        this.idUnidadeTarefa = idUnidadeTarefa;
+    }
+
+    public LocalDate getPrazoEntrega() {
+        return prazoEntrega;
+    }
+
+    public void setPrazoEntrega(LocalDate prazoEntrega) {
+        this.prazoEntrega = prazoEntrega;
+    }
+
+    public Boolean getPossuiEvidencia() {
+        return possuiEvidencia;
+    }
+
+    public void setPossuiEvidencia(Boolean possuiEvidencia) {
+        this.possuiEvidencia = possuiEvidencia;
     }
 
     public Integer getId() {

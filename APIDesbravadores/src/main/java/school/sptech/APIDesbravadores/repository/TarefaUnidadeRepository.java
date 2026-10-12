@@ -17,4 +17,5 @@ public interface TarefaUnidadeRepository extends JpaRepository<TarefaUnidade, In
 
     void deleteByTarefaId(Integer tarefaId);
     List<TarefaUnidade> findByUnidadeId(Integer unidadeId);
+    List<TarefaUnidade> findByTarefaIdAndUnidadeId(Integer tarefaId, Integer unidadeId);
 }

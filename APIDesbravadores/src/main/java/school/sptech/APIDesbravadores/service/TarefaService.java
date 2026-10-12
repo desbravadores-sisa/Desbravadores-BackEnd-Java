@@ -17,6 +17,8 @@ import school.sptech.APIDesbravadores.exception.RequisicaoInvalidaException;
 import school.sptech.APIDesbravadores.mapper.TarefaMapper;
 import school.sptech.APIDesbravadores.repository.CadernoRepository;
 import school.sptech.APIDesbravadores.repository.CicloRepository;
+import school.sptech.APIDesbravadores.repository.DesbravadorRepository;
+import school.sptech.APIDesbravadores.repository.EvidenciaRepository;
 import school.sptech.APIDesbravadores.repository.ClubeRepository;
 import school.sptech.APIDesbravadores.repository.TarefaRepository;
 import school.sptech.APIDesbravadores.repository.TarefaUnidadeRepository;
@@ -38,10 +40,23 @@ public class TarefaService {
     private final UnidadeRepository unidadeRepository;
     private final CicloRepository cicloRepository;
     private final CadernoRepository cadernoRepository;
+    private final DesbravadorRepository desbravadorRepository;
+    private final EvidenciaRepository evidenciaRepository;
 
     public TarefaService(TarefaRepository tarefaRepository, TarefaUnidadeRepository tarefaUnidadeRepository,
                           ClubeRepository clubeRepository, UnidadeRepository unidadeRepository,
                           CicloRepository cicloRepository, CadernoRepository cadernoRepository) {
+        this(tarefaRepository, tarefaUnidadeRepository, clubeRepository, unidadeRepository, cicloRepository,
+                cadernoRepository, null, null);
+    }
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public TarefaService(TarefaRepository tarefaRepository, TarefaUnidadeRepository tarefaUnidadeRepository,
+                          ClubeRepository clubeRepository, UnidadeRepository unidadeRepository,
+                          CicloRepository cicloRepository, CadernoRepository cadernoRepository,
+                          DesbravadorRepository desbravadorRepository, EvidenciaRepository evidenciaRepository) {
+        this.desbravadorRepository = desbravadorRepository;
+        this.evidenciaRepository = evidenciaRepository;
         this.tarefaRepository = tarefaRepository;
         this.tarefaUnidadeRepository = tarefaUnidadeRepository;
         this.clubeRepository = clubeRepository;
@@ -158,47 +173,89 @@ public class TarefaService {
         return TarefaMapper.toResponseDto(t, tu);
     }
 
-    @Transactional
-    public TarefaResponseDto updateStatus(Integer id, String statusStr) {
-        Tarefa t = tarefaRepository.findById(id)
-                .orElseThrow(() -> new EntidadeNaoEncontradaException("Tarefa não encontrada com ID: " + id));
+    // =====================================================================
+    // Kanban do Conselheiro: sempre restrito à unidade do usuário logado
+    // =====================================================================
 
-        TarefaUnidade tu = tarefaUnidadeRepository.findFirstByTarefaIdOrderByIdAsc(t.getId())
-                .orElseThrow(() -> new EntidadeNaoEncontradaException("TarefaUnidade não encontrada para Tarefa ID: " + id));
-
-        StatusKanban status = StatusKanban.fromString(statusStr);
-        if (status == null) {
-            throw new RequisicaoInvalidaException("Status inválido: " + statusStr);
-        }
-
-        tu.setStatusKanban(status);
-        tarefaUnidadeRepository.save(tu);
-
-        return TarefaMapper.toResponseDto(t, tu);
-    }
-
+    /**
+     * Quadro da unidade do conselheiro no ciclo ativo do clube, agrupado pela descrição
+     * do status ("A FAZER", "EM ANDAMENTO", "EM REVISAO", "CONCLUIDA"). Tarefas de caderno
+     * só entram se a unidade tiver desbravador com a idade-alvo do caderno.
+     */
     @Transactional(readOnly = true)
-    public Map<String, List<TarefaResponseDto>> getKanban() {
-        List<TarefaResponseDto> all = findAll();
-        if (all.isEmpty()) {
-            return Map.of();
+    public Map<String, List<TarefaResponseDto>> getKanbanDaUnidade(Integer idUnidade, Integer idClube) {
+        if (idUnidade == null) {
+            throw new EntidadeNaoEncontradaException("Conselheiro sem unidade vinculada");
         }
+        Integer idCicloAtivo = idClube == null ? null
+                : cicloRepository.findByClubeIdAndAtivoTrue(idClube).map(c -> c.getId()).orElse(null);
+        java.time.LocalDate hoje = java.time.LocalDate.now();
+        java.util.Set<Integer> idades = desbravadorRepository == null ? java.util.Set.of()
+                : RegraVisibilidadeCaderno.idadesDaUnidade(desbravadorRepository.findByUnidadeId(idUnidade), hoje);
+        Map<Integer, school.sptech.APIDesbravadores.domain.Caderno> cadernos = idClube == null ? Map.of()
+                : cadernoRepository.findByClubeId(idClube).stream()
+                .collect(Collectors.toMap(c -> c.getId(), Function.identity(), (a, b) -> a));
 
-        // Semeia as quatro colunas para o quadro nunca vir com coluna faltando
-        // quando nenhuma tarefa está naquele status.
+        List<TarefaUnidade> vinculos = tarefaUnidadeRepository.findByUnidadeId(idUnidade).stream()
+                .filter(tu -> tu.getTarefa() != null)
+                .filter(tu -> idCicloAtivo == null || (tu.getCiclo() != null && idCicloAtivo.equals(tu.getCiclo().getId())))
+                // Concluídas sempre aparecem (são pontos já conquistados); a regra de idade vale para as abertas.
+                .filter(tu -> tu.getStatusKanban() == StatusKanban.CONCLUIDA
+                        || RegraVisibilidadeCaderno.visivel(tu.getTarefa(), cadernos, idades))
+                .sorted(java.util.Comparator.comparing(
+                        (TarefaUnidade tu) -> tu.getPrazoEntrega() != null ? tu.getPrazoEntrega().toLocalDate() : tu.getTarefa().getPrazoPadrao(),
+                        java.util.Comparator.nullsLast(java.util.Comparator.naturalOrder())).thenComparing(TarefaUnidade::getId))
+                .toList();
+
+        java.util.Set<Integer> comEvidencia = vinculos.isEmpty() || evidenciaRepository == null ? java.util.Set.of()
+                : evidenciaRepository.findByUnidadeTarefaIdIn(vinculos.stream().map(TarefaUnidade::getId).toList()).stream()
+                .map(e -> e.getUnidadeTarefa().getId())
+                .collect(Collectors.toSet());
+
         Map<String, List<TarefaResponseDto>> kanban = new LinkedHashMap<>();
         for (StatusKanban status : StatusKanban.values()) {
             kanban.put(status.getDescricao(), new ArrayList<>());
         }
+        for (TarefaUnidade tu : vinculos) {
+            StatusKanban status = tu.getStatusKanban() != null ? tu.getStatusKanban() : StatusKanban.A_FAZER;
+            TarefaResponseDto dto = TarefaMapper.toResponseDto(tu.getTarefa(), tu);
+            dto.setStatusKanban(status.getDescricao());
+            dto.setPossuiEvidencia(comEvidencia.contains(tu.getId()));
+            kanban.get(status.getDescricao()).add(dto);
+        }
+        return kanban;
+    }
 
-        for (TarefaResponseDto tarefa : all) {
-            // Tarefa sem vínculo não tem status e portanto não pertence a nenhuma coluna.
-            if (tarefa.getStatusKanban() == null) {
-                continue;
-            }
-            kanban.computeIfAbsent(tarefa.getStatusKanban(), chave -> new ArrayList<>()).add(tarefa);
+    /**
+     * Move a tarefa no Kanban da unidade do conselheiro. O conselheiro não conclui tarefas:
+     * "CONCLUIDA" só acontece quando a Diretoria aprova a evidência.
+     */
+    @Transactional
+    public TarefaResponseDto updateStatusDaUnidade(Integer idTarefa, Integer idUnidade, String statusStr) {
+        StatusKanban status = StatusKanban.fromString(statusStr);
+        if (status == null) {
+            throw new RequisicaoInvalidaException("Status inválido: " + statusStr);
+        }
+        if (idUnidade == null) {
+            throw new EntidadeNaoEncontradaException("Conselheiro sem unidade vinculada");
+        }
+        List<TarefaUnidade> candidatos = tarefaUnidadeRepository.findByTarefaIdAndUnidadeId(idTarefa, idUnidade);
+        TarefaUnidade tu = candidatos.stream()
+                .filter(v -> v.getCiclo() != null && Boolean.TRUE.equals(v.getCiclo().getAtivo()))
+                .findFirst()
+                .or(() -> candidatos.stream().max(java.util.Comparator.comparing(TarefaUnidade::getId)))
+                .orElseThrow(() -> new EntidadeNaoEncontradaException(
+                        "Tarefa " + idTarefa + " não está vinculada à sua unidade"));
+
+        if (status == StatusKanban.CONCLUIDA) {
+            throw new RequisicaoInvalidaException("Só a Diretoria conclui tarefas, ao aprovar a evidência");
+        }
+        if (tu.getStatusKanban() == StatusKanban.CONCLUIDA) {
+            throw new RequisicaoInvalidaException("Tarefa já concluída não pode voltar no quadro");
         }
 
-        return kanban;
+        tu.setStatusKanban(status);
+        tarefaUnidadeRepository.save(tu);
+        return TarefaMapper.toResponseDto(tu.getTarefa(), tu);
     }
 }
