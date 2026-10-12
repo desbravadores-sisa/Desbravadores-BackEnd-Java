@@ -40,6 +40,13 @@ public class ChecklistCadernoService {
     }
 
     @Transactional(readOnly = true)
+    public List<ChecklistCadernoResponseDto> findAllByClube(Integer idClube) {
+        return checklistCadernoRepository.findByExecucaoCadernoUnidadeClubeId(idClube).stream()
+                .map(ChecklistCadernoMapper::toResponseDto)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
     public ChecklistCadernoResponseDto findById(Integer id) {
         ChecklistCaderno checklist = checklistCadernoRepository.findById(id)
                 .orElseThrow(() -> new EntidadeNaoEncontradaException("Checklist não encontrado com ID: " + id));

@@ -8,6 +8,7 @@ import lombok.ToString;
 import java.time.LocalDateTime;
 
 @Entity
+@Table(name = "Convite")
 @Getter
 @Setter
 @ToString

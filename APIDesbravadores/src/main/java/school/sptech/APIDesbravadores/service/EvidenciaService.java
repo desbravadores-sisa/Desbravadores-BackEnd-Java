@@ -23,12 +23,63 @@ public class EvidenciaService {
     private final EvidenciaRepository evidenciaRepository;
     private final TarefaUnidadeRepository tarefaUnidadeRepository;
     private final NotificacaoService notificacaoService;
+    private final ArmazenamentoArquivoService armazenamento;
+    private final school.sptech.APIDesbravadores.repository.CicloRepository cicloRepository;
 
     public EvidenciaService(EvidenciaRepository evidenciaRepository, TarefaUnidadeRepository tarefaUnidadeRepository,
                             NotificacaoService notificacaoService) {
+        this(evidenciaRepository, tarefaUnidadeRepository, notificacaoService, null, null);
+    }
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public EvidenciaService(EvidenciaRepository evidenciaRepository, TarefaUnidadeRepository tarefaUnidadeRepository,
+                            NotificacaoService notificacaoService, ArmazenamentoArquivoService armazenamento,
+                            school.sptech.APIDesbravadores.repository.CicloRepository cicloRepository) {
         this.evidenciaRepository = evidenciaRepository;
         this.tarefaUnidadeRepository = tarefaUnidadeRepository;
         this.notificacaoService = notificacaoService;
+        this.armazenamento = armazenamento;
+        this.cicloRepository = cicloRepository;
+    }
+
+    /**
+     * Conselheiro envia a evidência (foto/PDF) de uma tarefa de CLUBE da sua unidade.
+     * O arquivo vai para a pasta de uploads e a tarefa passa para EM REVISAO (aguarda a Diretoria).
+     */
+    @Transactional
+    public EvidenciaResponseDto enviar(Integer idTarefa, org.springframework.web.multipart.MultipartFile arquivo,
+                                       String comentario, Integer idUnidade, Integer idClube) {
+        if (idUnidade == null) {
+            throw new EntidadeNaoEncontradaException("Conselheiro sem unidade vinculada");
+        }
+        Integer idCiclo = idClube == null ? null
+                : cicloRepository.findByClubeIdAndAtivoTrue(idClube).map(c -> c.getId()).orElse(null);
+        java.util.List<TarefaUnidade> candidatos = tarefaUnidadeRepository.findByTarefaIdAndUnidadeId(idTarefa, idUnidade);
+        TarefaUnidade tu = candidatos.stream()
+                .filter(v -> idCiclo != null && v.getCiclo() != null && idCiclo.equals(v.getCiclo().getId()))
+                .findFirst()
+                .or(() -> candidatos.stream().max(java.util.Comparator.comparing(TarefaUnidade::getId)))
+                .orElseThrow(() -> new EntidadeNaoEncontradaException("Tarefa " + idTarefa + " não está vinculada à sua unidade"));
+        if (tu.getTarefa() != null && "CADERNO".equalsIgnoreCase(tu.getTarefa().getTipoTarefa())) {
+            throw new RequisicaoInvalidaException("Tarefas de caderno usam o check-in das crianças, não envio de arquivo");
+        }
+        if (tu.getStatusKanban() == StatusKanban.CONCLUIDA) {
+            throw new RequisicaoInvalidaException("Tarefa já concluída");
+        }
+        if (tu.getStatusKanban() == StatusKanban.EM_REVISAO) {
+            throw new RequisicaoInvalidaException("Já existe evidência aguardando a Diretoria");
+        }
+        String url = armazenamento.salvar(arquivo, false);
+        Evidencia evidencia = new Evidencia();
+        evidencia.setUnidadeTarefa(tu);
+        evidencia.setUrlS3(url);
+        evidencia.setComentarioFeedback(comentario == null || comentario.isBlank() ? null : comentario.trim());
+        evidencia.setDataEnvio(LocalDateTime.now());
+        evidenciaRepository.save(evidencia);
+        tu.setStatusKanban(StatusKanban.EM_REVISAO);
+        tu.setDataConclusao(null);
+        tarefaUnidadeRepository.save(tu);
+        return EvidenciaMapper.toResponseDto(evidencia);
     }
 
     @Transactional(readOnly = true)
@@ -136,6 +187,18 @@ public class EvidenciaService {
         if (!evidenciaRepository.existsById(id)) {
             throw new EntidadeNaoEncontradaException("Evidência não encontrada com ID: " + id);
         }
+        Evidencia evidencia = evidenciaRepository.findById(id).orElseThrow();
+        String url = evidencia.getUrlS3();
+        TarefaUnidade vinculo = evidencia.getUnidadeTarefa();
         evidenciaRepository.deleteById(id);
+        // Sem a evidência, a tarefa não pode ficar presa em "Em revisão" (o conselheiro não a tira de lá).
+        if (vinculo != null && vinculo.getStatusKanban() == StatusKanban.EM_REVISAO
+                && evidenciaRepository.findByUnidadeTarefaIdIn(List.of(vinculo.getId())).isEmpty()) {
+            vinculo.setStatusKanban(StatusKanban.EM_ANDAMENTO);
+            tarefaUnidadeRepository.save(vinculo);
+        }
+        if (armazenamento != null) {
+            armazenamento.remover(url);
+        }
     }
 }

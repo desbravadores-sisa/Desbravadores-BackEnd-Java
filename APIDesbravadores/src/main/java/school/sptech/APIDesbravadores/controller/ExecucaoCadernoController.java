@@ -38,8 +38,10 @@ public class ExecucaoCadernoController {
     @Operation(summary = "Listar todas as execuções de caderno", description = "Retorna uma lista de todas as execuções cadastradas")
     @ApiResponse(responseCode = "200", description = "Lista de execuções retornada com sucesso")
     @ApiResponse(responseCode = "204", description = "Nenhuma execução encontrada")
-    public ResponseEntity<List<ExecucaoCadernoResponseDto>> findAll() {
-        List<ExecucaoCadernoResponseDto> response = execucaoCadernoService.findAll();
+    public ResponseEntity<List<ExecucaoCadernoResponseDto>> findAll(@org.springframework.security.core.annotation.AuthenticationPrincipal school.sptech.APIDesbravadores.dto.UsuarioDetalhesDto usuarioLogado) {
+        List<ExecucaoCadernoResponseDto> response = usuarioLogado != null && usuarioLogado.getIdClube() != null
+                ? execucaoCadernoService.findAllByClube(usuarioLogado.getIdClube())
+                : execucaoCadernoService.findAll();
         if (response.isEmpty()) {
             return ResponseEntity.status(204).build();
         }

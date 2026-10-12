@@ -20,4 +20,7 @@ public class DesbravadorResponseDto {
     private String genero;
     private LocalDateTime dataAdmissao;
     private Boolean ativo;
+
+    /** Cadernos vinculados (dataConclusao != null = concluído). */
+    private java.util.List<CadernoDoDesbravadorDto> cadernos;
 }

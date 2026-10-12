@@ -143,6 +143,7 @@ public class UsuarioService {
         dto.setIdClube(usuario.getClube() != null ? usuario.getClube().getId() : null);
         dto.setIdUnidade(usuario.getUnidade() != null ? usuario.getUnidade().getId() : null);
         dto.setTelefone(usuario.getTelefone());
+        dto.setFotoUrl(usuario.getFotoUrl());
         return dto;
     }
 
@@ -170,5 +171,28 @@ public class UsuarioService {
         }
         usuario.setSenha(passwordEncoder.encode(dto.getNovaSenha()));
         usuarioRepository.save(usuario);
+    }
+
+    /** Troca a foto de perfil (arquivo na pasta de uploads; o banco guarda só o caminho). */
+    @Transactional
+    public UsuarioResponseDto atualizarFoto(String emailLogado, org.springframework.web.multipart.MultipartFile arquivo,
+                                            ArmazenamentoArquivoService armazenamento) {
+        Usuario usuario = usuarioRepository.findByEmail(emailLogado)
+                .orElseThrow(() -> new EntidadeNaoEncontradaException("Usuário não encontrado"));
+        String anterior = usuario.getFotoUrl();
+        usuario.setFotoUrl(armazenamento.salvar(arquivo, true));
+        usuarioRepository.save(usuario);
+        armazenamento.remover(anterior);
+        return buscarPerfil(emailLogado);
+    }
+
+    @Transactional
+    public UsuarioResponseDto removerFoto(String emailLogado, ArmazenamentoArquivoService armazenamento) {
+        Usuario usuario = usuarioRepository.findByEmail(emailLogado)
+                .orElseThrow(() -> new EntidadeNaoEncontradaException("Usuário não encontrado"));
+        armazenamento.remover(usuario.getFotoUrl());
+        usuario.setFotoUrl(null);
+        usuarioRepository.save(usuario);
+        return buscarPerfil(emailLogado);
     }
 }

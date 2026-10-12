@@ -47,12 +47,10 @@ public class ConviteService {
     }
 
     public List<Convite> listarConvites(Integer idClube){
-        System.out.println("IdClube na Service:" + idClube);
         if (!clubeRepository.existsById(idClube)){
             throw  new ClubeNãoEncontradoException();
         }
         List<Convite> convites = conviteRepository.findByClubeId(idClube);
-        System.out.println(convites);
         return convites;
     }
 

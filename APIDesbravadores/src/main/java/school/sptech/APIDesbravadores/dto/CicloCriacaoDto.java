@@ -18,7 +18,7 @@ public class CicloCriacaoDto {
     @Size(max = 100)
     private String nome;
 
-    @NotNull
+    /** Ignorado quando há usuário logado: o clube vem do token. */
     private Integer idClube;
 
     private LocalDate dataInicio;

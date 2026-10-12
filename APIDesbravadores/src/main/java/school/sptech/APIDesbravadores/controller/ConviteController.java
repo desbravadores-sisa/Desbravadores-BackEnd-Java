@@ -26,7 +26,6 @@ public class ConviteController {
     @PreAuthorize("hasRole('DIRETORIA')")
     public ResponseEntity<List<ConviteResponseDto>> listarUnidades(@AuthenticationPrincipal UsuarioDetalhesDto usuariologado){
         Integer idClube = usuariologado.getIdClube();
-        System.out.println("IdClube na Controller" + idClube);
         return ResponseEntity.ok(conviteService.listarConvites(idClube).stream().map((item) -> ConviteMapper.toResponse(item)).toList());
     }
 

@@ -81,4 +81,22 @@ public class EvidenciaController {
         evidenciaService.delete(id);
         return ResponseEntity.status(204).build();
     }
+
+    @PostMapping(value = "/envio", consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('CONSELHEIRO')")
+    @Operation(summary = "Enviar evidência (arquivo) de uma tarefa de clube",
+            description = "Conselheiro envia foto (JPG/PNG/WEBP) ou PDF de até 5 MB; a tarefa vai para EM REVISAO")
+    @ApiResponse(responseCode = "201", description = "Evidência enviada")
+    @ApiResponse(responseCode = "400", description = "Arquivo inválido, tarefa de caderno ou já em revisão")
+    public ResponseEntity<EvidenciaResponseDto> enviar(
+            @RequestParam Integer idTarefa,
+            @RequestParam("arquivo") org.springframework.web.multipart.MultipartFile arquivo,
+            @RequestParam(required = false) String comentario,
+            @AuthenticationPrincipal UsuarioDetalhesDto usuarioLogado) {
+        if (usuarioLogado == null) {
+            return ResponseEntity.status(401).build();
+        }
+        return ResponseEntity.status(201).body(evidenciaService.enviar(idTarefa, arquivo, comentario,
+                usuarioLogado.getIdUnidade(), usuarioLogado.getIdClube()));
+    }
 }

@@ -29,6 +29,9 @@ public class UnidadeService {
     private final UsuarioRepository usuarioRepository;
     private final ResumoUnidadeViewRepository resumoUnidadeViewRepository;
 
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private school.sptech.APIDesbravadores.repository.PenalidadeRepository penalidadeRepository;
+
     public UnidadeService(UnidadeRepository unidadeRepository, ClubeRepository clubeRepository, UsuarioRepository usuarioRepository, ResumoUnidadeViewRepository resumoUnidadeViewRepository) {
         this.unidadeRepository = unidadeRepository;
         this.clubeRepository = clubeRepository;
@@ -120,6 +123,9 @@ public class UnidadeService {
     public void deletarUnidade(Integer idUnidade){
         if (!unidadeRepository.existsById(idUnidade)){
             throw new UnidadeNãoEncontradaException();
+        }
+        if (penalidadeRepository != null) {
+            penalidadeRepository.deleteByUnidadeId(idUnidade);
         }
         List<Usuario> usuarios = usuarioRepository.findByUnidadeId(idUnidade);
         for (Usuario usuario : usuarios) {

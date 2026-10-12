@@ -10,4 +10,6 @@ import java.util.List;
 public interface TarefaRepository extends JpaRepository<Tarefa, Integer> {
 
     List<Tarefa> findByClubeId(Integer idClube);
+
+    List<Tarefa> findByCadernoIdAndTipoTarefa(Integer idCaderno, String tipoTarefa);
 }

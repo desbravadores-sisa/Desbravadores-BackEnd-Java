@@ -47,6 +47,13 @@ public class ExecucaoCadernoService {
     }
 
     @Transactional(readOnly = true)
+    public List<ExecucaoCadernoResponseDto> findAllByClube(Integer idClube) {
+        return execucaoCadernoRepository.findByUnidadeClubeId(idClube).stream()
+                .map(ExecucaoCadernoMapper::toResponseDto)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
     public ExecucaoCadernoResponseDto findById(Integer id) {
         ExecucaoCaderno execucao = execucaoCadernoRepository.findById(id)
                 .orElseThrow(() -> new EntidadeNaoEncontradaException("Execução de caderno não encontrada com ID: " + id));

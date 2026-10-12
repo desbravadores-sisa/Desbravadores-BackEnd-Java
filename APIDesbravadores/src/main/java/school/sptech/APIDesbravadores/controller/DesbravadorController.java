@@ -30,7 +30,11 @@ public class DesbravadorController {
     @ApiResponse(responseCode = "201", description = "Desbravador criado com sucesso")
     @ApiResponse(responseCode = "400", description = "Dados de entrada inválidos")
     @ApiResponse(responseCode = "404", description = "Clube ou unidade não encontrados")
-    public ResponseEntity<DesbravadorResponseDto> create(@RequestBody @Valid DesbravadorCriacaoDto dto) {
+    public ResponseEntity<DesbravadorResponseDto> create(@RequestBody @Valid DesbravadorCriacaoDto dto,
+                                                         @org.springframework.security.core.annotation.AuthenticationPrincipal school.sptech.APIDesbravadores.dto.UsuarioDetalhesDto usuarioLogado) {
+        if (usuarioLogado != null && usuarioLogado.getIdClube() != null) {
+            dto.setIdClube(usuarioLogado.getIdClube());
+        }
         DesbravadorResponseDto response = desbravadorService.create(dto);
         return ResponseEntity.status(201).body(response);
     }
@@ -41,7 +45,11 @@ public class DesbravadorController {
     @ApiResponse(responseCode = "204", description = "Nenhum desbravador encontrado")
     public ResponseEntity<List<DesbravadorResponseDto>> findAll(
             @Parameter(description = "ID do clube para filtrar os desbravadores", example = "1")
-            @RequestParam(required = false) Integer idClube) {
+            @RequestParam(required = false) Integer idClube,
+            @org.springframework.security.core.annotation.AuthenticationPrincipal school.sptech.APIDesbravadores.dto.UsuarioDetalhesDto usuarioLogado) {
+        if (usuarioLogado != null && usuarioLogado.getIdClube() != null) {
+            idClube = usuarioLogado.getIdClube();
+        }
         List<DesbravadorResponseDto> response = desbravadorService.findAll(idClube);
         if (response.isEmpty()) {
             return ResponseEntity.status(204).build();
@@ -66,7 +74,11 @@ public class DesbravadorController {
     @ApiResponse(responseCode = "400", description = "Dados de entrada inválidos")
     public ResponseEntity<DesbravadorResponseDto> update(
             @Parameter(description = "ID do desbravador a ser atualizado", example = "1") @PathVariable Integer id,
-            @RequestBody @Valid DesbravadorAtualizacaoDto dto) {
+            @RequestBody @Valid DesbravadorAtualizacaoDto dto,
+            @org.springframework.security.core.annotation.AuthenticationPrincipal school.sptech.APIDesbravadores.dto.UsuarioDetalhesDto usuarioLogado) {
+        if (usuarioLogado != null && usuarioLogado.getIdClube() != null) {
+            dto.setIdClube(usuarioLogado.getIdClube());
+        }
         DesbravadorResponseDto response = desbravadorService.update(id, dto);
         return ResponseEntity.status(200).body(response);
     }

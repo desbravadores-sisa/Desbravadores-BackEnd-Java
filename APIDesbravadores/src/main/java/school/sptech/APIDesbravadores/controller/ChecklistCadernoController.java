@@ -38,8 +38,10 @@ public class ChecklistCadernoController {
     @Operation(summary = "Listar todos os checklists", description = "Retorna uma lista de todos os checklists cadastrados")
     @ApiResponse(responseCode = "200", description = "Lista de checklists retornada com sucesso")
     @ApiResponse(responseCode = "204", description = "Nenhum checklist encontrado")
-    public ResponseEntity<List<ChecklistCadernoResponseDto>> findAll() {
-        List<ChecklistCadernoResponseDto> response = checklistCadernoService.findAll();
+    public ResponseEntity<List<ChecklistCadernoResponseDto>> findAll(@org.springframework.security.core.annotation.AuthenticationPrincipal school.sptech.APIDesbravadores.dto.UsuarioDetalhesDto usuarioLogado) {
+        List<ChecklistCadernoResponseDto> response = usuarioLogado != null && usuarioLogado.getIdClube() != null
+                ? checklistCadernoService.findAllByClube(usuarioLogado.getIdClube())
+                : checklistCadernoService.findAll();
         if (response.isEmpty()) {
             return ResponseEntity.status(204).build();
         }

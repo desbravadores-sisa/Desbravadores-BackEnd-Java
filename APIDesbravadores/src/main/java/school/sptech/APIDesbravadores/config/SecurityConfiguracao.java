@@ -42,7 +42,6 @@ public class  SecurityConfiguracao {
             "/swagger-ui/**",
             "/v3/api-docs/**",
             "/usuarios/login",
-            "/tarefas/**",
             "/usuarios/login/**",
             "/h2-console/**",
             "/error/**",
@@ -57,16 +56,6 @@ public class  SecurityConfiguracao {
                 .csrf(CsrfConfigurer<HttpSecurity>::disable)
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/tarefas/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/tarefas-unidades/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/clubes/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/perfis/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/desbravadores/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/cadernos/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/ciclos/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/evidencias/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/checklists-caderno/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/execucoes-caderno/**").permitAll()
                         .requestMatchers(URLS_PERMITIDAS).permitAll()
                         .anyRequest().authenticated()
                 )

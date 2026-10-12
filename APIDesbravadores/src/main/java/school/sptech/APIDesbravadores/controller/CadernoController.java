@@ -44,7 +44,11 @@ public class CadernoController {
     @ApiResponse(responseCode = "204", description = "Nenhum caderno encontrado")
     public ResponseEntity<List<CadernoResponseDto>> findAll(
             @Parameter(description = "ID do clube para filtrar os cadernos", example = "1")
-            @RequestParam(required = false) Integer idClube) {
+            @RequestParam(required = false) Integer idClube,
+            @org.springframework.security.core.annotation.AuthenticationPrincipal school.sptech.APIDesbravadores.dto.UsuarioDetalhesDto usuarioLogado) {
+        if (usuarioLogado != null && usuarioLogado.getIdClube() != null) {
+            idClube = usuarioLogado.getIdClube();
+        }
         List<CadernoResponseDto> response = cadernoService.findAll(idClube);
         if (response.isEmpty()) {
             return ResponseEntity.status(204).build();

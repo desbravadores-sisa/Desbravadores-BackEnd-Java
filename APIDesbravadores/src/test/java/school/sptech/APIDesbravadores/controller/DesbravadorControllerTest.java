@@ -150,7 +150,7 @@ class DesbravadorControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("Dados de entrada inválidos"))
                 .andExpect(jsonPath("$.campos.nome").exists())
-                .andExpect(jsonPath("$.campos.idClube").exists())
+                .andExpect(jsonPath("$.campos.idClube").doesNotExist())
                 .andExpect(jsonPath("$.campos.idUnidade").exists());
     }
 

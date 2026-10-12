@@ -12,6 +12,18 @@ API REST (Java 21 + Spring Boot 4) do sistema de gestão do Clube de Desbravador
 
 ---
 
+## Novidades de 12/10/2026 (pendências do protótipo)
+
+- **Vínculo explícito desbravador ↔ caderno** (tabela `Desbravador_Caderno`, migração 003 do banco): a Diretoria vincula e desvincula em "Ver Caderno"; `data_conclusao` guarda o histórico de cadernos concluídos (preenchida sozinha quando a criança cumpre todos os requisitos).
+- **Check-in do conselheiro** nas tarefas de caderno: marcar parte das crianças → `EM ANDAMENTO`; marcar todas → `EM REVISAO` com pendência para a Diretoria (`url_s3 = "checkin:caderno"`); desmarcar desfaz. A visibilidade das tarefas de caderno no Kanban e no dashboard passa a seguir o vínculo, não mais a idade.
+- **Kanban:** o conselheiro não arrasta para `EM REVISAO` nem tira de lá (só por evidência/check-in); excluir a evidência pendente devolve a tarefa para `EM ANDAMENTO`.
+- **Envio de evidência com arquivo** (`POST /evidencias/envio`, multipart) e **foto de perfil** (`PUT/DELETE /usuarios/perfil/foto`). Arquivos (JPG/PNG/WEBP/PDF, até 5 MB, assinatura conferida) ficam na pasta `APP_UPLOADS_DIR`, servidos por `GET /arquivos/{nome}` só para usuários logados; o banco guarda só o caminho.
+- **Descontos reais** (tabela `Penalidade`): `GET/POST /unidades/{id}/penalidades`, `DELETE /penalidades/{id}`; entram no ranking (`vw_resumo_unidades`) e no dashboard, e notificam o conselheiro.
+- **Novo ciclo:** criar um ciclo ativo encerra o anterior e aplica o período a todos os cadernos do clube.
+- **Tela "Desbravadores" do conselheiro:** `GET /desbravadores/minha-unidade` e `GET /desbravadores/{id}/requisitos`.
+- **Segurança e deploy:** removidos os `System.out.println` que gravavam senha/token no log; `GET`s anônimos fechados e filtrados pelo clube do usuário; `idClube` sai do corpo de ciclos e desbravadores; `@Table` com a capitalização do schema + `NomeTabelaExatoNamingStrategy` (roda em MySQL Linux **sem** `lower_case_table_names`, validado).
+- **122 testes** (`./mvnw.cmd test`) e E2E 41/41 + 10/10 + 20/20 + 53/53 (`_validacao/` na pasta raiz).
+
 ## Em que pé estamos (11/10/2026)
 
 A branch **`consolidacao/sprint-final`** é a versão consolidada e integrada ao frontend. Ela foi criada a partir de `feature/endpoints-domains`; a `main` local antiga tinha um merge com 43 conflitos e não compilava. A `main` recebe essa versão via Pull Request.
@@ -32,13 +44,10 @@ O que foi entregue nesta etapa:
 
 | Tema | Situação |
 |---|---|
-| Conselheiro | ✅ Kanban da unidade (`GET /tarefas/kanban`) e mudança de status no vínculo da unidade do conselheiro. Faltam o check-in com transição automática e o upload de evidência |
-| Check-in de caderno | Existe CRUD de `/execucoes-caderno` e `/checklists-caderno`, mas **não** há a transição automática Em andamento ↔ Em revisão prevista no protótipo |
-| Evidência (envio) | `POST /evidencias` exige `urlS3`; não há upload nem armazenamento de arquivos |
-| Dashboard da unidade | ✅ `GET /unidades/{id}/dashboard`. "Desconto" é calculado como pontos previstos não obtidos (prazo vencido ou nota abaixo da prevista); o time precisa confirmar essa definição |
-| Logs | Há 10 `System.out.println` de depuração (`AutenticacaoProvider`, `AutenticacaoService`, `ConviteController`, `ConviteService`, `UnidadeController`); alguns imprimem entidades `Usuario` inteiras, **com o hash da senha**, e convites com o token |
-| Segurança | `GET` em `/tarefas/**`, `/evidencias/**`, `/cadernos/**`, `/clubes/**` etc. é liberado sem login; sem sessão, os dados de todos os clubes ficam visíveis |
-| Nomes de tabela | O schema usa `Usuario`, `Convite`…, enquanto o Hibernate consulta em minúsculas. Funciona apenas em MySQL que não diferencia maiúsculas (Windows ou `lower_case_table_names=1`) |
+| Conselheiro | ✅ Kanban, check-in, envio de evidência e tela Desbravadores (12/10) |
+| Novo ciclo | ✅ encerra o anterior e aplica o período aos cadernos. As tarefas **não** são copiadas para o ciclo novo: a Diretoria cria/distribui de novo (decisão do time pendente) |
+| Arquivos | Pasta local (`APP_UPLOADS_DIR`). Em produção, monte um volume Docker nela; sem volume, os arquivos somem ao recriar o container |
+| Logs / segurança / nomes de tabela | ✅ resolvidos em 12/10 (ver "Novidades") |
 
 ---
 
@@ -51,14 +60,17 @@ DB_URL=jdbc:mysql://localhost:3306/clube_desbravadores
 DB_USER=...
 DB_PASSWORD=...
 JWT_SECRET=...   # precisa ser Base64 (ex.: 64 bytes aleatórios); com caracteres fora de Base64 o login retorna 500
+APP_UPLOADS_DIR=/uploads   # opcional (padrão: ./uploads); evidências e fotos de perfil
 ```
+
+Em Docker, persista os arquivos com um volume: `docker run ... -e APP_UPLOADS_DIR=/uploads -v desbrav-uploads:/uploads ...` (na EC2 o volume fica no disco da máquina).
 
 ```powershell
 cd APIDesbravadores
 Copy-Item .env.example .env   # e preencha os valores
 ```
 
-- `spring.jpa.hibernate.ddl-auto=none`: o schema vem **só** do repositório de banco. Antes de subir esta versão num banco existente, aplique as migrações 001 e 002 de lá.
+- `spring.jpa.hibernate.ddl-auto=none`: o schema vem **só** do repositório de banco. Antes de subir esta versão num banco existente, aplique as migrações 001, 002 e 003 de lá e reexecute `SQL - Views.sql`.
 - Nunca versione `.env`, senhas ou dumps.
 
 ## Como executar
@@ -73,15 +85,17 @@ cd APIDesbravadores
 - CORS liberado para `http://localhost:5173` e `5174` (Vite)
 - Autenticação: o `POST /usuarios/login` devolve o JWT no cookie httpOnly `authToken`; o header `Authorization: Bearer` também é aceito
 
-## Endpoints (70)
+## Endpoints
 
 | Recurso | Endpoints |
 |---|---|
-| Usuários | `POST /usuarios/cadastro` · `POST /usuarios/login` · `POST /usuarios/logoff` · `GET/PUT /usuarios/perfil` · `PUT /usuarios/senha` · `GET /usuarios/painel-diretoria` |
+| Usuários | `POST /usuarios/cadastro` · `POST /usuarios/login` · `POST /usuarios/logoff` · `GET/PUT /usuarios/perfil` · `PUT/DELETE /usuarios/perfil/foto` · `PUT /usuarios/senha` · `GET /usuarios/painel-diretoria` |
 | Unidades | `GET /unidades/diretor` · `GET /unidades/{idUnidade}/dashboard` · `GET /unidades/conselheiro` · `POST /unidades` · `PUT /unidades` · `DELETE /unidades/{idUnidade}` |
 | Tarefas | `GET/POST /tarefas` · `GET/PUT/DELETE /tarefas/{id}` · `PATCH /tarefas/{id}/status` · `GET /tarefas/kanban` |
 | Tarefas × Unidades | `GET /tarefas-unidades/{idTarefa}` · `PUT /tarefas-unidades/{idTarefa}/status` |
-| Evidências | `GET/POST /evidencias` · `GET/PUT/DELETE /evidencias/{id}` |
+| Evidências | `GET/POST /evidencias` · `POST /evidencias/envio` (multipart, conselheiro) · `GET/PUT/DELETE /evidencias/{id}` · `GET /arquivos/{nome}` |
+| Vínculo e check-in de caderno | `GET/POST /cadernos/{id}/desbravadores` · `GET /cadernos/{id}/desbravadores/elegiveis` · `DELETE /cadernos/{id}/desbravadores/{idDesbravador}` · `GET /tarefas/{id}/checkin` · `PUT /tarefas/{id}/checkin/{idDesbravador}` · `GET /desbravadores/minha-unidade` · `GET /desbravadores/{id}/requisitos` |
+| Descontos | `GET/POST /unidades/{id}/penalidades` · `DELETE /penalidades/{id}` |
 | Convites | `GET/POST /convites` · `PUT/DELETE /convites/{id}` · `GET /convites/validar` |
 | Notificações | `GET /notificacoes` · `PATCH /notificacoes/{id}/lida` · `PATCH /notificacoes/lidas` |
 | Cadernos | `GET/POST /cadernos` · `GET/PUT/DELETE /cadernos/{id}` · `GET /cadernos/resumo` |
@@ -108,12 +122,8 @@ cd APIDesbravadores
 
 ## Próximos passos (backend)
 
-1. **PR `consolidacao/sprint-final` → `main`**, depois do PR do banco (migrações 001 e 002).
-2. **Decidir os nomes das tabelas:** padronizar `@Table(name = "...")` com a capitalização do schema, ou configurar o servidor para não diferenciar maiúsculas (necessário para deploy em Linux).
-3. **Remover os `System.out.println` de depuração** (vazam o hash da senha e o token do convite no log) e usar um logger sem dados sensíveis.
-4. **Fechar os `GET` anônimos** em `SecurityConfiguracao` (exigir autenticação e filtrar por clube).
-5. **Conselheiro:** ~~Kanban da unidade~~ ✅. Faltam o check-in (Em andamento ↔ Em revisão automático) e o upload da evidência.
-6. **Check-in:** implementar a transição automática para `EM REVISAO` quando todas as crianças elegíveis estiverem marcadas, e o retorno a `EM ANDAMENTO` ao desmarcar.
-7. **Ciclo global:** um endpoint para aplicar o novo ciclo a todos os cadernos do clube (`Caderno.id_ciclo`), como no protótipo.
-8. **Dashboard da unidade:** ✅ feito. Falta só o time confirmar a definição de "desconto" ou pedir uma tabela de penalidades.
-9. **Upload de evidências e da foto de perfil** (armazenamento S3 ou local).
+1. **PR `consolidacao/sprint-final` → `main`**, depois do PR do banco (migrações 001, 002 e 003).
+2. ~~Nomes de tabela, logs com senha, GETs anônimos, conselheiro (check-in/upload), ciclo global, descontos, uploads~~ ✅ 12/10.
+3. **Novo ciclo × tarefas:** definir se as tarefas abertas são copiadas para o ciclo novo (hoje não são).
+4. **Deploy:** Dockerfile da API com o volume de uploads; trocar o `ddl-auto=none` por migrações versionadas (Flyway) se o time quiser.
+5. Testes de controller para os endpoints novos (hoje cobertos por testes de serviço e pelo E2E).

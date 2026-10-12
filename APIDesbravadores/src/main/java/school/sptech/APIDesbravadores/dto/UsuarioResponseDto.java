@@ -28,4 +28,6 @@ public class UsuarioResponseDto {
 
     @Schema(description = "Telefone", example = "(11) 99999-0000")
     private String telefone;
+
+    private String fotoUrl;
 }

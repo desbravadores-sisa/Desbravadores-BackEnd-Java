@@ -22,19 +22,36 @@ public class DesbravadorService {
     private final DesbravadorRepository desbravadorRepository;
     private final ClubeRepository clubeRepository;
     private final UnidadeRepository unidadeRepository;
+    private final school.sptech.APIDesbravadores.repository.DesbravadorCadernoRepository vinculoRepository;
+    private final school.sptech.APIDesbravadores.repository.ChecklistCadernoRepository checklistRepository;
+    private final AcompanhamentoCadernoService acompanhamento;
 
     public DesbravadorService(DesbravadorRepository desbravadorRepository,
                               ClubeRepository clubeRepository,
                               UnidadeRepository unidadeRepository) {
+        this(desbravadorRepository, clubeRepository, unidadeRepository, null, null, null);
+    }
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public DesbravadorService(DesbravadorRepository desbravadorRepository,
+                              ClubeRepository clubeRepository,
+                              UnidadeRepository unidadeRepository,
+                              school.sptech.APIDesbravadores.repository.DesbravadorCadernoRepository vinculoRepository,
+                              school.sptech.APIDesbravadores.repository.ChecklistCadernoRepository checklistRepository,
+                              AcompanhamentoCadernoService acompanhamento) {
         this.desbravadorRepository = desbravadorRepository;
         this.clubeRepository = clubeRepository;
         this.unidadeRepository = unidadeRepository;
+        this.vinculoRepository = vinculoRepository;
+        this.checklistRepository = checklistRepository;
+        this.acompanhamento = acompanhamento;
     }
 
     @Transactional
     public DesbravadorResponseDto create(DesbravadorCriacaoDto dto) {
         Clube clube = buscarClube(dto.getIdClube());
         Unidade unidade = buscarUnidade(dto.getIdUnidade());
+        exigirMesmoClube(unidade, clube);
         Desbravador desbravador = DesbravadorMapper.toEntity(dto, clube, unidade);
         return DesbravadorMapper.toResponse(desbravadorRepository.save(desbravador));
     }
@@ -44,7 +61,13 @@ public class DesbravadorService {
         List<Desbravador> desbravadores = idClube != null
                 ? desbravadorRepository.findByClubeId(idClube)
                 : desbravadorRepository.findAll();
-        return DesbravadorMapper.toResponse(desbravadores);
+        List<DesbravadorResponseDto> lista = DesbravadorMapper.toResponse(desbravadores);
+        if (acompanhamento != null && !lista.isEmpty()) {
+            java.util.Map<Integer, List<school.sptech.APIDesbravadores.dto.CadernoDoDesbravadorDto>> cadernos =
+                    acompanhamento.cadernosPorDesbravador(lista.stream().map(DesbravadorResponseDto::getId).toList());
+            lista.forEach(d -> d.setCadernos(cadernos.getOrDefault(d.getId(), List.of())));
+        }
+        return lista;
     }
 
     @Transactional(readOnly = true)
@@ -77,12 +100,25 @@ public class DesbravadorService {
         if (!desbravadorRepository.existsById(id)) {
             throw new EntidadeNaoEncontradaException("Desbravador não encontrado com ID: " + id);
         }
+        // Remove o que referencia o desbravador (check-ins e vínculos com cadernos) antes de apagá-lo.
+        if (checklistRepository != null) {
+            checklistRepository.deleteByDesbravadorId(id);
+        }
+        if (vinculoRepository != null) {
+            vinculoRepository.deleteByDesbravadorId(id);
+        }
         desbravadorRepository.deleteById(id);
     }
 
     private Clube buscarClube(Integer idClube) {
         return clubeRepository.findById(idClube)
                 .orElseThrow(() -> new EntidadeNaoEncontradaException("Clube não encontrado com ID: " + idClube));
+    }
+
+    private static void exigirMesmoClube(Unidade unidade, Clube clube) {
+        if (unidade.getClube() != null && !unidade.getClube().getId().equals(clube.getId())) {
+            throw new EntidadeNaoEncontradaException("Unidade não encontrada com ID: " + unidade.getId());
+        }
     }
 
     private Unidade buscarUnidade(Integer idUnidade) {

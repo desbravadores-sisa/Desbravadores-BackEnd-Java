@@ -6,6 +6,7 @@ import lombok.Setter;
 import lombok.ToString;
 
 @Entity
+@Table(name = "Usuario")
 @Getter
 @Setter
 @ToString
@@ -23,6 +24,9 @@ public class Usuario {
     private String senha;
 
     private String telefone;
+
+    @Column(name = "foto_url")
+    private String fotoUrl;
 
     private Boolean ativo;
 

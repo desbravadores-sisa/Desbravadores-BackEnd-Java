@@ -51,7 +51,7 @@ class CicloControllerTest {
         request.setDataFim(LocalDate.of(2026, 11, 30));
         request.setAtivo(true);
 
-        when(cicloService.create(any(CicloCriacaoDto.class))).thenReturn(cicloResponse());
+        when(cicloService.create(any(CicloCriacaoDto.class), any())).thenReturn(cicloResponse());
 
         mockMvc.perform(post("/ciclos")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -110,7 +110,7 @@ class CicloControllerTest {
         CicloResponseDto response = cicloResponse();
         response.setNome("Ciclo 2026 Atualizado");
         response.setAtivo(false);
-        when(cicloService.update(eq(1), any(CicloAtualizacaoDto.class))).thenReturn(response);
+        when(cicloService.update(eq(1), any(CicloAtualizacaoDto.class), any())).thenReturn(response);
 
         mockMvc.perform(put("/ciclos/{id}", 1)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -149,7 +149,8 @@ class CicloControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("Dados de entrada inválidos"))
                 .andExpect(jsonPath("$.campos.nome").exists())
-                .andExpect(jsonPath("$.campos.idClube").exists());
+                // idClube não é mais obrigatório: vem do usuário logado
+                .andExpect(jsonPath("$.campos.idClube").doesNotExist());
     }
 
     private CicloResponseDto cicloResponse() {

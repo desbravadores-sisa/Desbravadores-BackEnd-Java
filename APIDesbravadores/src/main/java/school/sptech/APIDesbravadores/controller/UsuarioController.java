@@ -35,6 +35,10 @@ public class UsuarioController {
     // O cookie precisa morrer junto com o token, senão o usuário parece logado e toma 401.
     private final long jwtValidity;
 
+    // Opcional para os testes @WebMvcTest, que não carregam serviços.
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private school.sptech.APIDesbravadores.service.ArmazenamentoArquivoService armazenamento;
+
     public UsuarioController(UsuarioService usuarioService, @Value("${jwt.validity}") long jwtValidity) {
         this.usuarioService = usuarioService;
         this.jwtValidity = jwtValidity;
@@ -148,5 +152,25 @@ public class UsuarioController {
         }
         usuarioService.alterarSenha(usuarioLogado.getEmail(), dto);
         return ResponseEntity.ok().build();
+    }
+
+    @PutMapping(value = "/perfil/foto", consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Enviar foto de perfil", description = "Imagem JPG, PNG ou WEBP de até 5 MB")
+    public ResponseEntity<UsuarioResponseDto> enviarFoto(
+            @AuthenticationPrincipal UsuarioDetalhesDto usuarioLogado,
+            @RequestParam("arquivo") org.springframework.web.multipart.MultipartFile arquivo) {
+        if (usuarioLogado == null) {
+            return ResponseEntity.status(401).build();
+        }
+        return ResponseEntity.ok(usuarioService.atualizarFoto(usuarioLogado.getEmail(), arquivo, armazenamento));
+    }
+
+    @DeleteMapping("/perfil/foto")
+    @Operation(summary = "Remover foto de perfil")
+    public ResponseEntity<UsuarioResponseDto> removerFoto(@AuthenticationPrincipal UsuarioDetalhesDto usuarioLogado) {
+        if (usuarioLogado == null) {
+            return ResponseEntity.status(401).build();
+        }
+        return ResponseEntity.ok(usuarioService.removerFoto(usuarioLogado.getEmail(), armazenamento));
     }
 }

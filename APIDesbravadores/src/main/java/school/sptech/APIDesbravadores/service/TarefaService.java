@@ -17,7 +17,6 @@ import school.sptech.APIDesbravadores.exception.RequisicaoInvalidaException;
 import school.sptech.APIDesbravadores.mapper.TarefaMapper;
 import school.sptech.APIDesbravadores.repository.CadernoRepository;
 import school.sptech.APIDesbravadores.repository.CicloRepository;
-import school.sptech.APIDesbravadores.repository.DesbravadorRepository;
 import school.sptech.APIDesbravadores.repository.EvidenciaRepository;
 import school.sptech.APIDesbravadores.repository.ClubeRepository;
 import school.sptech.APIDesbravadores.repository.TarefaRepository;
@@ -40,7 +39,7 @@ public class TarefaService {
     private final UnidadeRepository unidadeRepository;
     private final CicloRepository cicloRepository;
     private final CadernoRepository cadernoRepository;
-    private final DesbravadorRepository desbravadorRepository;
+    private final school.sptech.APIDesbravadores.repository.DesbravadorCadernoRepository vinculoRepository;
     private final EvidenciaRepository evidenciaRepository;
 
     public TarefaService(TarefaRepository tarefaRepository, TarefaUnidadeRepository tarefaUnidadeRepository,
@@ -54,8 +53,9 @@ public class TarefaService {
     public TarefaService(TarefaRepository tarefaRepository, TarefaUnidadeRepository tarefaUnidadeRepository,
                           ClubeRepository clubeRepository, UnidadeRepository unidadeRepository,
                           CicloRepository cicloRepository, CadernoRepository cadernoRepository,
-                          DesbravadorRepository desbravadorRepository, EvidenciaRepository evidenciaRepository) {
-        this.desbravadorRepository = desbravadorRepository;
+                          school.sptech.APIDesbravadores.repository.DesbravadorCadernoRepository vinculoRepository,
+                          EvidenciaRepository evidenciaRepository) {
+        this.vinculoRepository = vinculoRepository;
         this.evidenciaRepository = evidenciaRepository;
         this.tarefaRepository = tarefaRepository;
         this.tarefaUnidadeRepository = tarefaUnidadeRepository;
@@ -189,19 +189,15 @@ public class TarefaService {
         }
         Integer idCicloAtivo = idClube == null ? null
                 : cicloRepository.findByClubeIdAndAtivoTrue(idClube).map(c -> c.getId()).orElse(null);
-        java.time.LocalDate hoje = java.time.LocalDate.now();
-        java.util.Set<Integer> idades = desbravadorRepository == null ? java.util.Set.of()
-                : RegraVisibilidadeCaderno.idadesDaUnidade(desbravadorRepository.findByUnidadeId(idUnidade), hoje);
-        Map<Integer, school.sptech.APIDesbravadores.domain.Caderno> cadernos = idClube == null ? Map.of()
-                : cadernoRepository.findByClubeId(idClube).stream()
-                .collect(Collectors.toMap(c -> c.getId(), Function.identity(), (a, b) -> a));
+        java.util.Set<Integer> cadernosDaUnidade = vinculoRepository == null ? java.util.Set.of()
+                : RegraVisibilidadeCaderno.cadernosEmAndamento(vinculoRepository.findByDesbravadorUnidadeId(idUnidade));
 
         List<TarefaUnidade> vinculos = tarefaUnidadeRepository.findByUnidadeId(idUnidade).stream()
                 .filter(tu -> tu.getTarefa() != null)
                 .filter(tu -> idCicloAtivo == null || (tu.getCiclo() != null && idCicloAtivo.equals(tu.getCiclo().getId())))
                 // Concluídas sempre aparecem (são pontos já conquistados); a regra de idade vale para as abertas.
                 .filter(tu -> tu.getStatusKanban() == StatusKanban.CONCLUIDA
-                        || RegraVisibilidadeCaderno.visivel(tu.getTarefa(), cadernos, idades))
+                        || RegraVisibilidadeCaderno.visivel(tu.getTarefa(), cadernosDaUnidade))
                 .sorted(java.util.Comparator.comparing(
                         (TarefaUnidade tu) -> tu.getPrazoEntrega() != null ? tu.getPrazoEntrega().toLocalDate() : tu.getTarefa().getPrazoPadrao(),
                         java.util.Comparator.nullsLast(java.util.Comparator.naturalOrder())).thenComparing(TarefaUnidade::getId))
@@ -252,6 +248,15 @@ public class TarefaService {
         }
         if (tu.getStatusKanban() == StatusKanban.CONCLUIDA) {
             throw new RequisicaoInvalidaException("Tarefa já concluída não pode voltar no quadro");
+        }
+        boolean caderno = tu.getTarefa() != null && "CADERNO".equalsIgnoreCase(tu.getTarefa().getTipoTarefa());
+        if (status == StatusKanban.EM_REVISAO) {
+            throw new RequisicaoInvalidaException(caderno
+                    ? "Para mandar à revisão, faça o check-in de todas as crianças"
+                    : "Para mandar à revisão, envie a evidência da tarefa");
+        }
+        if (tu.getStatusKanban() == StatusKanban.EM_REVISAO) {
+            throw new RequisicaoInvalidaException("A tarefa está aguardando a Diretoria e não pode ser movida");
         }
 
         tu.setStatusKanban(status);

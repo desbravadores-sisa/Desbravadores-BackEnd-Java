@@ -3,21 +3,22 @@ package school.sptech.APIDesbravadores.service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import school.sptech.APIDesbravadores.domain.Caderno;
 import school.sptech.APIDesbravadores.domain.Ciclo;
+import school.sptech.APIDesbravadores.domain.Penalidade;
 import school.sptech.APIDesbravadores.domain.StatusKanban;
 import school.sptech.APIDesbravadores.domain.Tarefa;
 import school.sptech.APIDesbravadores.domain.TarefaUnidade;
 import school.sptech.APIDesbravadores.domain.Unidade;
+import school.sptech.APIDesbravadores.dto.PenalidadeDto;
 import school.sptech.APIDesbravadores.dto.UnidadeDashboardDto;
 import school.sptech.APIDesbravadores.dto.UnidadeDashboardDto.Atividade;
 import school.sptech.APIDesbravadores.dto.UnidadeDashboardDto.Semana;
 import school.sptech.APIDesbravadores.dto.UnidadeDashboardDto.UnidadeInfo;
 import school.sptech.APIDesbravadores.exception.UnidadeNãoEncontradaException;
-import school.sptech.APIDesbravadores.repository.CadernoRepository;
 import school.sptech.APIDesbravadores.repository.CicloRepository;
-import school.sptech.APIDesbravadores.repository.DesbravadorRepository;
+import school.sptech.APIDesbravadores.repository.DesbravadorCadernoRepository;
 import school.sptech.APIDesbravadores.repository.EvidenciaRepository;
+import school.sptech.APIDesbravadores.repository.PenalidadeRepository;
 import school.sptech.APIDesbravadores.repository.ResumoUnidadeViewRepository;
 import school.sptech.APIDesbravadores.repository.TarefaUnidadeRepository;
 import school.sptech.APIDesbravadores.repository.UnidadeRepository;
@@ -30,12 +31,13 @@ import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
+/**
+ * Monta o dashboard da unidade: ganhos = pontos das tarefas concluídas na semana da conclusão;
+ * descontos = penalidades lançadas pela Diretoria na semana do lançamento. Tudo no ciclo ativo.
+ */
 @Service
 public class UnidadeDashboardService {
 
@@ -44,30 +46,30 @@ public class UnidadeDashboardService {
     private final UnidadeRepository unidadeRepository;
     private final TarefaUnidadeRepository tarefaUnidadeRepository;
     private final CicloRepository cicloRepository;
-    private final DesbravadorRepository desbravadorRepository;
-    private final CadernoRepository cadernoRepository;
+    private final DesbravadorCadernoRepository vinculoRepository;
+    private final PenalidadeRepository penalidadeRepository;
     private final EvidenciaRepository evidenciaRepository;
     private final ResumoUnidadeViewRepository resumoUnidadeViewRepository;
     private final Clock clock;
 
     @Autowired
     public UnidadeDashboardService(UnidadeRepository unidadeRepository, TarefaUnidadeRepository tarefaUnidadeRepository,
-                                   CicloRepository cicloRepository, DesbravadorRepository desbravadorRepository,
-                                   CadernoRepository cadernoRepository, EvidenciaRepository evidenciaRepository,
+                                   CicloRepository cicloRepository, DesbravadorCadernoRepository vinculoRepository,
+                                   PenalidadeRepository penalidadeRepository, EvidenciaRepository evidenciaRepository,
                                    ResumoUnidadeViewRepository resumoUnidadeViewRepository) {
-        this(unidadeRepository, tarefaUnidadeRepository, cicloRepository, desbravadorRepository, cadernoRepository,
+        this(unidadeRepository, tarefaUnidadeRepository, cicloRepository, vinculoRepository, penalidadeRepository,
                 evidenciaRepository, resumoUnidadeViewRepository, Clock.systemDefaultZone());
     }
 
     UnidadeDashboardService(UnidadeRepository unidadeRepository, TarefaUnidadeRepository tarefaUnidadeRepository,
-                            CicloRepository cicloRepository, DesbravadorRepository desbravadorRepository,
-                            CadernoRepository cadernoRepository, EvidenciaRepository evidenciaRepository,
+                            CicloRepository cicloRepository, DesbravadorCadernoRepository vinculoRepository,
+                            PenalidadeRepository penalidadeRepository, EvidenciaRepository evidenciaRepository,
                             ResumoUnidadeViewRepository resumoUnidadeViewRepository, Clock clock) {
         this.unidadeRepository = unidadeRepository;
         this.tarefaUnidadeRepository = tarefaUnidadeRepository;
         this.cicloRepository = cicloRepository;
-        this.desbravadorRepository = desbravadorRepository;
-        this.cadernoRepository = cadernoRepository;
+        this.vinculoRepository = vinculoRepository;
+        this.penalidadeRepository = penalidadeRepository;
         this.evidenciaRepository = evidenciaRepository;
         this.resumoUnidadeViewRepository = resumoUnidadeViewRepository;
         this.clock = clock;
@@ -86,6 +88,8 @@ public class UnidadeDashboardService {
                 .filter(tu -> tu.getTarefa() != null)
                 .filter(tu -> idCicloAtivo == null || (tu.getCiclo() != null && idCicloAtivo.equals(tu.getCiclo().getId())))
                 .toList();
+        List<Penalidade> penalidades = idCicloAtivo == null ? List.of()
+                : penalidadeRepository.findByUnidadeIdAndCicloIdOrderByDataRegistroDesc(idUnidade, idCicloAtivo);
 
         // ---- Semanas S1..S6 (segunda a domingo), terminando na semana atual ----
         LocalDate inicioSemanaAtual = hoje.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
@@ -96,30 +100,29 @@ public class UnidadeDashboardService {
         int pontuacaoTotal = 0;
         int pontosCaderno = 0;
         for (TarefaUnidade tu : vinculos) {
+            if (tu.getStatusKanban() != StatusKanban.CONCLUIDA) {
+                continue;
+            }
             Tarefa t = tu.getTarefa();
-            int previstos = t.getPontuacao() != null ? t.getPontuacao() : 0;
-            int efetivos = tu.getPontuacaoConcedida() != null ? tu.getPontuacaoConcedida() : previstos;
-            boolean concluida = tu.getStatusKanban() == StatusKanban.CONCLUIDA;
-
-            if (concluida) {
-                pontuacaoTotal += efetivos;
-                if ("CADERNO".equalsIgnoreCase(t.getTipoTarefa())) {
-                    pontosCaderno += efetivos;
+            int pontos = tu.getPontuacaoConcedida() != null ? tu.getPontuacaoConcedida()
+                    : (t.getPontuacao() != null ? t.getPontuacao() : 0);
+            pontuacaoTotal += pontos;
+            if ("CADERNO".equalsIgnoreCase(t.getTipoTarefa())) {
+                pontosCaderno += pontos;
+            }
+            if (tu.getDataConclusao() != null) {
+                int i = indiceSemana(inicioJanela, tu.getDataConclusao().toLocalDate());
+                if (i >= 0) {
+                    ganhos[i] += pontos;
                 }
-                if (tu.getDataConclusao() != null) {
-                    int i = indiceSemana(inicioJanela, tu.getDataConclusao().toLocalDate());
-                    if (i >= 0) {
-                        ganhos[i] += efetivos;
-                        descontos[i] += Math.max(0, previstos - efetivos);
-                    }
-                }
-            } else {
-                LocalDate prazo = prazo(tu);
-                if (prazo != null && prazo.isBefore(hoje)) {
-                    int i = indiceSemana(inicioJanela, prazo);
-                    if (i >= 0) {
-                        descontos[i] += previstos;
-                    }
+            }
+        }
+        for (Penalidade p : penalidades) {
+            pontuacaoTotal -= p.getPontos();
+            if (p.getDataRegistro() != null) {
+                int i = indiceSemana(inicioJanela, p.getDataRegistro().toLocalDate());
+                if (i >= 0) {
+                    descontos[i] += p.getPontos();
                 }
             }
         }
@@ -142,15 +145,12 @@ public class UnidadeDashboardService {
         int evidenciasPendentes = idsEmRevisao.isEmpty() ? 0
                 : (int) evidenciaRepository.countByUnidadeTarefaIdIn(idsEmRevisao);
 
-        // ---- Atividades abertas (regra do protótipo para tarefas de caderno) ----
-        Set<Integer> idadesDaUnidade = RegraVisibilidadeCaderno.idadesDaUnidade(
-                desbravadorRepository.findByUnidadeId(idUnidade), hoje);
-        Map<Integer, Caderno> cadernos = cadernoRepository.findByClubeId(idClubeUsuario).stream()
-                .collect(Collectors.toMap(Caderno::getId, Function.identity(), (a, b) -> a));
-
+        // ---- Atividades abertas (tarefa de caderno só com criança vinculada ao caderno) ----
+        Set<Integer> cadernosDaUnidade = RegraVisibilidadeCaderno.cadernosEmAndamento(
+                vinculoRepository.findByDesbravadorUnidadeId(idUnidade));
         List<Atividade> atividades = vinculos.stream()
                 .filter(tu -> tu.getStatusKanban() != StatusKanban.CONCLUIDA)
-                .filter(tu -> RegraVisibilidadeCaderno.visivel(tu.getTarefa(), cadernos, idadesDaUnidade))
+                .filter(tu -> RegraVisibilidadeCaderno.visivel(tu.getTarefa(), cadernosDaUnidade))
                 .sorted(Comparator.comparing(UnidadeDashboardService::prazo, Comparator.nullsLast(Comparator.naturalOrder()))
                         .thenComparing(TarefaUnidade::getId))
                 .map(tu -> new Atividade(
@@ -167,9 +167,10 @@ public class UnidadeDashboardService {
         String nomeConselheiro = resumoUnidadeViewRepository.findByIdUnidade(idUnidade).map(v -> v.getNomeConselheiro()).orElse(null);
         UnidadeInfo info = new UnidadeInfo(unidade.getId(), unidade.getNome(), unidade.getGenero(),
                 unidade.getIdadeMinima(), unidade.getIdadeMaxima(), nomeConselheiro);
+        List<PenalidadeDto> lista = penalidades.stream().map(PenalidadeService::toDto).toList();
 
         return new UnidadeDashboardDto(info, pontuacaoTotal, pontosCaderno, semanas.get(SEMANAS - 1),
-                evidenciasPendentes, semanas, atividades);
+                evidenciasPendentes, semanas, atividades, lista);
     }
 
     private static LocalDate prazo(TarefaUnidade tu) {

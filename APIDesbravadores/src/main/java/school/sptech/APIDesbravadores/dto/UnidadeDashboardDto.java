@@ -5,8 +5,7 @@ import java.util.List;
 
 /**
  * Dashboard da unidade (tela "Ver Detalhes" da Diretoria).
- * "Descontos" = pontos que a unidade poderia ter ganhado e não ganhou
- * (prazo vencido sem conclusão, ou pontos concedidos abaixo do previsto).
+ * "Descontos" = penalidades lançadas pela Diretoria (tabela Penalidade) no ciclo ativo.
  */
 public record UnidadeDashboardDto(
         UnidadeInfo unidade,
@@ -15,7 +14,8 @@ public record UnidadeDashboardDto(
         Semana semanaAtual,
         Integer evidenciasPendentes,
         List<Semana> semanas,
-        List<Atividade> atividades
+        List<Atividade> atividades,
+        List<PenalidadeDto> penalidades
 ) {
     public record UnidadeInfo(Integer id, String nome, String genero, Integer idadeMinima,
                               Integer idadeMaxima, String nomeConselheiro) {}

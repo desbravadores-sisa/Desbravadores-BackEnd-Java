@@ -8,6 +8,7 @@ import lombok.ToString;
 import java.time.LocalDate;
 
 @Entity
+@Table(name = "Ciclo")
 @Getter
 @Setter
 @ToString

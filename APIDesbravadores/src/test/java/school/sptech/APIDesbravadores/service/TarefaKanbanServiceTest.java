@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import school.sptech.APIDesbravadores.domain.Caderno;
 import school.sptech.APIDesbravadores.domain.Ciclo;
 import school.sptech.APIDesbravadores.domain.Desbravador;
+import school.sptech.APIDesbravadores.domain.DesbravadorCaderno;
 import school.sptech.APIDesbravadores.domain.Evidencia;
 import school.sptech.APIDesbravadores.domain.StatusKanban;
 import school.sptech.APIDesbravadores.domain.Tarefa;
@@ -16,7 +17,7 @@ import school.sptech.APIDesbravadores.exception.RequisicaoInvalidaException;
 import school.sptech.APIDesbravadores.repository.CadernoRepository;
 import school.sptech.APIDesbravadores.repository.CicloRepository;
 import school.sptech.APIDesbravadores.repository.ClubeRepository;
-import school.sptech.APIDesbravadores.repository.DesbravadorRepository;
+import school.sptech.APIDesbravadores.repository.DesbravadorCadernoRepository;
 import school.sptech.APIDesbravadores.repository.EvidenciaRepository;
 import school.sptech.APIDesbravadores.repository.TarefaRepository;
 import school.sptech.APIDesbravadores.repository.TarefaUnidadeRepository;
@@ -43,7 +44,7 @@ class TarefaKanbanServiceTest {
     private TarefaUnidadeRepository tuRepo;
     private CicloRepository cicloRepo;
     private CadernoRepository cadernoRepo;
-    private DesbravadorRepository desbravadorRepo;
+    private DesbravadorCadernoRepository vinculoRepo;
     private EvidenciaRepository evidenciaRepo;
     private TarefaService service;
 
@@ -57,10 +58,10 @@ class TarefaKanbanServiceTest {
         tuRepo = mock(TarefaUnidadeRepository.class);
         cicloRepo = mock(CicloRepository.class);
         cadernoRepo = mock(CadernoRepository.class);
-        desbravadorRepo = mock(DesbravadorRepository.class);
+        vinculoRepo = mock(DesbravadorCadernoRepository.class);
         evidenciaRepo = mock(EvidenciaRepository.class);
         service = new TarefaService(mock(TarefaRepository.class), tuRepo, mock(ClubeRepository.class),
-                mock(UnidadeRepository.class), cicloRepo, cadernoRepo, desbravadorRepo, evidenciaRepo);
+                mock(UnidadeRepository.class), cicloRepo, cadernoRepo, vinculoRepo, evidenciaRepo);
 
         unidade = new Unidade();
         unidade.setId(2);
@@ -73,10 +74,15 @@ class TarefaKanbanServiceTest {
 
         when(cicloRepo.findByClubeIdAndAtivoTrue(10)).thenReturn(Optional.of(ciclo));
         when(cadernoRepo.findByClubeId(10)).thenReturn(List.of(caderno12));
+        // A unidade tem uma criança vinculada a OUTRO caderno (id 99), não ao caderno12.
+        Caderno outro = new Caderno();
+        outro.setId(99);
         Desbravador d = new Desbravador();
         d.setAtivo(true);
-        d.setDataNascimento(LocalDate.now().minusYears(10).minusDays(1));
-        when(desbravadorRepo.findByUnidadeId(2)).thenReturn(List.of(d));
+        DesbravadorCaderno v = new DesbravadorCaderno();
+        v.setDesbravador(d);
+        v.setCaderno(outro);
+        when(vinculoRepo.findByDesbravadorUnidadeId(2)).thenReturn(List.of(v));
     }
 
     private TarefaUnidade vinculo(String tipo, StatusKanban status, Caderno caderno, Ciclo c) {
@@ -115,25 +121,39 @@ class TarefaKanbanServiceTest {
         assertEquals(List.of("A FAZER", "EM ANDAMENTO", "EM REVISAO", "CONCLUIDA"), List.copyOf(kanban.keySet()));
         assertEquals(1, kanban.get("EM REVISAO").size());
         assertTrue(kanban.get("EM REVISAO").get(0).getPossuiEvidencia());
-        // só a tarefa sem status (vira A FAZER); a de caderno some (sem criança de 12) e a do ciclo antigo também
+        // só a tarefa sem status (vira A FAZER); a de caderno some (nenhuma criança vinculada ao caderno) e a do ciclo antigo também
         assertEquals(1, kanban.get("A FAZER").size());
         assertEquals(semStatus.getId(), kanban.get("A FAZER").get(0).getIdUnidadeTarefa());
         assertEquals(LocalDate.of(2026, 11, 4), kanban.get("A FAZER").get(0).getPrazoEntrega());
-        // concluída de caderno continua no quadro mesmo sem criança da idade (pontos já conquistados)
+        // concluída de caderno continua no quadro mesmo sem criança vinculada (pontos já conquistados)
         assertEquals(1, kanban.get("CONCLUIDA").size());
     }
 
     @Test
     void moverAceitaRotuloComAcentoEAlteraOVinculoDaUnidade() {
-        TarefaUnidade tu = vinculo("CLUBE", StatusKanban.EM_ANDAMENTO, null, ciclo);
+        TarefaUnidade tu = vinculo("CLUBE", StatusKanban.A_FAZER, null, ciclo);
         tu.setPrazoEntrega(LocalDateTime.of(2026, 11, 20, 23, 59));
         when(tuRepo.findByTarefaIdAndUnidadeId(1, 2)).thenReturn(List.of(tu));
 
-        TarefaResponseDto dto = service.updateStatusDaUnidade(1, 2, "Em revisão");
+        TarefaResponseDto dto = service.updateStatusDaUnidade(1, 2, "em andamento");
 
-        assertEquals(StatusKanban.EM_REVISAO, tu.getStatusKanban());
-        assertEquals("EM REVISAO", dto.getStatusKanban());
+        assertEquals(StatusKanban.EM_ANDAMENTO, tu.getStatusKanban());
+        assertEquals("EM ANDAMENTO", dto.getStatusKanban());
         verify(tuRepo).save(tu);
+    }
+
+    @Test
+    void revisaoSoPorEvidenciaOuCheckinENaoSaiDeRevisaoArrastando() {
+        TarefaUnidade aberta = vinculo("CLUBE", StatusKanban.EM_ANDAMENTO, null, ciclo);
+        TarefaUnidade emRevisao = vinculo("CLUBE", StatusKanban.EM_REVISAO, null, ciclo);
+        when(tuRepo.findByTarefaIdAndUnidadeId(1, 2)).thenReturn(List.of(aberta));
+        when(tuRepo.findByTarefaIdAndUnidadeId(2, 2)).thenReturn(List.of(emRevisao));
+
+        RequisicaoInvalidaException e = assertThrows(RequisicaoInvalidaException.class,
+                () -> service.updateStatusDaUnidade(1, 2, "Em revisão"));
+        assertTrue(e.getMessage().contains("evidência"));
+        assertThrows(RequisicaoInvalidaException.class, () -> service.updateStatusDaUnidade(2, 2, "A fazer"));
+        verify(tuRepo, never()).save(any());
     }
 
     @Test

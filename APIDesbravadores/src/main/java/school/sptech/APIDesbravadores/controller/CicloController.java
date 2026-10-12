@@ -30,8 +30,9 @@ public class CicloController {
     @ApiResponse(responseCode = "201", description = "Ciclo criado com sucesso")
     @ApiResponse(responseCode = "400", description = "Dados de entrada inválidos")
     @ApiResponse(responseCode = "404", description = "Clube não encontrado")
-    public ResponseEntity<CicloResponseDto> create(@RequestBody @Valid CicloCriacaoDto dto) {
-        CicloResponseDto response = cicloService.create(dto);
+    public ResponseEntity<CicloResponseDto> create(@RequestBody @Valid CicloCriacaoDto dto,
+                                                   @org.springframework.security.core.annotation.AuthenticationPrincipal school.sptech.APIDesbravadores.dto.UsuarioDetalhesDto usuarioLogado) {
+        CicloResponseDto response = cicloService.create(dto, usuarioLogado != null ? usuarioLogado.getIdClube() : null);
         return ResponseEntity.status(201).body(response);
     }
 
@@ -41,7 +42,11 @@ public class CicloController {
     @ApiResponse(responseCode = "204", description = "Nenhum ciclo encontrado")
     public ResponseEntity<List<CicloResponseDto>> findAll(
             @Parameter(description = "ID do clube para filtrar os ciclos", example = "1")
-            @RequestParam(required = false) Integer idClube) {
+            @RequestParam(required = false) Integer idClube,
+            @org.springframework.security.core.annotation.AuthenticationPrincipal school.sptech.APIDesbravadores.dto.UsuarioDetalhesDto usuarioLogado) {
+        if (usuarioLogado != null && usuarioLogado.getIdClube() != null) {
+            idClube = usuarioLogado.getIdClube();
+        }
         List<CicloResponseDto> response = cicloService.findAll(idClube);
         if (response.isEmpty()) {
             return ResponseEntity.status(204).build();
@@ -66,8 +71,9 @@ public class CicloController {
     @ApiResponse(responseCode = "400", description = "Dados de entrada inválidos")
     public ResponseEntity<CicloResponseDto> update(
             @Parameter(description = "ID do ciclo a ser atualizado", example = "1") @PathVariable Integer id,
-            @RequestBody @Valid CicloAtualizacaoDto dto) {
-        CicloResponseDto response = cicloService.update(id, dto);
+            @RequestBody @Valid CicloAtualizacaoDto dto,
+            @org.springframework.security.core.annotation.AuthenticationPrincipal school.sptech.APIDesbravadores.dto.UsuarioDetalhesDto usuarioLogado) {
+        CicloResponseDto response = cicloService.update(id, dto, usuarioLogado != null ? usuarioLogado.getIdClube() : null);
         return ResponseEntity.status(200).body(response);
     }
 
