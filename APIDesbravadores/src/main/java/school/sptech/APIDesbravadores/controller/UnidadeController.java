@@ -13,6 +13,8 @@ import school.sptech.APIDesbravadores.dto.UnidadeAtualizacaoDto;
 import school.sptech.APIDesbravadores.dto.UnidadeCriacaoDto;
 import school.sptech.APIDesbravadores.dto.UnidadeResponseDto;
 import school.sptech.APIDesbravadores.dto.UsuarioDetalhesDto;
+import school.sptech.APIDesbravadores.dto.UnidadeDashboardDto;
+import school.sptech.APIDesbravadores.service.UnidadeDashboardService;
 import school.sptech.APIDesbravadores.service.UnidadeService;
 
 import java.util.List;
@@ -22,9 +24,11 @@ import java.util.List;
 @Tag(name = "Unidades", description = "Endpoints para gerenciamento das unidades do clube")
 public class UnidadeController {
     private final UnidadeService unidadeService;
+    private final UnidadeDashboardService unidadeDashboardService;
 
-    public UnidadeController(UnidadeService unidadeService) {
+    public UnidadeController(UnidadeService unidadeService, UnidadeDashboardService unidadeDashboardService) {
         this.unidadeService = unidadeService;
+        this.unidadeDashboardService = unidadeDashboardService;
     }
 
 
@@ -70,8 +74,26 @@ public class UnidadeController {
     @ApiResponse(responseCode = "401", description = "Usuário não autenticado")
     @ApiResponse(responseCode = "403", description = "Usuário não possui a permissão DIRETOR")
     @ApiResponse(responseCode = "404", description = "Unidade não encontrada")
-    public ResponseEntity<UnidadeResponseDto> atualizarUnidade(@RequestBody @Valid UnidadeAtualizacaoDto request){
-        return ResponseEntity.ok(unidadeService.atualizarUnidade(request));
+    public ResponseEntity<UnidadeResponseDto> atualizarUnidade(@RequestBody @Valid UnidadeAtualizacaoDto request,
+                                                               @AuthenticationPrincipal UsuarioDetalhesDto usuariologado){
+        Integer idClube = usuariologado != null ? usuariologado.getIdClube() : null;
+        return ResponseEntity.ok(unidadeService.atualizarUnidade(request, idClube));
+    }
+
+    @GetMapping("/{idUnidade}/dashboard")
+    @PreAuthorize("hasRole('DIRETORIA')")
+    @Operation(summary = "Dashboard da unidade", description = "Pontuação, saldo semanal (6 semanas), evidências pendentes e atividades abertas da unidade, no ciclo ativo do clube do diretor")
+    @ApiResponse(responseCode = "200", description = "Dashboard montado com sucesso")
+    @ApiResponse(responseCode = "401", description = "Usuário não autenticado")
+    @ApiResponse(responseCode = "403", description = "Usuário não possui a permissão DIRETORIA")
+    @ApiResponse(responseCode = "404", description = "Unidade não encontrada no clube do usuário")
+    public ResponseEntity<UnidadeDashboardDto> dashboard(
+            @Parameter(description = "ID da unidade", example = "1") @PathVariable Integer idUnidade,
+            @AuthenticationPrincipal UsuarioDetalhesDto usuariologado){
+        if (usuariologado == null) {
+            return ResponseEntity.status(401).build();
+        }
+        return ResponseEntity.ok(unidadeDashboardService.montar(idUnidade, usuariologado.getIdClube()));
     }
 
     @DeleteMapping("/{idUnidade}")
@@ -103,8 +125,6 @@ public class UnidadeController {
     @ApiResponse(responseCode = "404", description = "Unidade não encontrada")
     public ResponseEntity<UnidadeResponseDto> buscarUnidadeConselheiro(@AuthenticationPrincipal UsuarioDetalhesDto usuariologado){
         Integer idUnidade = usuariologado.getIdUnidade();
-        UnidadeResponseDto unidade =  unidadeService.buscarUnidadePorId(idUnidade);
-        System.out.println("A unidade:" + unidade);
         return ResponseEntity.ok(unidadeService.buscarUnidadePorId(idUnidade));
     }
 }

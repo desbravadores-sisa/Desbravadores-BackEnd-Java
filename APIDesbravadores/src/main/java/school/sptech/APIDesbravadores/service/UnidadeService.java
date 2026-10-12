@@ -48,17 +48,19 @@ public class UnidadeService {
             throw new UnidadeNãoEncontradaException();
         }
 
-        return unidades.stream().map(this::toResponse).toList();
+        java.util.Map<Integer, Unidade> entidades = unidadeRepository.findByClubeId(idClube).stream()
+                .collect(java.util.stream.Collectors.toMap(Unidade::getId, u -> u));
+        return unidades.stream().map(v -> toResponse(v, entidades.get(v.getIdUnidade()))).toList();
     }
 
     @Transactional(readOnly = true)
     public UnidadeResponseDto buscarUnidadePorId(Integer id){
         ResumoUnidadeView unidade = resumoUnidadeViewRepository.findByIdUnidade(id)
                 .orElseThrow(UnidadeNãoEncontradaException::new);
-        return toResponse(unidade);
+        return toResponse(unidade, unidadeRepository.findById(id).orElse(null));
     }
 
-    private UnidadeResponseDto toResponse(ResumoUnidadeView view){
+    private UnidadeResponseDto toResponse(ResumoUnidadeView view, Unidade entidade){
         UnidadeResponseDto dto = new UnidadeResponseDto();
         dto.setId(view.getIdUnidade());
         dto.setNome(view.getNomeUnidade());
@@ -66,6 +68,12 @@ public class UnidadeService {
         dto.setNomeConselheiro(view.getNomeConselheiro());
         dto.setTarefasConcluidas(view.getTarefasConcluidas());
         dto.setTotalTarefas(view.getTotalTarefas());
+        // A view não traz faixa etária nem gênero; vêm da própria tabela Unidade.
+        if (entidade != null) {
+            dto.setGenero(entidade.getGenero());
+            dto.setIdadeMinima(entidade.getIdadeMinima());
+            dto.setIdadeMaxima(entidade.getIdadeMaxima());
+        }
         return dto;
     }
 
@@ -85,7 +93,13 @@ public class UnidadeService {
 
     @Transactional
     public UnidadeResponseDto atualizarUnidade(UnidadeAtualizacaoDto request){
+        return atualizarUnidade(request, null);
+    }
+
+    @Transactional
+    public UnidadeResponseDto atualizarUnidade(UnidadeAtualizacaoDto request, Integer idClubeUsuario){
         Unidade unidade = unidadeRepository.findById(request.getIdUnidade())
+                .filter(u -> idClubeUsuario == null || (u.getClube() != null && idClubeUsuario.equals(u.getClube().getId())))
                 .orElseThrow(UnidadeNãoEncontradaException::new);
 
         boolean nomeMudou = !unidade.getNome().equals(request.getNome());

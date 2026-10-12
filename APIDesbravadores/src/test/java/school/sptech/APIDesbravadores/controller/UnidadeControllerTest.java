@@ -19,6 +19,7 @@ import school.sptech.APIDesbravadores.dto.UnidadeAtualizacaoDto;
 import school.sptech.APIDesbravadores.dto.UnidadeCriacaoDto;
 import school.sptech.APIDesbravadores.dto.UnidadeResponseDto;
 import school.sptech.APIDesbravadores.dto.UsuarioDetalhesDto;
+import school.sptech.APIDesbravadores.service.UnidadeDashboardService;
 import school.sptech.APIDesbravadores.service.UnidadeService;
 
 import java.util.List;
@@ -46,6 +47,9 @@ class UnidadeControllerTest {
 
     @MockitoBean
     private UnidadeService unidadeService;
+
+    @MockitoBean
+    private UnidadeDashboardService unidadeDashboardService;
 
     @AfterEach
     void clearSecurityContext() {
@@ -96,7 +100,7 @@ class UnidadeControllerTest {
 
         UnidadeResponseDto response = unidadeResponse();
         response.setNome("Tigres Atualizado");
-        when(unidadeService.atualizarUnidade(any(UnidadeAtualizacaoDto.class))).thenReturn(response);
+        when(unidadeService.atualizarUnidade(any(UnidadeAtualizacaoDto.class), any())).thenReturn(response);
 
         mockMvc.perform(put("/unidades")
                         .contentType(MediaType.APPLICATION_JSON)

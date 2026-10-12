@@ -7,4 +7,5 @@ import java.util.List;
 
 public interface DesbravadorRepository extends JpaRepository<Desbravador, Integer> {
     List<Desbravador> findByClubeId(Integer idClube);
+    List<Desbravador> findByUnidadeId(Integer idUnidade);
 }
