@@ -1,143 +1,117 @@
 # Desbravadores BackEnd Java
 
-Repositorio do backend Java/Spring Boot do sistema Desbravadores.
+API REST (Java 21 + Spring Boot 4) do sistema de gestão do Clube de Desbravadores **Tigre da Montanha** (Projeto Integrador SPTech).
 
-Na branch `integrar-api-tasks`, a aplicacao principal `APIDesbravadores`
-tambem recebeu os endpoints de tarefas que antes estavam em uma API separada.
-A partir desta reorganizacao, a API principal para execucao e evolucao e apenas
-a `APIDesbravadores`.
+| Repositório | Papel |
+|---|---|
+| [Desbravadores-Aplicacao-Web](https://github.com/desbravadores-sisa/Desbravadores-Aplicacao-Web) | Frontend React, que consome esta API |
+| **Desbravadores-BackEnd-Java** (este) | API REST |
+| [Desbravadores-Banco-De-Dados](https://github.com/desbravadores-sisa/Desbravadores-Banco-De-Dados) | Scripts MySQL. **Única fonte do schema** |
 
-## Estrutura
+🎨 Protótipo de referência: [Figma Make — prototipo_versãofinal](https://www.figma.com/make/zdjDwsWCbkBmPXUXtR9QxT/prototipo_vers%C3%A3ofinal?t=SkffTCtZwgP5uuL2-1)
 
-```text
-APIDesbravadores/   API principal do sistema
-README.md           Documentacao do repositorio
-```
+---
 
-## Responsabilidade deste repositorio
+## Em que pé estamos (11/10/2026)
 
-- API REST do sistema.
-- Autenticacao e autorizacao com Spring Security/JWT.
-- Cadastro, login e logoff de usuarios.
-- Gestao de unidades.
-- Gestao de tarefas e quadro Kanban.
-- Testes unitarios/de controller com JUnit e MockMvc.
+A branch **`consolidacao/sprint-final`** é a versão consolidada e integrada ao frontend. Ela foi criada a partir de `feature/endpoints-domains`; a `main` local antiga tinha um merge com 43 conflitos e não compilava. A `main` recebe essa versão via Pull Request.
 
-Os scripts e a modelagem do banco **nao ficam neste repositorio**. Eles devem
-ser mantidos no repositorio `Desbravadores-Banco-De-Dados`.
+O que foi entregue nesta etapa:
 
-## Tecnologias
+- **Autorização corrigida.** Os perfis no banco são `Diretoria` e `Conselheiro` (authority `ROLE_DIRETORIA` / `ROLE_CONSELHEIRO`). O uso de `hasRole('DIRETOR')` bloqueava com 403 todos os usuários reais.
+- **Contratos alinhados ao front.** O clube vem sempre do usuário logado (o front não envia `idClube`) em tarefas, evidências, convites e no resumo de cadernos.
+- **Cadastro por convite** (`token`), com os códigos 404, 410, 422 e 409; o convite passa a `ACEITO`.
+- **Perfil e senha:** `GET/PUT /usuarios/perfil` e `PUT /usuarios/senha`.
+- **Tarefas:** sem unidade informada, a tarefa é distribuída para todas as unidades do clube. As consultas funcionam com vários vínculos por tarefa.
+- **Evidências:** a decisão da Diretoria (`APROVADA` / `RECONHECIDO` / `CORRECAO_SOLICITADA`) atualiza `Unidade_Tarefa.status_kanban`. É possível ajustar os pontos concedidos, que entram no ranking por `vw_resumo_unidades`.
+- **Notificações:** `GET /notificacoes` e marcação de lidas; são geradas automaticamente quando uma evidência é decidida.
+- **107 testes passando**: os testes de controller e mais 14 testes de serviço em `IntegracaoFrontServiceTest`.
+- **Validação E2E:** MySQL 8.4 criado com os scripts do repo de banco, esta API e os payloads reais do front. Resultado: 41/41 verificações.
 
-- Java 21
-- Spring Boot 4
-- Spring Web MVC
-- Spring Security
-- Spring Data JPA
-- JWT
-- Maven
-- JUnit
-- MockMvc
-- MySQL via variaveis de ambiente
+### Limitações conhecidas
 
-## Configuracao
+| Tema | Situação |
+|---|---|
+| Conselheiro | `PATCH /tarefas/{id}/status` altera o **primeiro** vínculo da tarefa, não o da unidade do conselheiro. Falta um endpoint para listar as tarefas da unidade do conselheiro |
+| Check-in de caderno | Existe CRUD de `/execucoes-caderno` e `/checklists-caderno`, mas **não** há a transição automática Em andamento ↔ Em revisão prevista no protótipo |
+| Evidência (envio) | `POST /evidencias` exige `urlS3`; não há upload nem armazenamento de arquivos |
+| Dashboard da unidade | Não há endpoint de série semanal (ganhos/descontos, saldo acumulado); o conceito de **desconto** não existe no modelo |
+| Segurança | `GET` em `/tarefas/**`, `/evidencias/**`, `/cadernos/**`, `/clubes/**` etc. é liberado sem login; sem sessão, os dados de todos os clubes ficam visíveis |
+| Nomes de tabela | O schema usa `Usuario`, `Convite`…, enquanto o Hibernate consulta em minúsculas. Funciona apenas em MySQL que não diferencia maiúsculas (Windows ou `lower_case_table_names=1`) |
 
-A API principal le as configuracoes sensiveis por variaveis de ambiente em
-`APIDesbravadores/src/main/resources/application.properties`:
+---
+
+## Configuração
+
+As variáveis ficam no arquivo `APIDesbravadores/.env` (carregado automaticamente) ou no ambiente:
 
 ```properties
-spring.datasource.url=${DB_URL}
-spring.datasource.username=${DB_USER}
-spring.datasource.password=${DB_PASSWORD}
-api.security.token.secret=${JWT_SECRET}
+DB_URL=jdbc:mysql://localhost:3306/clube_desbravadores
+DB_USER=...
+DB_PASSWORD=...
+JWT_SECRET=...   # precisa ser Base64 (ex.: 64 bytes aleatórios); com caracteres fora de Base64 o login retorna 500
 ```
-
-Exemplo local:
 
 ```powershell
 cd APIDesbravadores
-Copy-Item .env.example .env
+Copy-Item .env.example .env   # e preencha os valores
 ```
 
-Depois ajuste os valores no `.env` de acordo com seu MySQL local. O arquivo
-`.env` nao deve ser versionado.
-
-```powershell
-$env:DB_URL="jdbc:mysql://localhost:3306/desbravadores"
-$env:DB_USER="jpauser"
-$env:DB_PASSWORD="senha-segura123"
-$env:JWT_SECRET="uma-chave-local-para-desenvolvimento"
-```
-
-Nao versionar `.env`, senhas, dumps ou scripts de banco neste repositorio.
+- `spring.jpa.hibernate.ddl-auto=none`: o schema vem **só** do repositório de banco. Antes de subir esta versão num banco existente, aplique as migrações 001 e 002 de lá.
+- Nunca versione `.env`, senhas ou dumps.
 
 ## Como executar
 
 ```bash
 cd APIDesbravadores
-./mvnw.cmd spring-boot:run
+./mvnw.cmd spring-boot:run        # ou: ./mvnw.cmd -DskipTests package && java -jar target/APIDesbravadores-0.0.1-SNAPSHOT.jar
 ```
-
-URLs comuns:
 
 - API: `http://localhost:8080`
 - Swagger UI: `http://localhost:8080/swagger-ui.html`
+- CORS liberado para `http://localhost:5173` e `5174` (Vite)
+- Autenticação: o `POST /usuarios/login` devolve o JWT no cookie httpOnly `authToken`; o header `Authorization: Bearer` também é aceito
 
-## Endpoints
+## Endpoints (70)
 
-### Usuarios
+| Recurso | Endpoints |
+|---|---|
+| Usuários | `POST /usuarios/cadastro` · `POST /usuarios/login` · `POST /usuarios/logoff` · `GET/PUT /usuarios/perfil` · `PUT /usuarios/senha` · `GET /usuarios/painel-diretoria` |
+| Unidades | `GET /unidades/diretor` · `GET /unidades/conselheiro` · `POST /unidades` · `PUT /unidades` · `DELETE /unidades/{idUnidade}` |
+| Tarefas | `GET/POST /tarefas` · `GET/PUT/DELETE /tarefas/{id}` · `PATCH /tarefas/{id}/status` · `GET /tarefas/kanban` |
+| Tarefas × Unidades | `GET /tarefas-unidades/{idTarefa}` · `PUT /tarefas-unidades/{idTarefa}/status` |
+| Evidências | `GET/POST /evidencias` · `GET/PUT/DELETE /evidencias/{id}` |
+| Convites | `GET/POST /convites` · `PUT/DELETE /convites/{id}` · `GET /convites/validar` |
+| Notificações | `GET /notificacoes` · `PATCH /notificacoes/{id}/lida` · `PATCH /notificacoes/lidas` |
+| Cadernos | `GET/POST /cadernos` · `GET/PUT/DELETE /cadernos/{id}` · `GET /cadernos/resumo` |
+| Ciclos | `GET/POST /ciclos` · `GET/PUT/DELETE /ciclos/{id}` |
+| Desbravadores | `GET/POST /desbravadores` · `GET/PUT/DELETE /desbravadores/{id}` |
+| Execuções de caderno | `GET/POST /execucoes-caderno` · `GET/PUT/DELETE /execucoes-caderno/{id}` |
+| Checklists de caderno | `GET/POST /checklists-caderno` · `GET/PUT/DELETE /checklists-caderno/{id}` |
+| Clubes | `GET/POST /clubes` · `GET/PUT/DELETE /clubes/{id}` |
+| Perfis | `GET/POST /perfis` · `GET/PUT/DELETE /perfis/{id}` |
 
-```http
-POST /usuarios/cadastro
-POST /usuarios/login
-POST /usuarios/logoff
-GET  /usuarios/painel-diretoria
-```
-
-### Unidades
-
-```http
-GET    /unidades/diretor
-POST   /unidades
-PUT    /unidades
-DELETE /unidades/{idUnidade}
-GET    /unidades/conselheiro
-```
-
-### Tarefas
-
-```http
-POST   /tarefas
-GET    /tarefas
-GET    /tarefas/{id}
-PUT    /tarefas/{id}
-DELETE /tarefas/{id}
-PATCH  /tarefas/{id}/status
-GET    /tarefas/kanban
-```
-
-Total atual: 16 endpoints.
+As rotas da Diretoria exigem `hasRole('DIRETORIA')`; `PATCH /tarefas/{id}/status` e `/unidades/conselheiro` exigem `hasRole('CONSELHEIRO')`.
 
 ## Testes
-
-Os testes dos endpoints ficam em:
-
-```text
-APIDesbravadores/src/test/java/school/sptech/APIDesbravadores/controller/
-```
-
-Para executar:
 
 ```bash
 cd APIDesbravadores
 ./mvnw.cmd test
 ```
 
-A suite cobre os controllers de usuarios, unidades e tarefas usando JUnit,
-MockMvc e services mockados, sem depender de banco real.
+- `src/test/.../controller/`: testes de controller com MockMvc (services mockados).
+- `src/test/.../service/IntegracaoFrontServiceTest.java`: regras dos contratos usados pelo front (convite, perfil/senha, distribuição de tarefas, decisão de evidência, pontos e notificação).
 
-## Observacoes
+> Atenção: os testes de controller mockam o papel do usuário. Ao mudar autorização ou nomes de perfil, valide também contra o banco real, porque foi assim que o bug do `DIRETOR` × `Diretoria` passou despercebido.
 
-- A pasta `target/` e ignorada pelo Git.
-- Arquivos de banco devem ficar apenas em `Desbravadores-Banco-De-Dados`.
-- Para alterar estrutura de tabelas, atualizar primeiro o repositorio de banco
-  e depois alinhar as entidades JPA neste backend.
+## Próximos passos (backend)
+
+1. **PR `consolidacao/sprint-final` → `main`**, depois do PR do banco (migrações 001 e 002).
+2. **Decidir os nomes das tabelas:** padronizar `@Table(name = "...")` com a capitalização do schema, ou configurar o servidor para não diferenciar maiúsculas (necessário para deploy em Linux).
+3. **Fechar os `GET` anônimos** em `SecurityConfiguracao` (exigir autenticação e filtrar por clube).
+4. **Conselheiro:** criar um endpoint para listar as tarefas da unidade do conselheiro; corrigir o `PATCH status` para usar o vínculo da unidade dele.
+5. **Check-in:** implementar a transição automática para `EM REVISAO` quando todas as crianças elegíveis estiverem marcadas, e o retorno a `EM ANDAMENTO` ao desmarcar.
+6. **Ciclo global:** um endpoint para aplicar o novo ciclo a todos os cadernos do clube (`Caderno.id_ciclo`), como no protótipo.
+7. **Dashboard da unidade:** um endpoint de série semanal de pontos; definir com o time se existirá "desconto".
+8. **Upload de evidências e da foto de perfil** (armazenamento S3 ou local).
