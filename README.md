@@ -32,7 +32,7 @@ O que foi entregue nesta etapa:
 
 | Tema | Situação |
 |---|---|
-| Conselheiro | `PATCH /tarefas/{id}/status` altera o **primeiro** vínculo da tarefa, não o da unidade do conselheiro. Falta um endpoint para listar as tarefas da unidade do conselheiro |
+| Conselheiro | ✅ Kanban da unidade (`GET /tarefas/kanban`) e mudança de status no vínculo da unidade do conselheiro. Faltam o check-in com transição automática e o upload de evidência |
 | Check-in de caderno | Existe CRUD de `/execucoes-caderno` e `/checklists-caderno`, mas **não** há a transição automática Em andamento ↔ Em revisão prevista no protótipo |
 | Evidência (envio) | `POST /evidencias` exige `urlS3`; não há upload nem armazenamento de arquivos |
 | Dashboard da unidade | ✅ `GET /unidades/{id}/dashboard`. "Desconto" é calculado como pontos previstos não obtidos (prazo vencido ou nota abaixo da prevista); o time precisa confirmar essa definição |
@@ -92,7 +92,7 @@ cd APIDesbravadores
 | Clubes | `GET/POST /clubes` · `GET/PUT/DELETE /clubes/{id}` |
 | Perfis | `GET/POST /perfis` · `GET/PUT/DELETE /perfis/{id}` |
 
-As rotas da Diretoria exigem `hasRole('DIRETORIA')`; `PATCH /tarefas/{id}/status` e `/unidades/conselheiro` exigem `hasRole('CONSELHEIRO')`.
+As rotas da Diretoria exigem `hasRole('DIRETORIA')`. `GET /tarefas/kanban`, `PATCH /tarefas/{id}/status`, `PUT /tarefas-unidades/{id}/status` e `/unidades/conselheiro` exigem `hasRole('CONSELHEIRO')` e usam a unidade do usuário logado. O conselheiro não move tarefas para `CONCLUIDA`: isso acontece quando a Diretoria aprova a evidência.
 
 ## Testes
 
@@ -112,7 +112,7 @@ cd APIDesbravadores
 2. **Decidir os nomes das tabelas:** padronizar `@Table(name = "...")` com a capitalização do schema, ou configurar o servidor para não diferenciar maiúsculas (necessário para deploy em Linux).
 3. **Remover os `System.out.println` de depuração** (vazam o hash da senha e o token do convite no log) e usar um logger sem dados sensíveis.
 4. **Fechar os `GET` anônimos** em `SecurityConfiguracao` (exigir autenticação e filtrar por clube).
-5. **Conselheiro:** criar um endpoint para listar as tarefas da unidade do conselheiro; corrigir o `PATCH status` para usar o vínculo da unidade dele.
+5. **Conselheiro:** ~~Kanban da unidade~~ ✅. Faltam o check-in (Em andamento ↔ Em revisão automático) e o upload da evidência.
 6. **Check-in:** implementar a transição automática para `EM REVISAO` quando todas as crianças elegíveis estiverem marcadas, e o retorno a `EM ANDAMENTO` ao desmarcar.
 7. **Ciclo global:** um endpoint para aplicar o novo ciclo a todos os cadernos do clube (`Caderno.id_ciclo`), como no protótipo.
 8. **Dashboard da unidade:** ✅ feito. Falta só o time confirmar a definição de "desconto" ou pedir uma tabela de penalidades.
