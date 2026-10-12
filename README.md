@@ -36,6 +36,7 @@ O que foi entregue nesta etapa:
 | Check-in de caderno | Existe CRUD de `/execucoes-caderno` e `/checklists-caderno`, mas **não** há a transição automática Em andamento ↔ Em revisão prevista no protótipo |
 | Evidência (envio) | `POST /evidencias` exige `urlS3`; não há upload nem armazenamento de arquivos |
 | Dashboard da unidade | Não há endpoint de série semanal (ganhos/descontos, saldo acumulado); o conceito de **desconto** não existe no modelo |
+| Logs | Há 10 `System.out.println` de depuração (`AutenticacaoProvider`, `AutenticacaoService`, `ConviteController`, `ConviteService`, `UnidadeController`); alguns imprimem entidades `Usuario` inteiras, **com o hash da senha**, e convites com o token |
 | Segurança | `GET` em `/tarefas/**`, `/evidencias/**`, `/cadernos/**`, `/clubes/**` etc. é liberado sem login; sem sessão, os dados de todos os clubes ficam visíveis |
 | Nomes de tabela | O schema usa `Usuario`, `Convite`…, enquanto o Hibernate consulta em minúsculas. Funciona apenas em MySQL que não diferencia maiúsculas (Windows ou `lower_case_table_names=1`) |
 
@@ -109,9 +110,10 @@ cd APIDesbravadores
 
 1. **PR `consolidacao/sprint-final` → `main`**, depois do PR do banco (migrações 001 e 002).
 2. **Decidir os nomes das tabelas:** padronizar `@Table(name = "...")` com a capitalização do schema, ou configurar o servidor para não diferenciar maiúsculas (necessário para deploy em Linux).
-3. **Fechar os `GET` anônimos** em `SecurityConfiguracao` (exigir autenticação e filtrar por clube).
-4. **Conselheiro:** criar um endpoint para listar as tarefas da unidade do conselheiro; corrigir o `PATCH status` para usar o vínculo da unidade dele.
-5. **Check-in:** implementar a transição automática para `EM REVISAO` quando todas as crianças elegíveis estiverem marcadas, e o retorno a `EM ANDAMENTO` ao desmarcar.
-6. **Ciclo global:** um endpoint para aplicar o novo ciclo a todos os cadernos do clube (`Caderno.id_ciclo`), como no protótipo.
-7. **Dashboard da unidade:** um endpoint de série semanal de pontos; definir com o time se existirá "desconto".
-8. **Upload de evidências e da foto de perfil** (armazenamento S3 ou local).
+3. **Remover os `System.out.println` de depuração** (vazam o hash da senha e o token do convite no log) e usar um logger sem dados sensíveis.
+4. **Fechar os `GET` anônimos** em `SecurityConfiguracao` (exigir autenticação e filtrar por clube).
+5. **Conselheiro:** criar um endpoint para listar as tarefas da unidade do conselheiro; corrigir o `PATCH status` para usar o vínculo da unidade dele.
+6. **Check-in:** implementar a transição automática para `EM REVISAO` quando todas as crianças elegíveis estiverem marcadas, e o retorno a `EM ANDAMENTO` ao desmarcar.
+7. **Ciclo global:** um endpoint para aplicar o novo ciclo a todos os cadernos do clube (`Caderno.id_ciclo`), como no protótipo.
+8. **Dashboard da unidade:** um endpoint de série semanal de pontos; definir com o time se existirá "desconto".
+9. **Upload de evidências e da foto de perfil** (armazenamento S3 ou local).
