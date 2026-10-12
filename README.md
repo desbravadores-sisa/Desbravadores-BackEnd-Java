@@ -35,7 +35,7 @@ O que foi entregue nesta etapa:
 | Conselheiro | `PATCH /tarefas/{id}/status` altera o **primeiro** vínculo da tarefa, não o da unidade do conselheiro. Falta um endpoint para listar as tarefas da unidade do conselheiro |
 | Check-in de caderno | Existe CRUD de `/execucoes-caderno` e `/checklists-caderno`, mas **não** há a transição automática Em andamento ↔ Em revisão prevista no protótipo |
 | Evidência (envio) | `POST /evidencias` exige `urlS3`; não há upload nem armazenamento de arquivos |
-| Dashboard da unidade | Não há endpoint de série semanal (ganhos/descontos, saldo acumulado); o conceito de **desconto** não existe no modelo |
+| Dashboard da unidade | ✅ `GET /unidades/{id}/dashboard`. "Desconto" é calculado como pontos previstos não obtidos (prazo vencido ou nota abaixo da prevista); o time precisa confirmar essa definição |
 | Logs | Há 10 `System.out.println` de depuração (`AutenticacaoProvider`, `AutenticacaoService`, `ConviteController`, `ConviteService`, `UnidadeController`); alguns imprimem entidades `Usuario` inteiras, **com o hash da senha**, e convites com o token |
 | Segurança | `GET` em `/tarefas/**`, `/evidencias/**`, `/cadernos/**`, `/clubes/**` etc. é liberado sem login; sem sessão, os dados de todos os clubes ficam visíveis |
 | Nomes de tabela | O schema usa `Usuario`, `Convite`…, enquanto o Hibernate consulta em minúsculas. Funciona apenas em MySQL que não diferencia maiúsculas (Windows ou `lower_case_table_names=1`) |
@@ -78,7 +78,7 @@ cd APIDesbravadores
 | Recurso | Endpoints |
 |---|---|
 | Usuários | `POST /usuarios/cadastro` · `POST /usuarios/login` · `POST /usuarios/logoff` · `GET/PUT /usuarios/perfil` · `PUT /usuarios/senha` · `GET /usuarios/painel-diretoria` |
-| Unidades | `GET /unidades/diretor` · `GET /unidades/conselheiro` · `POST /unidades` · `PUT /unidades` · `DELETE /unidades/{idUnidade}` |
+| Unidades | `GET /unidades/diretor` · `GET /unidades/{idUnidade}/dashboard` · `GET /unidades/conselheiro` · `POST /unidades` · `PUT /unidades` · `DELETE /unidades/{idUnidade}` |
 | Tarefas | `GET/POST /tarefas` · `GET/PUT/DELETE /tarefas/{id}` · `PATCH /tarefas/{id}/status` · `GET /tarefas/kanban` |
 | Tarefas × Unidades | `GET /tarefas-unidades/{idTarefa}` · `PUT /tarefas-unidades/{idTarefa}/status` |
 | Evidências | `GET/POST /evidencias` · `GET/PUT/DELETE /evidencias/{id}` |
@@ -115,5 +115,5 @@ cd APIDesbravadores
 5. **Conselheiro:** criar um endpoint para listar as tarefas da unidade do conselheiro; corrigir o `PATCH status` para usar o vínculo da unidade dele.
 6. **Check-in:** implementar a transição automática para `EM REVISAO` quando todas as crianças elegíveis estiverem marcadas, e o retorno a `EM ANDAMENTO` ao desmarcar.
 7. **Ciclo global:** um endpoint para aplicar o novo ciclo a todos os cadernos do clube (`Caderno.id_ciclo`), como no protótipo.
-8. **Dashboard da unidade:** um endpoint de série semanal de pontos; definir com o time se existirá "desconto".
+8. **Dashboard da unidade:** ✅ feito. Falta só o time confirmar a definição de "desconto" ou pedir uma tabela de penalidades.
 9. **Upload de evidências e da foto de perfil** (armazenamento S3 ou local).
