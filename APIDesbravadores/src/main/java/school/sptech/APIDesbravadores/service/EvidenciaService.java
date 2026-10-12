@@ -42,6 +42,29 @@ public class EvidenciaService {
         this.cicloRepository = cicloRepository;
     }
 
+    /** Fonte do nome do conselheiro (a mesma da tela de Unidades). Opcional para os testes de unidade. */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private school.sptech.APIDesbravadores.repository.ResumoUnidadeViewRepository resumoUnidadeViewRepository;
+
+    void setResumoUnidadeViewRepository(school.sptech.APIDesbravadores.repository.ResumoUnidadeViewRepository repo) {
+        this.resumoUnidadeViewRepository = repo;
+    }
+
+    /** Preenche nomeConselheiro, consultando cada unidade uma única vez. */
+    private List<EvidenciaResponseDto> comConselheiro(List<EvidenciaResponseDto> dtos) {
+        if (resumoUnidadeViewRepository == null) {
+            return dtos;
+        }
+        java.util.Map<Integer, java.util.Optional<String>> porUnidade = new java.util.HashMap<>();
+        for (EvidenciaResponseDto dto : dtos) {
+            if (dto != null && dto.getIdUnidade() != null) {
+                dto.setNomeConselheiro(porUnidade.computeIfAbsent(dto.getIdUnidade(), id ->
+                        resumoUnidadeViewRepository.findByIdUnidade(id).map(v -> v.getNomeConselheiro())).orElse(null));
+            }
+        }
+        return dtos;
+    }
+
     /**
      * Conselheiro envia a evidência (foto/PDF) de uma tarefa de CLUBE da sua unidade.
      * O arquivo vai para a pasta de uploads e a tarefa passa para EM REVISAO (aguarda a Diretoria).
@@ -84,16 +107,16 @@ public class EvidenciaService {
 
     @Transactional(readOnly = true)
     public List<EvidenciaResponseDto> findAll() {
-        return evidenciaRepository.findAll().stream()
+        return comConselheiro(evidenciaRepository.findAll().stream()
                 .map(EvidenciaMapper::toResponseDto)
-                .toList();
+                .toList());
     }
 
     @Transactional(readOnly = true)
     public EvidenciaResponseDto findById(Integer id) {
         Evidencia evidencia = evidenciaRepository.findById(id)
                 .orElseThrow(() -> new EntidadeNaoEncontradaException("Evidência não encontrada com ID: " + id));
-        return EvidenciaMapper.toResponseDto(evidencia);
+        return comConselheiro(List.of(EvidenciaMapper.toResponseDto(evidencia))).get(0);
     }
 
     @Transactional
@@ -173,13 +196,13 @@ public class EvidenciaService {
 
     @Transactional(readOnly = true)
     public List<EvidenciaResponseDto> findAllByClube(Integer idClube) {
-        return evidenciaRepository.findAll().stream()
+        return comConselheiro(evidenciaRepository.findAll().stream()
                 .filter(e -> e.getUnidadeTarefa() != null
                         && e.getUnidadeTarefa().getUnidade() != null
                         && e.getUnidadeTarefa().getUnidade().getClube() != null
                         && idClube.equals(e.getUnidadeTarefa().getUnidade().getClube().getId()))
                 .map(EvidenciaMapper::toResponseDto)
-                .toList();
+                .toList());
     }
 
     @Transactional

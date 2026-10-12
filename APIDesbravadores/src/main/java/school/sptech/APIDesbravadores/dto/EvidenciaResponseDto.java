@@ -80,6 +80,9 @@ public class EvidenciaResponseDto {
 
     private String nomeUnidade;
 
+    /** Conselheiro responsável pela unidade (vw_resumo_unidades). */
+    private String nomeConselheiro;
+
 
 
     private String statusKanban;
