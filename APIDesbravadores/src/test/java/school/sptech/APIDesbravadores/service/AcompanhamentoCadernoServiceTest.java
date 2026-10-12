@@ -37,6 +37,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -149,18 +150,36 @@ class AcompanhamentoCadernoServiceTest {
     }
 
     @Test
-    void desmarcarVoltaParaAndamentoRetiraPendenciaEDesfazConclusao() {
+    void emRevisaoContinuaComAlguemMarcadoEVoltaQuandoNinguemFica() {
         service.marcarCheckin(40, 1, true, 2, 10);
         service.marcarCheckin(40, 2, true, 2, 10);
         Evidencia pendencia = new Evidencia();
+        pendencia.setId(1);
         pendencia.setUrlS3(AcompanhamentoCadernoService.URL_CHECKIN);
         when(evidenciaRepo.findByUnidadeTarefaIdIn(anyCollection())).thenReturn(List.of(pendencia));
 
-        CheckinDto dto = service.marcarCheckin(40, 1, false, 2, 10);
+        CheckinDto parcial = service.marcarCheckin(40, 2, false, 2, 10);
+        assertEquals("EM REVISAO", parcial.statusKanban());
+        assertEquals("Check-in: 1 de 2 desbravadores cumpriram", pendencia.getComentarioFeedback());
 
-        assertEquals("EM ANDAMENTO", dto.statusKanban());
+        CheckinDto nenhum = service.marcarCheckin(40, 1, false, 2, 10);
+        assertEquals("EM ANDAMENTO", nenhum.statusKanban());
         verify(evidenciaRepo).delete(pendencia);
         assertNull(vinculoAna.getDataConclusao());
+    }
+
+    @Test
+    void conselheiroEnviaCheckinParcialParaRevisao() {
+        assertThrows(RequisicaoInvalidaException.class, () -> service.enviarParaRevisao(40, 2, 10),
+                "sem ninguém marcado não envia");
+        service.marcarCheckin(40, 1, true, 2, 10);
+
+        CheckinDto dto = service.enviarParaRevisao(40, 2, 10);
+
+        assertEquals("EM REVISAO", dto.statusKanban());
+        assertEquals(StatusKanban.EM_REVISAO, tu.getStatusKanban());
+        verify(evidenciaRepo).save(argThat((Evidencia e) ->
+                "Check-in: 1 de 2 desbravadores cumpriram".equals(e.getComentarioFeedback())));
     }
 
     @Test

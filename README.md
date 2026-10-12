@@ -15,14 +15,14 @@ API REST (Java 21 + Spring Boot 4) do sistema de gestão do Clube de Desbravador
 ## Novidades de 12/10/2026 (pendências do protótipo)
 
 - **Vínculo explícito desbravador ↔ caderno** (tabela `Desbravador_Caderno`, migração 003 do banco): a Diretoria vincula e desvincula em "Ver Caderno"; `data_conclusao` guarda o histórico de cadernos concluídos (preenchida sozinha quando a criança cumpre todos os requisitos).
-- **Check-in do conselheiro** nas tarefas de caderno: marcar parte das crianças → `EM ANDAMENTO`; marcar todas → `EM REVISAO` com pendência para a Diretoria (`url_s3 = "checkin:caderno"`); desmarcar desfaz. A visibilidade das tarefas de caderno no Kanban e no dashboard passa a seguir o vínculo, não mais a idade.
+- **Check-in do conselheiro** nas tarefas de caderno: marcar parte das crianças → `EM ANDAMENTO`; marcar todas → `EM REVISAO` com pendência para a Diretoria (`url_s3 = "checkin:caderno"`). O conselheiro também pode **enviar com parte das crianças** (`POST /tarefas/{id}/checkin/enviar`). Em revisão, a tarefa fica lá enquanto houver alguém marcado (a pendência mostra "X de N"); sem ninguém, volta para `EM ANDAMENTO`. A visibilidade das tarefas de caderno no Kanban e no dashboard passa a seguir o vínculo, não mais a idade.
 - **Kanban:** o conselheiro não arrasta para `EM REVISAO` nem tira de lá (só por evidência/check-in); excluir a evidência pendente devolve a tarefa para `EM ANDAMENTO`.
 - **Envio de evidência com arquivo** (`POST /evidencias/envio`, multipart) e **foto de perfil** (`PUT/DELETE /usuarios/perfil/foto`). Arquivos (JPG/PNG/WEBP/PDF, até 5 MB, assinatura conferida) ficam na pasta `APP_UPLOADS_DIR`, servidos por `GET /arquivos/{nome}` só para usuários logados; o banco guarda só o caminho.
 - **Descontos reais** (tabela `Penalidade`): `GET/POST /unidades/{id}/penalidades`, `DELETE /penalidades/{id}`; entram no ranking (`vw_resumo_unidades`) e no dashboard, e notificam o conselheiro.
 - **Novo ciclo:** criar um ciclo ativo encerra o anterior e aplica o período a todos os cadernos do clube.
 - **Tela "Desbravadores" do conselheiro:** `GET /desbravadores/minha-unidade` e `GET /desbravadores/{id}/requisitos`.
 - **Segurança e deploy:** removidos os `System.out.println` que gravavam senha/token no log; `GET`s anônimos fechados e filtrados pelo clube do usuário; `idClube` sai do corpo de ciclos e desbravadores; `@Table` com a capitalização do schema + `NomeTabelaExatoNamingStrategy` (roda em MySQL Linux **sem** `lower_case_table_names`, validado).
-- **122 testes** (`./mvnw.cmd test`) e E2E 41/41 + 10/10 + 20/20 + 53/53 (`_validacao/` na pasta raiz).
+- **123 testes** (`./mvnw.cmd test`) e E2E 41/41 + 10/10 + 20/20 + 53/53 (`_validacao/` na pasta raiz).
 
 ## Em que pé estamos (11/10/2026)
 
@@ -45,7 +45,7 @@ O que foi entregue nesta etapa:
 | Tema | Situação |
 |---|---|
 | Conselheiro | ✅ Kanban, check-in, envio de evidência e tela Desbravadores (12/10) |
-| Novo ciclo | ✅ encerra o anterior e aplica o período aos cadernos. As tarefas **não** são copiadas para o ciclo novo: a Diretoria cria/distribui de novo (decisão do time pendente) |
+| Novo ciclo | ✅ encerra o anterior e aplica o período aos cadernos. O ciclo novo começa vazio: as tarefas abertas não são copiadas (decisão de 12/10) |
 | Arquivos | Pasta local (`APP_UPLOADS_DIR`). Em produção, monte um volume Docker nela; sem volume, os arquivos somem ao recriar o container |
 | Logs / segurança / nomes de tabela | ✅ resolvidos em 12/10 (ver "Novidades") |
 
@@ -94,7 +94,7 @@ cd APIDesbravadores
 | Tarefas | `GET/POST /tarefas` · `GET/PUT/DELETE /tarefas/{id}` · `PATCH /tarefas/{id}/status` · `GET /tarefas/kanban` |
 | Tarefas × Unidades | `GET /tarefas-unidades/{idTarefa}` · `PUT /tarefas-unidades/{idTarefa}/status` |
 | Evidências | `GET/POST /evidencias` · `POST /evidencias/envio` (multipart, conselheiro) · `GET/PUT/DELETE /evidencias/{id}` · `GET /arquivos/{nome}` |
-| Vínculo e check-in de caderno | `GET/POST /cadernos/{id}/desbravadores` · `GET /cadernos/{id}/desbravadores/elegiveis` · `DELETE /cadernos/{id}/desbravadores/{idDesbravador}` · `GET /tarefas/{id}/checkin` · `PUT /tarefas/{id}/checkin/{idDesbravador}` · `GET /desbravadores/minha-unidade` · `GET /desbravadores/{id}/requisitos` |
+| Vínculo e check-in de caderno | `GET/POST /cadernos/{id}/desbravadores` · `GET /cadernos/{id}/desbravadores/elegiveis` · `DELETE /cadernos/{id}/desbravadores/{idDesbravador}` · `GET /tarefas/{id}/checkin` · `PUT /tarefas/{id}/checkin/{idDesbravador}` · `POST /tarefas/{id}/checkin/enviar` · `GET /desbravadores/minha-unidade` · `GET /desbravadores/{id}/requisitos` |
 | Descontos | `GET/POST /unidades/{id}/penalidades` · `DELETE /penalidades/{id}` |
 | Convites | `GET/POST /convites` · `PUT/DELETE /convites/{id}` · `GET /convites/validar` |
 | Notificações | `GET /notificacoes` · `PATCH /notificacoes/{id}/lida` · `PATCH /notificacoes/lidas` |
@@ -124,6 +124,5 @@ cd APIDesbravadores
 
 1. **PR `consolidacao/sprint-final` → `main`**, depois do PR do banco (migrações 001, 002 e 003).
 2. ~~Nomes de tabela, logs com senha, GETs anônimos, conselheiro (check-in/upload), ciclo global, descontos, uploads~~ ✅ 12/10.
-3. **Novo ciclo × tarefas:** definir se as tarefas abertas são copiadas para o ciclo novo (hoje não são).
-4. **Deploy:** Dockerfile da API com o volume de uploads; trocar o `ddl-auto=none` por migrações versionadas (Flyway) se o time quiser.
-5. Testes de controller para os endpoints novos (hoje cobertos por testes de serviço e pelo E2E).
+3. **Deploy:** Dockerfile da API com o volume de uploads; trocar o `ddl-auto=none` por migrações versionadas (Flyway) se o time quiser.
+4. Testes de controller para os endpoints novos (hoje cobertos por testes de serviço e pelo E2E).

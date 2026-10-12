@@ -199,28 +199,14 @@ public class AcompanhamentoCadernoService {
         checklistRepository.save(item);
 
         Set<Integer> marcados = marcadosNaExecucao(execucao.getId());
-        long totalMarcados = elegiveis.stream().filter(d -> marcados.contains(d.getId())).count();
-        StatusKanban novo = totalMarcados == elegiveis.size() ? StatusKanban.EM_REVISAO
-                : (totalMarcados > 0 || tu.getStatusKanban() == StatusKanban.EM_REVISAO) ? StatusKanban.EM_ANDAMENTO
+        int totalMarcados = (int) elegiveis.stream().filter(d -> marcados.contains(d.getId())).count();
+        boolean emRevisao = tu.getStatusKanban() == StatusKanban.EM_REVISAO;
+        // Todas marcadas -> revisão automática. Já em revisão (envio parcial), continua lá enquanto
+        // houver alguém marcado; sem ninguém marcado, volta para "Em andamento".
+        StatusKanban novo = totalMarcados > 0 && (totalMarcados == elegiveis.size() || emRevisao) ? StatusKanban.EM_REVISAO
+                : (totalMarcados > 0 || emRevisao) ? StatusKanban.EM_ANDAMENTO
                 : tu.getStatusKanban() == null ? StatusKanban.A_FAZER : tu.getStatusKanban();
-
-        if (novo == StatusKanban.EM_REVISAO && tu.getStatusKanban() != StatusKanban.EM_REVISAO) {
-            Evidencia pendencia = new Evidencia();
-            pendencia.setUnidadeTarefa(tu);
-            pendencia.setUrlS3(URL_CHECKIN);
-            pendencia.setComentarioFeedback("Check-in concluído: " + elegiveis.size() + " de " + elegiveis.size()
-                    + " desbravadores");
-            pendencia.setDataEnvio(LocalDateTime.now());
-            evidenciaRepository.save(pendencia);
-        } else if (novo != StatusKanban.EM_REVISAO && tu.getStatusKanban() == StatusKanban.EM_REVISAO) {
-            evidenciaRepository.findByUnidadeTarefaIdIn(List.of(tu.getId())).stream()
-                    .filter(e -> URL_CHECKIN.equals(e.getUrlS3()))
-                    .forEach(evidenciaRepository::delete);
-        }
-        tu.setStatusKanban(novo);
-        tarefaUnidadeRepository.save(tu);
-        execucao.setStatusKanban(novo);
-        execucaoRepository.save(execucao);
+        aplicarStatus(tu, execucao, novo, totalMarcados, elegiveis.size());
 
         atualizarConclusao(desbravador.getId(), tarefa.getCaderno().getId());
         return montarCheckin(tu, tarefa, idUnidade, idClube);
@@ -229,6 +215,53 @@ public class AcompanhamentoCadernoService {
     // =====================================================================
     // Conselheiro — "Desbravadores" (requisitos individuais)
     // =====================================================================
+
+    /** Conselheiro envia para a Diretoria com parte das crianças marcadas (decisão de 12/10). */
+    @Transactional
+    public CheckinDto enviarParaRevisao(Integer idTarefa, Integer idUnidade, Integer idClube) {
+        TarefaUnidade tu = vinculoTarefaDaUnidade(idTarefa, idUnidade, idClube);
+        Tarefa tarefa = exigirTarefaDeCaderno(tu);
+        if (tu.getStatusKanban() == StatusKanban.CONCLUIDA) {
+            throw new RequisicaoInvalidaException("Tarefa já concluída pela Diretoria");
+        }
+        if (tu.getStatusKanban() != StatusKanban.EM_REVISAO) {
+            List<Desbravador> elegiveis = elegiveisNaUnidade(tarefa.getCaderno().getId(), idUnidade);
+            ExecucaoCaderno execucao = execucaoDe(tu, false);
+            Set<Integer> marcados = execucao == null ? Set.of() : marcadosNaExecucao(execucao.getId());
+            int totalMarcados = (int) elegiveis.stream().filter(d -> marcados.contains(d.getId())).count();
+            if (totalMarcados == 0) {
+                throw new RequisicaoInvalidaException("Marque pelo menos uma criança antes de enviar para revisão");
+            }
+            aplicarStatus(tu, execucao, StatusKanban.EM_REVISAO, totalMarcados, elegiveis.size());
+        }
+        return montarCheckin(tu, tarefa, idUnidade, idClube);
+    }
+
+    /** Grava o status no vínculo e na execução e mantém a pendência do check-in em Evidências. */
+    private void aplicarStatus(TarefaUnidade tu, ExecucaoCaderno execucao, StatusKanban novo,
+                               int marcados, int total) {
+        List<Evidencia> pendencias = evidenciaRepository.findByUnidadeTarefaIdIn(List.of(tu.getId())).stream()
+                .filter(e -> URL_CHECKIN.equals(e.getUrlS3()))
+                .toList();
+        if (novo == StatusKanban.EM_REVISAO) {
+            Evidencia pendencia = pendencias.isEmpty() ? new Evidencia() : pendencias.get(0);
+            if (pendencia.getId() == null) {
+                pendencia.setUnidadeTarefa(tu);
+                pendencia.setUrlS3(URL_CHECKIN);
+                pendencia.setDataEnvio(LocalDateTime.now());
+            }
+            pendencia.setComentarioFeedback("Check-in: " + marcados + " de " + total + " desbravadores cumpriram");
+            evidenciaRepository.save(pendencia);
+        } else {
+            pendencias.forEach(evidenciaRepository::delete);
+        }
+        tu.setStatusKanban(novo);
+        tarefaUnidadeRepository.save(tu);
+        if (execucao != null) {
+            execucao.setStatusKanban(novo);
+            execucaoRepository.save(execucao);
+        }
+    }
 
     @Transactional(readOnly = true)
     public List<DesbravadorUnidadeDto> desbravadoresDaUnidade(Integer idUnidade) {

@@ -82,12 +82,21 @@ public class AcompanhamentoCadernoController {
     @PutMapping("/tarefas/{idTarefa}/checkin/{idDesbravador}")
     @PreAuthorize("hasRole('CONSELHEIRO')")
     @Operation(summary = "Marcar/desmarcar criança no check-in",
-            description = "Todas marcadas → tarefa vai para EM REVISAO (aguarda a Diretoria reconhecer); desmarcar volta para EM ANDAMENTO")
+            description = "Todas marcadas → EM REVISAO automaticamente. Em revisão, continua lá enquanto houver alguém marcado; sem ninguém, volta para EM ANDAMENTO")
     public ResponseEntity<CheckinDto> marcar(@PathVariable Integer idTarefa, @PathVariable Integer idDesbravador,
                                              @RequestBody @Valid CheckinMarcacaoDto dto,
                                              @AuthenticationPrincipal UsuarioDetalhesDto u) {
         if (u == null) return ResponseEntity.status(401).build();
         return ResponseEntity.ok(service.marcarCheckin(idTarefa, idDesbravador, dto.concluiu(), u.getIdUnidade(), u.getIdClube()));
+    }
+
+    @PostMapping("/tarefas/{idTarefa}/checkin/enviar")
+    @PreAuthorize("hasRole('CONSELHEIRO')")
+    @Operation(summary = "Enviar check-in parcial para revisão",
+            description = "Com pelo menos uma criança marcada, a tarefa vai para EM REVISAO e a Diretoria recebe a pendência")
+    public ResponseEntity<CheckinDto> enviar(@PathVariable Integer idTarefa, @AuthenticationPrincipal UsuarioDetalhesDto u) {
+        if (u == null) return ResponseEntity.status(401).build();
+        return ResponseEntity.ok(service.enviarParaRevisao(idTarefa, u.getIdUnidade(), u.getIdClube()));
     }
 
     // ----- Conselheiro: "Desbravadores" -----
