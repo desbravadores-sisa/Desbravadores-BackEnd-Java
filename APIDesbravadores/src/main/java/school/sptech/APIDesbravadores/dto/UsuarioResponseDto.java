@@ -17,7 +17,7 @@ public class UsuarioResponseDto {
     @Schema(description = "E-mail do usuário", example = "maria@email.com")
     private String email;
 
-    @Schema(description = "Tipo de conta", example = "DIRETOR")
+    @Schema(description = "Tipo de conta", example = "Diretoria")
     private String tipoConta;
 
     @Schema(description = "ID do clube vinculado", example = "1")
@@ -25,4 +25,7 @@ public class UsuarioResponseDto {
 
     @Schema(description = "ID da unidade vinculada", example = "2")
     private Integer idUnidade;
+
+    @Schema(description = "Telefone", example = "(11) 99999-0000")
+    private String telefone;
 }

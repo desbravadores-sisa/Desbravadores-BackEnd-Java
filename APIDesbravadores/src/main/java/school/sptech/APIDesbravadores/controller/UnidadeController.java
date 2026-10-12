@@ -34,7 +34,7 @@ public class UnidadeController {
     * =========================================================================
     * */
     @GetMapping("/diretor")
-    @PreAuthorize("hasRole('DIRETOR')")
+    @PreAuthorize("hasRole('DIRETORIA')")
     @Operation(summary = "Listar unidades do clube", description = "Retorna todas as unidades do clube do diretor autenticado")
     @ApiResponse(responseCode = "200", description = "Lista de unidades retornada com sucesso")
     @ApiResponse(responseCode = "204", description = "O clube não possui unidades cadastradas")
@@ -51,7 +51,7 @@ public class UnidadeController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('DIRETOR')")
+    @PreAuthorize("hasRole('DIRETORIA')")
     @Operation(summary = "Cadastrar uma nova unidade", description = "Cria uma unidade vinculada ao clube do diretor autenticado")
     @ApiResponse(responseCode = "201", description = "Unidade criada com sucesso")
     @ApiResponse(responseCode = "400", description = "Dados de entrada inválidos")
@@ -63,7 +63,7 @@ public class UnidadeController {
     }
 
     @PutMapping
-    @PreAuthorize("hasRole('DIRETOR')")
+    @PreAuthorize("hasRole('DIRETORIA')")
     @Operation(summary = "Atualizar uma unidade", description = "Atualiza os dados de uma unidade existente")
     @ApiResponse(responseCode = "200", description = "Unidade atualizada com sucesso")
     @ApiResponse(responseCode = "400", description = "Dados de entrada inválidos")
@@ -75,7 +75,7 @@ public class UnidadeController {
     }
 
     @DeleteMapping("/{idUnidade}")
-    @PreAuthorize("hasRole('DIRETOR')")
+    @PreAuthorize("hasRole('DIRETORIA')")
     @Operation(summary = "Deletar uma unidade", description = "Remove uma unidade do clube e desvincula os usuários que pertenciam a ela")
     @ApiResponse(responseCode = "204", description = "Unidade deletada com sucesso")
     @ApiResponse(responseCode = "401", description = "Usuário não autenticado")

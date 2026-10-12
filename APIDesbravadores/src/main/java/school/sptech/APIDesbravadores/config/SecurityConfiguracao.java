@@ -28,7 +28,7 @@ import java.util.List;
 
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity // Permite usar o @PreAuthorize("hasRole('DIRETOR')")
+@EnableMethodSecurity // Permite usar o @PreAuthorize("hasRole('DIRETORIA')")
 public class  SecurityConfiguracao {
 
     @Autowired

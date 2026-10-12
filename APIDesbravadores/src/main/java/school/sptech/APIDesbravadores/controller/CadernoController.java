@@ -6,7 +6,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import school.sptech.APIDesbravadores.dto.UsuarioDetalhesDto;
 import school.sptech.APIDesbravadores.dto.CadernoAtualizacaoDto;
 import school.sptech.APIDesbravadores.dto.CadernoCriacaoDto;
 import school.sptech.APIDesbravadores.dto.CadernoResponseDto;
@@ -56,8 +58,19 @@ public class CadernoController {
     @ApiResponse(responseCode = "404", description = "Clube não encontrado")
     public ResponseEntity<List<GrupoCadernoDto>> listarResumos(
             @Parameter(description = "ID do clube para filtrar os cadernos", example = "1")
-            @RequestParam Integer idClube) {
+            @RequestParam(required = false) Integer idClube,
+            @AuthenticationPrincipal UsuarioDetalhesDto usuarioLogado) {
+        // O front não envia idClube: usa o clube do usuário autenticado.
+        if (idClube == null && usuarioLogado != null) {
+            idClube = usuarioLogado.getIdClube();
+        }
+        if (idClube == null) {
+            return ResponseEntity.badRequest().build();
+        }
         List<GrupoCadernoDto> response = cadernoService.listarResumosCadernos(idClube);
+        if (response.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
         return ResponseEntity.status(200).body(response);
     }
 

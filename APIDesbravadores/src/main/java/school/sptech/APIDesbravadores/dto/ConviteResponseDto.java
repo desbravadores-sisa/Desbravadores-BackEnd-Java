@@ -22,4 +22,7 @@ public class ConviteResponseDto {
     private String statusConvite;
 
     private String nomeUnidade;
+
+    /** Preenchido apenas na criação, para a diretoria montar o link de cadastro. */
+    private String token;
 }

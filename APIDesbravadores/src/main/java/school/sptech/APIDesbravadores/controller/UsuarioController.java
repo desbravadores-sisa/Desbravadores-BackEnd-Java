@@ -102,7 +102,7 @@ public class UsuarioController {
     }
 
     @GetMapping("/painel-diretoria")
-    @PreAuthorize("hasRole('DIRETOR')") // O Spring Security vai olhar a pulseira antes de rodar essa linha
+    @PreAuthorize("hasRole('DIRETORIA')") // O Spring Security vai olhar a pulseira antes de rodar essa linha
     @Operation(summary = "Acessar o painel da diretoria", description = "Endpoint restrito para validar a permissão de DIRETOR")
     @ApiResponse(responseCode = "200", description = "Acesso liberado")
     @ApiResponse(responseCode = "401", description = "Usuário não autenticado")

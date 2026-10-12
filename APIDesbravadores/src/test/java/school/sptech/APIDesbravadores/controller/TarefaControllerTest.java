@@ -178,7 +178,7 @@ class TarefaControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("Dados de entrada inválidos"))
                 .andExpect(jsonPath("$.campos.titulo").exists())
-                .andExpect(jsonPath("$.campos.fkClube").exists());
+                .andExpect(jsonPath("$.campos.tipoTarefa").exists());
     }
 
     @Test

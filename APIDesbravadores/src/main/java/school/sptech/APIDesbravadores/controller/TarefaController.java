@@ -7,7 +7,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import school.sptech.APIDesbravadores.dto.UsuarioDetalhesDto;
 import school.sptech.APIDesbravadores.dto.TarefaCreateDto;
 import school.sptech.APIDesbravadores.dto.TarefaResponseDto;
 import school.sptech.APIDesbravadores.dto.TarefaStatusUpdateDto;
@@ -32,8 +34,13 @@ public class TarefaController {
     @Operation(summary = "Criar uma nova tarefa", description = "Cria uma tarefa com as informações fornecidas")
     @ApiResponse(responseCode = "201", description = "Tarefa criada com sucesso")
     @ApiResponse(responseCode = "400", description = "Dados de entrada inválidos")
-    @PreAuthorize("hasRole('DIRETOR')")
-    public ResponseEntity<TarefaResponseDto> create(@RequestBody @Valid TarefaCreateDto dto) {
+    @PreAuthorize("hasRole('DIRETORIA')")
+    public ResponseEntity<TarefaResponseDto> create(@RequestBody @Valid TarefaCreateDto dto,
+                                                    @AuthenticationPrincipal UsuarioDetalhesDto usuarioLogado) {
+        // O front não envia o clube: ele é derivado do usuário autenticado.
+        if (dto.getFkClube() == null && usuarioLogado != null) {
+            dto.setFkClube(usuarioLogado.getIdClube());
+        }
         TarefaResponseDto response = tarefaService.create(dto);
         return ResponseEntity.status(201).body(response);
     }
@@ -42,8 +49,10 @@ public class TarefaController {
     @Operation(summary = "Listar todas as tarefas", description = "Retorna uma lista de todas as tarefas cadastradas")
     @ApiResponse(responseCode = "200", description = "Lista de tarefas retornada com sucesso")
     @ApiResponse(responseCode = "204", description = "Nenhuma tarefa encontrada")
-    public ResponseEntity<List<TarefaResponseDto>> findAll() {
-        List<TarefaResponseDto> response = tarefaService.findAll();
+    public ResponseEntity<List<TarefaResponseDto>> findAll(@AuthenticationPrincipal UsuarioDetalhesDto usuarioLogado) {
+        List<TarefaResponseDto> response = usuarioLogado != null && usuarioLogado.getIdClube() != null
+                ? tarefaService.findAllByClube(usuarioLogado.getIdClube())
+                : tarefaService.findAll();
         if (response.isEmpty()) {
             return ResponseEntity.status(204).build();
         }
@@ -65,7 +74,7 @@ public class TarefaController {
     @ApiResponse(responseCode = "200", description = "Tarefa atualizada com sucesso")
     @ApiResponse(responseCode = "404", description = "Tarefa não encontrada")
     @ApiResponse(responseCode = "400", description = "Dados de entrada inválidos")
-    @PreAuthorize("hasRole('DIRETOR')")
+    @PreAuthorize("hasRole('DIRETORIA')")
     public ResponseEntity<TarefaResponseDto> update(
             @Parameter(description = "ID da tarefa a ser atualizada", example = "1") @PathVariable Integer id,
             @RequestBody @Valid TarefaUpdateDto dto) {
@@ -77,7 +86,7 @@ public class TarefaController {
     @Operation(summary = "Deletar uma tarefa", description = "Remove uma tarefa do sistema")
     @ApiResponse(responseCode = "204", description = "Tarefa deletada com sucesso")
     @ApiResponse(responseCode = "404", description = "Tarefa não encontrada")
-    @PreAuthorize("hasRole('DIRETOR')")
+    @PreAuthorize("hasRole('DIRETORIA')")
     public ResponseEntity<Void> delete(
             @Parameter(description = "ID da tarefa a ser deletada", example = "1") @PathVariable Integer id) {
         tarefaService.delete(id);

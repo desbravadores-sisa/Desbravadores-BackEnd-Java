@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import school.sptech.APIDesbravadores.config.GerenciadorTokenJwt;
 import school.sptech.APIDesbravadores.domain.Clube;
+import school.sptech.APIDesbravadores.domain.Convite;
 import school.sptech.APIDesbravadores.domain.Perfil;
 import school.sptech.APIDesbravadores.domain.Usuario;
 import school.sptech.APIDesbravadores.dto.UsuarioCriacaoDto;
@@ -22,11 +23,14 @@ import school.sptech.APIDesbravadores.dto.UsuarioTokenDto;
 import school.sptech.APIDesbravadores.exception.ClubeNãoEncontradoException;
 import school.sptech.APIDesbravadores.exception.EmailJaCadastradoException;
 import school.sptech.APIDesbravadores.exception.EntidadeNaoEncontradaException;
+import school.sptech.APIDesbravadores.exception.RequisicaoInvalidaException;
 import school.sptech.APIDesbravadores.mapper.UsuarioMapper;
 import school.sptech.APIDesbravadores.repository.ClubeRepository;
+import school.sptech.APIDesbravadores.repository.ConviteRepository;
 import school.sptech.APIDesbravadores.repository.PerfilRepository;
 import school.sptech.APIDesbravadores.repository.UsuarioRepository;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Service
@@ -38,18 +42,26 @@ public class UsuarioService {
     private final PasswordEncoder passwordEncoder;
     private final ClubeRepository clubeRepository;
     private final PerfilRepository perfilRepository;
+    private final ConviteRepository conviteRepository;
 
-    public UsuarioService(UsuarioRepository usuarioRepository, GerenciadorTokenJwt gerenciadorTokenJwt, AuthenticationManager authenticationManager, PasswordEncoder passwordEncoder, ClubeRepository clubeRepository, PerfilRepository perfilRepository) {
+    public UsuarioService(UsuarioRepository usuarioRepository, GerenciadorTokenJwt gerenciadorTokenJwt, AuthenticationManager authenticationManager, PasswordEncoder passwordEncoder, ClubeRepository clubeRepository, PerfilRepository perfilRepository, ConviteRepository conviteRepository) {
         this.usuarioRepository = usuarioRepository;
         this.gerenciadorTokenJwt = gerenciadorTokenJwt;
         this.authenticationManager = authenticationManager;
         this.passwordEncoder = passwordEncoder;
         this.clubeRepository = clubeRepository;
         this.perfilRepository = perfilRepository;
+        this.conviteRepository = conviteRepository;
     }
 
     @Transactional
     public Usuario cadastrarUsuario(UsuarioCriacaoDto request){
+        if (request.getToken() != null && !request.getToken().isBlank()) {
+            return cadastrarPorConvite(request);
+        }
+        if (request.getIdClube() == null || request.getTipoConta() == null || request.getTipoConta().isBlank()) {
+            throw new RequisicaoInvalidaException("Informe o token do convite ou tipoConta e idClube");
+        }
         Optional<Clube> clube = clubeRepository.findById(request.getIdClube());
         if (clube.isEmpty()){
             throw new ClubeNãoEncontradoException();
@@ -64,6 +76,42 @@ public class UsuarioService {
         usuario.setSenha(senhaCriptografada);
         usuario.setClube(clube.get());
         usuarioRepository.save(usuario);
+        return usuario;
+    }
+
+    /**
+     * Fluxo da tela /cadastro?token=...: perfil, clube e unidade vêm do convite.
+     * Códigos esperados pelo front: 404 convite inexistente, 410 expirado/usado,
+     * 422 e-mail diferente do convite, 409 e-mail já cadastrado.
+     */
+    private Usuario cadastrarPorConvite(UsuarioCriacaoDto request) {
+        Convite convite = conviteRepository.findByToken(request.getToken())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Convite não encontrado"));
+
+        if ("PENDENTE".equalsIgnoreCase(convite.getStatusConvite())
+                && convite.getDataExpiracao() != null
+                && convite.getDataExpiracao().isBefore(LocalDateTime.now())) {
+            convite.setStatusConvite("EXPIRADO");
+            conviteRepository.save(convite);
+        }
+        if (!"PENDENTE".equalsIgnoreCase(convite.getStatusConvite())) {
+            throw new ResponseStatusException(HttpStatus.GONE, "Convite expirado ou já utilizado");
+        }
+        if (!convite.getEmail().equalsIgnoreCase(request.getEmail())) {
+            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "E-mail não corresponde ao convite");
+        }
+        if (usuarioRepository.findByEmail(request.getEmail()).isPresent()) {
+            throw new EmailJaCadastradoException();
+        }
+
+        Usuario usuario = UsuarioMapper.toEntity(request, convite.getPerfil());
+        usuario.setSenha(passwordEncoder.encode(request.getSenha()));
+        usuario.setClube(convite.getClube());
+        usuario.setUnidade(convite.getUnidade());
+        usuarioRepository.save(usuario);
+
+        convite.setStatusConvite("ACEITO");
+        conviteRepository.save(convite);
         return usuario;
     }
 
@@ -94,6 +142,7 @@ public class UsuarioService {
         dto.setTipoConta(usuario.getPerfil() != null ? usuario.getPerfil().getNome() : null);
         dto.setIdClube(usuario.getClube() != null ? usuario.getClube().getId() : null);
         dto.setIdUnidade(usuario.getUnidade() != null ? usuario.getUnidade().getId() : null);
+        dto.setTelefone(usuario.getTelefone());
         return dto;
     }
 
@@ -101,8 +150,13 @@ public class UsuarioService {
     public UsuarioResponseDto atualizarPerfil(String emailLogado, UsuarioPerfilUpdateDto dto) {
         Usuario usuario = usuarioRepository.findByEmail(emailLogado)
                 .orElseThrow(() -> new EntidadeNaoEncontradaException("Usuário não encontrado"));
+        if (!usuario.getEmail().equalsIgnoreCase(dto.getEmail())
+                && usuarioRepository.findByEmail(dto.getEmail()).isPresent()) {
+            throw new EmailJaCadastradoException();
+        }
         usuario.setNome(dto.getNome());
         usuario.setEmail(dto.getEmail());
+        usuario.setTelefone(dto.getTelefone());
         usuarioRepository.save(usuario);
         return buscarPerfil(dto.getEmail());
     }

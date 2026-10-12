@@ -7,12 +7,10 @@ import java.time.LocalDate;
 
 public class TarefaCreateDto {
 
-    @NotNull
-    @Schema(description = "ID do Clube", example = "1")
+        @Schema(description = "ID do Clube", example = "1")
     private Integer fkClube;
 
-    @NotNull
-    @Schema(description = "ID da Unidade", example = "2")
+        @Schema(description = "ID da Unidade", example = "2")
     private Integer fkUnidade;
 
     @Schema(description = "ID do Caderno (opcional, para tarefas de Caderno)", example = "1")

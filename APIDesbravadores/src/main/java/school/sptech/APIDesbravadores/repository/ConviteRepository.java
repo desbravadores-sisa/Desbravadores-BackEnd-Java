@@ -5,7 +5,10 @@ import org.springframework.data.jpa.repository.Query;
 import school.sptech.APIDesbravadores.domain.Convite;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface ConviteRepository extends JpaRepository<Convite, Integer> {
     List<Convite> findByClubeId(Integer idClube);
+
+    Optional<Convite> findByToken(String token);
 }

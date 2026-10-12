@@ -11,7 +11,7 @@ import java.util.Optional;
 
 @Repository
 public interface TarefaUnidadeRepository extends JpaRepository<TarefaUnidade, Integer> {
-    Optional<TarefaUnidade> findByTarefaId(Integer tarefaId);
+    Optional<TarefaUnidade> findFirstByTarefaIdOrderByIdAsc(Integer tarefaId);
 
     List<TarefaUnidade> findByTarefaIdIn(Collection<Integer> tarefaIds);
 

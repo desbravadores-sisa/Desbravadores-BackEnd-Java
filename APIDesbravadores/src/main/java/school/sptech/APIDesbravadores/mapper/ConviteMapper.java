@@ -17,6 +17,9 @@ public class ConviteMapper {
         dto.setDataExpiracao(convite.getDataExpiracao());
         dto.setTipoConta(convite.getPerfil() != null ? convite.getPerfil().getNome() : null);
         dto.setStatusConvite(convite.getStatusConvite());
+        if ("PENDENTE".equalsIgnoreCase(convite.getStatusConvite())) {
+            dto.setToken(convite.getToken());
+        }
         if (convite.getUnidade() != null){
             dto.setNomeUnidade(convite.getUnidade().getNome());
         }

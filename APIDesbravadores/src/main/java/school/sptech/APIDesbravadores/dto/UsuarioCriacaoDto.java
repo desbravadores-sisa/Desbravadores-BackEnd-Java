@@ -23,11 +23,13 @@ public class UsuarioCriacaoDto {
     @Size(max = 100)
     private String senha;
 
-    @NotBlank
     @Size(max = 45)
     private String tipoConta;
 
-    @NotNull
     @Positive
     private Integer idClube;
+
+    /** Token do convite. Quando presente, perfil/clube/unidade vêm do convite. */
+    @Size(max = 128)
+    private String token;
 }

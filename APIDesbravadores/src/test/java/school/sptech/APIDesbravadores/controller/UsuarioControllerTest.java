@@ -100,7 +100,7 @@ class UsuarioControllerTest {
 
     @Test
     void painelDiretoriaDeveRetornar401QuandoUsuarioNaoAutenticado() throws Exception {
-        mockMvc.perform(get("/usuarios/painel-diretoria").with(user("diretor").roles("DIRETOR")))
+        mockMvc.perform(get("/usuarios/painel-diretoria").with(user("diretor").roles("DIRETORIA")))
                 .andExpect(status().isUnauthorized());
     }
 }

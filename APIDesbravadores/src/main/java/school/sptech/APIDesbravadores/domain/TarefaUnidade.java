@@ -34,6 +34,9 @@ public class TarefaUnidade {
     @Column(name = "data_conclusao")
     private LocalDateTime dataConclusao;
 
+    @Column(name = "pontuacao_concedida")
+    private Integer pontuacaoConcedida;
+
     public TarefaUnidade() {
     }
 
@@ -91,5 +94,13 @@ public class TarefaUnidade {
 
     public void setDataConclusao(LocalDateTime dataConclusao) {
         this.dataConclusao = dataConclusao;
+    }
+
+    public Integer getPontuacaoConcedida() {
+        return pontuacaoConcedida;
+    }
+
+    public void setPontuacaoConcedida(Integer pontuacaoConcedida) {
+        this.pontuacaoConcedida = pontuacaoConcedida;
     }
 }

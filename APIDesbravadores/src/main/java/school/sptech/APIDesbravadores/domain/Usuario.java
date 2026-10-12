@@ -22,6 +22,8 @@ public class Usuario {
 
     private String senha;
 
+    private String telefone;
+
     private Boolean ativo;
 
     @ManyToOne

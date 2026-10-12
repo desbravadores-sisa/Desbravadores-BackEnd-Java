@@ -23,7 +23,7 @@ public class ConviteController {
     }
 
     @GetMapping("")
-    @PreAuthorize("hasRole('DIRETOR')")
+    @PreAuthorize("hasRole('DIRETORIA')")
     public ResponseEntity<List<ConviteResponseDto>> listarUnidades(@AuthenticationPrincipal UsuarioDetalhesDto usuariologado){
         Integer idClube = usuariologado.getIdClube();
         System.out.println("IdClube na Controller" + idClube);
@@ -31,10 +31,13 @@ public class ConviteController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('DIRETOR')")
+    @PreAuthorize("hasRole('DIRETORIA')")
     public ResponseEntity<ConviteResponseDto> criarConvite(@AuthenticationPrincipal UsuarioDetalhesDto usuariologado, @RequestBody @Valid ConviteCriacaoDto request){
         Integer idClube = usuariologado.getIdClube();
-        return ResponseEntity.status(201).body(ConviteMapper.toResponse(conviteService.criarConvite(request, idClube)));
+        Convite convite = conviteService.criarConvite(request, idClube);
+        ConviteResponseDto response = ConviteMapper.toResponse(convite);
+        response.setToken(convite.getToken());
+        return ResponseEntity.status(201).body(response);
     }
 
     @GetMapping("/validar")
@@ -43,13 +46,13 @@ public class ConviteController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('DIRETOR')")
+    @PreAuthorize("hasRole('DIRETORIA')")
     public ResponseEntity<ConviteResponseDto> atualizarConvite(@RequestBody @Valid ConviteUpdateDto updateDto, @PathVariable Integer id){
         return ResponseEntity.ok(ConviteMapper.toResponse(conviteService.atualizarConvite(updateDto, id)));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('DIRETOR')")
+    @PreAuthorize("hasRole('DIRETORIA')")
     public ResponseEntity<Void> deletarConvite(@PathVariable Integer id){
         conviteService.deletarConvite(id);
         return ResponseEntity.noContent().build();

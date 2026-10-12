@@ -52,17 +52,26 @@ public class TarefaService {
 
     @Transactional
     public TarefaResponseDto create(TarefaCreateDto dto) {
+        if (dto.getFkClube() == null) {
+            throw new RequisicaoInvalidaException("fkClube é obrigatório");
+        }
         Clube clube = clubeRepository.findById(dto.getFkClube())
                 .orElseThrow(() -> new EntidadeNaoEncontradaException("Clube não encontrado com ID: " + dto.getFkClube()));
-
         Caderno caderno = null;
         if (dto.getFkCaderno() != null) {
             caderno = cadernoRepository.findById(dto.getFkCaderno())
                     .orElseThrow(() -> new EntidadeNaoEncontradaException("Caderno não encontrado com ID: " + dto.getFkCaderno()));
         }
 
-        Unidade unidade = unidadeRepository.findById(dto.getFkUnidade())
-                .orElseThrow(() -> new EntidadeNaoEncontradaException("Unidade não encontrada com ID: " + dto.getFkUnidade()));
+        // Com fkUnidade a tarefa vai para uma unidade; sem ela (fluxo da tela da
+        // diretoria), é distribuída para todas as unidades do clube.
+        List<Unidade> unidades;
+        if (dto.getFkUnidade() != null) {
+            unidades = List.of(unidadeRepository.findById(dto.getFkUnidade())
+                    .orElseThrow(() -> new EntidadeNaoEncontradaException("Unidade não encontrada com ID: " + dto.getFkUnidade())));
+        } else {
+            unidades = unidadeRepository.findByClubeId(dto.getFkClube());
+        }
 
         Ciclo ciclo = cicloRepository.findByClubeIdAndAtivoTrue(dto.getFkClube())
                 .orElseThrow(() -> new EntidadeNaoEncontradaException("Nenhum ciclo ativo encontrado para o Clube ID: " + dto.getFkClube()));
@@ -70,19 +79,30 @@ public class TarefaService {
         Tarefa tarefa = TarefaMapper.toEntity(dto, clube, caderno);
         Tarefa savedTarefa = tarefaRepository.save(tarefa);
 
-        TarefaUnidade tu = new TarefaUnidade();
-        tu.setTarefa(savedTarefa);
-        tu.setUnidade(unidade);
-        tu.setCiclo(ciclo);
-        tu.setStatusKanban(StatusKanban.A_FAZER);
-        tarefaUnidadeRepository.save(tu);
+        TarefaUnidade primeiro = null;
+        for (Unidade unidade : unidades) {
+            TarefaUnidade tu = new TarefaUnidade();
+            tu.setTarefa(savedTarefa);
+            tu.setUnidade(unidade);
+            tu.setCiclo(ciclo);
+            tu.setStatusKanban(StatusKanban.A_FAZER);
+            tarefaUnidadeRepository.save(tu);
+            if (primeiro == null) primeiro = tu;
+        }
+        return TarefaMapper.toResponseDto(savedTarefa, primeiro);
+    }
 
-        return TarefaMapper.toResponseDto(savedTarefa, tu);
+    @Transactional(readOnly = true)
+    public List<TarefaResponseDto> findAllByClube(Integer idClube) {
+        return mapearComVinculos(tarefaRepository.findByClubeId(idClube));
     }
 
     @Transactional(readOnly = true)
     public List<TarefaResponseDto> findAll() {
-        List<Tarefa> tarefas = tarefaRepository.findAll();
+        return mapearComVinculos(tarefaRepository.findAll());
+    }
+
+    private List<TarefaResponseDto> mapearComVinculos(List<Tarefa> tarefas) {
         if (tarefas.isEmpty()) {
             return List.of();
         }
@@ -105,7 +125,7 @@ public class TarefaService {
     public TarefaResponseDto findById(Integer id) {
         Tarefa t = tarefaRepository.findById(id)
                 .orElseThrow(() -> new EntidadeNaoEncontradaException("Tarefa não encontrada com ID: " + id));
-        TarefaUnidade tu = tarefaUnidadeRepository.findByTarefaId(t.getId()).orElse(null);
+        TarefaUnidade tu = tarefaUnidadeRepository.findFirstByTarefaIdOrderByIdAsc(t.getId()).orElse(null);
         return TarefaMapper.toResponseDto(t, tu);
     }
 
@@ -115,7 +135,7 @@ public class TarefaService {
                 .orElseThrow(() -> new EntidadeNaoEncontradaException("Tarefa não encontrada com ID: " + id));
         TarefaMapper.updateEntity(dto, t);
         Tarefa saved = tarefaRepository.save(t);
-        TarefaUnidade tu = tarefaUnidadeRepository.findByTarefaId(saved.getId()).orElse(null);
+        TarefaUnidade tu = tarefaUnidadeRepository.findFirstByTarefaIdOrderByIdAsc(saved.getId()).orElse(null);
         return TarefaMapper.toResponseDto(saved, tu);
     }
 
@@ -132,7 +152,7 @@ public class TarefaService {
         Tarefa t = tarefaRepository.findById(id)
                 .orElseThrow(() -> new EntidadeNaoEncontradaException("Tarefa não encontrada com ID: " + id));
 
-        TarefaUnidade tu = tarefaUnidadeRepository.findByTarefaId(t.getId())
+        TarefaUnidade tu = tarefaUnidadeRepository.findFirstByTarefaIdOrderByIdAsc(t.getId())
                 .orElseThrow(() -> new EntidadeNaoEncontradaException("TarefaUnidade não encontrada para Tarefa ID: " + id));
 
         return TarefaMapper.toResponseDto(t, tu);
@@ -143,7 +163,7 @@ public class TarefaService {
         Tarefa t = tarefaRepository.findById(id)
                 .orElseThrow(() -> new EntidadeNaoEncontradaException("Tarefa não encontrada com ID: " + id));
 
-        TarefaUnidade tu = tarefaUnidadeRepository.findByTarefaId(t.getId())
+        TarefaUnidade tu = tarefaUnidadeRepository.findFirstByTarefaIdOrderByIdAsc(t.getId())
                 .orElseThrow(() -> new EntidadeNaoEncontradaException("TarefaUnidade não encontrada para Tarefa ID: " + id));
 
         StatusKanban status = StatusKanban.fromString(statusStr);

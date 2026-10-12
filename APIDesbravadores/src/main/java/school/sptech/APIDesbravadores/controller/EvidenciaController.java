@@ -6,7 +6,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import school.sptech.APIDesbravadores.dto.UsuarioDetalhesDto;
 import school.sptech.APIDesbravadores.dto.EvidenciaAtualizacaoDto;
 import school.sptech.APIDesbravadores.dto.EvidenciaCriacaoDto;
 import school.sptech.APIDesbravadores.dto.EvidenciaResponseDto;
@@ -38,8 +40,10 @@ public class EvidenciaController {
     @Operation(summary = "Listar todas as evidências", description = "Retorna uma lista de todas as evidências cadastradas")
     @ApiResponse(responseCode = "200", description = "Lista de evidências retornada com sucesso")
     @ApiResponse(responseCode = "204", description = "Nenhuma evidência encontrada")
-    public ResponseEntity<List<EvidenciaResponseDto>> findAll() {
-        List<EvidenciaResponseDto> response = evidenciaService.findAll();
+    public ResponseEntity<List<EvidenciaResponseDto>> findAll(@AuthenticationPrincipal UsuarioDetalhesDto usuarioLogado) {
+        List<EvidenciaResponseDto> response = usuarioLogado != null && usuarioLogado.getIdClube() != null
+                ? evidenciaService.findAllByClube(usuarioLogado.getIdClube())
+                : evidenciaService.findAll();
         if (response.isEmpty()) {
             return ResponseEntity.status(204).build();
         }
