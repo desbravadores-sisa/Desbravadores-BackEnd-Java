@@ -64,8 +64,9 @@ public class TarefaController {
     @ApiResponse(responseCode = "200", description = "Tarefa encontrada com sucesso")
     @ApiResponse(responseCode = "404", description = "Tarefa não encontrada")
     public ResponseEntity<TarefaResponseDto> findById(
-            @Parameter(description = "ID da tarefa a ser buscada", example = "1") @PathVariable Integer id) {
-        TarefaResponseDto response = tarefaService.findById(id);
+            @Parameter(description = "ID da tarefa a ser buscada", example = "1") @PathVariable Integer id,
+            @AuthenticationPrincipal UsuarioDetalhesDto usuarioLogado) {
+        TarefaResponseDto response = tarefaService.findById(id, clubeDe(usuarioLogado));
         return ResponseEntity.status(200).body(response);
     }
 
@@ -77,8 +78,9 @@ public class TarefaController {
     @PreAuthorize("hasRole('DIRETORIA')")
     public ResponseEntity<TarefaResponseDto> update(
             @Parameter(description = "ID da tarefa a ser atualizada", example = "1") @PathVariable Integer id,
-            @RequestBody @Valid TarefaUpdateDto dto) {
-        TarefaResponseDto response = tarefaService.update(id, dto);
+            @RequestBody @Valid TarefaUpdateDto dto,
+            @AuthenticationPrincipal UsuarioDetalhesDto usuarioLogado) {
+        TarefaResponseDto response = tarefaService.update(id, dto, clubeDe(usuarioLogado));
         return ResponseEntity.status(200).body(response);
     }
 
@@ -88,8 +90,9 @@ public class TarefaController {
     @ApiResponse(responseCode = "404", description = "Tarefa não encontrada")
     @PreAuthorize("hasRole('DIRETORIA')")
     public ResponseEntity<Void> delete(
-            @Parameter(description = "ID da tarefa a ser deletada", example = "1") @PathVariable Integer id) {
-        tarefaService.delete(id);
+            @Parameter(description = "ID da tarefa a ser deletada", example = "1") @PathVariable Integer id,
+            @AuthenticationPrincipal UsuarioDetalhesDto usuarioLogado) {
+        tarefaService.delete(id, clubeDe(usuarioLogado));
         return ResponseEntity.status(204).build();
     }
 
@@ -122,5 +125,9 @@ public class TarefaController {
             return ResponseEntity.status(401).build();
         }
         return ResponseEntity.ok(tarefaService.getKanbanDaUnidade(usuarioLogado.getIdUnidade(), usuarioLogado.getIdClube()));
+    }
+
+    private static Integer clubeDe(UsuarioDetalhesDto usuarioLogado) {
+        return usuarioLogado != null ? usuarioLogado.getIdClube() : null;
     }
 }

@@ -42,6 +42,14 @@ public class TarefaService {
     private final school.sptech.APIDesbravadores.repository.DesbravadorCadernoRepository vinculoRepository;
     private final EvidenciaRepository evidenciaRepository;
 
+    // Opcionais (testes de unidade antigos não os fornecem): usados só na exclusão em cascata.
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private school.sptech.APIDesbravadores.repository.ExecucaoCadernoRepository execucaoCadernoRepository;
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private school.sptech.APIDesbravadores.repository.ChecklistCadernoRepository checklistCadernoRepository;
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private ArmazenamentoArquivoService armazenamento;
+
     public TarefaService(TarefaRepository tarefaRepository, TarefaUnidadeRepository tarefaUnidadeRepository,
                           ClubeRepository clubeRepository, UnidadeRepository unidadeRepository,
                           CicloRepository cicloRepository, CadernoRepository cadernoRepository) {
@@ -72,10 +80,25 @@ public class TarefaService {
         }
         Clube clube = clubeRepository.findById(dto.getFkClube())
                 .orElseThrow(() -> new EntidadeNaoEncontradaException("Clube não encontrado com ID: " + dto.getFkClube()));
+        // Tipo e caderno precisam ser coerentes: CADERNO exige um caderno do próprio clube; CLUBE não tem caderno.
+        String tipo = dto.getTipoTarefa() == null ? "" : dto.getTipoTarefa().trim().toUpperCase(java.util.Locale.ROOT);
+        if (!"CLUBE".equals(tipo) && !"CADERNO".equals(tipo)) {
+            throw new RequisicaoInvalidaException("Tipo de tarefa deve ser CLUBE ou CADERNO");
+        }
+        dto.setTipoTarefa(tipo);
+        if (dto.getPontuacao() != null && dto.getPontuacao() < 0) {
+            throw new RequisicaoInvalidaException("A pontuação não pode ser negativa");
+        }
         Caderno caderno = null;
-        if (dto.getFkCaderno() != null) {
+        if ("CADERNO".equals(tipo)) {
+            if (dto.getFkCaderno() == null) {
+                throw new RequisicaoInvalidaException("Selecione o caderno da tarefa");
+            }
             caderno = cadernoRepository.findById(dto.getFkCaderno())
+                    .filter(c -> c.getClube() != null && dto.getFkClube().equals(c.getClube().getId()))
                     .orElseThrow(() -> new EntidadeNaoEncontradaException("Caderno não encontrado com ID: " + dto.getFkCaderno()));
+        } else {
+            dto.setFkCaderno(null);
         }
 
         // Com fkUnidade a tarefa vai para uma unidade; sem ela (fluxo da tela da
@@ -109,15 +132,16 @@ public class TarefaService {
 
     @Transactional(readOnly = true)
     public List<TarefaResponseDto> findAllByClube(Integer idClube) {
-        return mapearComVinculos(tarefaRepository.findByClubeId(idClube));
+        Integer idCicloAtivo = cicloRepository.findByClubeIdAndAtivoTrue(idClube).map(Ciclo::getId).orElse(null);
+        return mapearComVinculos(tarefaRepository.findByClubeId(idClube), idCicloAtivo);
     }
 
     @Transactional(readOnly = true)
     public List<TarefaResponseDto> findAll() {
-        return mapearComVinculos(tarefaRepository.findAll());
+        return mapearComVinculos(tarefaRepository.findAll(), null);
     }
 
-    private List<TarefaResponseDto> mapearComVinculos(List<Tarefa> tarefas) {
+    private List<TarefaResponseDto> mapearComVinculos(List<Tarefa> tarefas, Integer idCicloAtivo) {
         if (tarefas.isEmpty()) {
             return List.of();
         }
@@ -125,29 +149,58 @@ public class TarefaService {
         // Busca os vínculos de uma vez só. Consultar dentro do laço custava
         // uma query por tarefa (N+1).
         List<Integer> ids = tarefas.stream().map(Tarefa::getId).toList();
-        Map<Integer, TarefaUnidade> vinculosPorTarefa = tarefaUnidadeRepository.findByTarefaIdIn(ids).stream()
-                .collect(Collectors.toMap(
-                        tu -> tu.getTarefa().getId(),
-                        Function.identity(),
-                        (existente, duplicado) -> existente));
+        Map<Integer, List<TarefaUnidade>> vinculosPorTarefa = tarefaUnidadeRepository.findByTarefaIdIn(ids).stream()
+                .collect(Collectors.groupingBy(tu -> tu.getTarefa().getId(), LinkedHashMap::new, Collectors.toList()));
 
         return tarefas.stream()
-                .map(t -> TarefaMapper.toResponseDto(t, vinculosPorTarefa.get(t.getId())))
+                .map(t -> {
+                    List<TarefaUnidade> vinculos = vinculosPorTarefa.getOrDefault(t.getId(), List.of());
+                    TarefaResponseDto dto = TarefaMapper.toResponseDto(t, vinculos.isEmpty() ? null : vinculos.get(0));
+                    // "X/N unidades entregaram" da tela Gerenciar Tarefas: só o ciclo ativo conta.
+                    List<TarefaUnidade> doCiclo = vinculos.stream()
+                            .filter(tu -> idCicloAtivo == null
+                                    || (tu.getCiclo() != null && idCicloAtivo.equals(tu.getCiclo().getId())))
+                            .toList();
+                    dto.setUnidadesTotal(doCiclo.size());
+                    dto.setUnidadesEntregaram((int) doCiclo.stream()
+                            .filter(tu -> tu.getStatusKanban() == StatusKanban.EM_REVISAO
+                                    || tu.getStatusKanban() == StatusKanban.CONCLUIDA)
+                            .count());
+                    return dto;
+                })
                 .collect(Collectors.toList());
+    }
+
+    /** Tarefa do clube do usuário (404 para tarefa de outro clube, sem revelar que existe). */
+    private Tarefa tarefaDoClube(Integer id, Integer idClube) {
+        return tarefaRepository.findById(id)
+                .filter(t -> idClube == null || (t.getClube() != null && idClube.equals(t.getClube().getId())))
+                .orElseThrow(() -> new EntidadeNaoEncontradaException("Tarefa não encontrada com ID: " + id));
     }
 
     @Transactional(readOnly = true)
     public TarefaResponseDto findById(Integer id) {
-        Tarefa t = tarefaRepository.findById(id)
-                .orElseThrow(() -> new EntidadeNaoEncontradaException("Tarefa não encontrada com ID: " + id));
+        return findById(id, null);
+    }
+
+    @Transactional(readOnly = true)
+    public TarefaResponseDto findById(Integer id, Integer idClube) {
+        Tarefa t = tarefaDoClube(id, idClube);
         TarefaUnidade tu = tarefaUnidadeRepository.findFirstByTarefaIdOrderByIdAsc(t.getId()).orElse(null);
         return TarefaMapper.toResponseDto(t, tu);
     }
 
     @Transactional
     public TarefaResponseDto update(Integer id, TarefaUpdateDto dto) {
-        Tarefa t = tarefaRepository.findById(id)
-                .orElseThrow(() -> new EntidadeNaoEncontradaException("Tarefa não encontrada com ID: " + id));
+        return update(id, dto, null);
+    }
+
+    @Transactional
+    public TarefaResponseDto update(Integer id, TarefaUpdateDto dto, Integer idClube) {
+        Tarefa t = tarefaDoClube(id, idClube);
+        if (dto.getPontuacao() != null && dto.getPontuacao() < 0) {
+            throw new RequisicaoInvalidaException("A pontuação não pode ser negativa");
+        }
         TarefaMapper.updateEntity(dto, t);
         Tarefa saved = tarefaRepository.save(t);
         TarefaUnidade tu = tarefaUnidadeRepository.findFirstByTarefaIdOrderByIdAsc(saved.getId()).orElse(null);
@@ -156,9 +209,34 @@ public class TarefaService {
 
     @Transactional
     public void delete(Integer id) {
-        Tarefa t = tarefaRepository.findById(id)
-                .orElseThrow(() -> new EntidadeNaoEncontradaException("Tarefa não encontrada com ID: " + id));
+        delete(id, null);
+    }
 
+    /**
+     * Exclui a tarefa e tudo o que depende dela: evidências (e os arquivos), check-ins,
+     * execuções de caderno e os vínculos com as unidades. Sem isso, as chaves estrangeiras
+     * impediam excluir qualquer tarefa que já tivesse evidência ou check-in.
+     */
+    @Transactional
+    public void delete(Integer id, Integer idClube) {
+        Tarefa t = tarefaDoClube(id, idClube);
+
+        List<Integer> idsVinculo = tarefaUnidadeRepository.findByTarefaIdIn(List.of(t.getId())).stream()
+                .map(TarefaUnidade::getId).toList();
+        if (evidenciaRepository != null && !idsVinculo.isEmpty()) {
+            List<school.sptech.APIDesbravadores.domain.Evidencia> evidencias = evidenciaRepository.findByUnidadeTarefaIdIn(idsVinculo);
+            evidencias.forEach(e -> {
+                if (armazenamento != null) armazenamento.remover(e.getUrlS3());
+            });
+            evidenciaRepository.deleteAll(evidencias);
+        }
+        if (execucaoCadernoRepository != null) {
+            List<school.sptech.APIDesbravadores.domain.ExecucaoCaderno> execucoes = execucaoCadernoRepository.findByTarefaId(t.getId());
+            if (!execucoes.isEmpty()) {
+                checklistCadernoRepository.deleteByExecucaoCadernoIdIn(execucoes.stream().map(e -> e.getId()).toList());
+                execucaoCadernoRepository.deleteAll(execucoes);
+            }
+        }
         tarefaUnidadeRepository.deleteByTarefaId(t.getId());
         tarefaRepository.delete(t);
     }

@@ -11,4 +11,5 @@ public interface ChecklistCadernoRepository extends JpaRepository<ChecklistCader
     java.util.List<ChecklistCaderno> findByDesbravadorIdInAndConcluiuTarefaTrue(java.util.Collection<Integer> idsDesbravador);
     java.util.List<ChecklistCaderno> findByExecucaoCadernoUnidadeClubeId(Integer idClube);
     void deleteByDesbravadorId(Integer idDesbravador);
+    void deleteByExecucaoCadernoIdIn(java.util.Collection<Integer> idsExecucao);
 }

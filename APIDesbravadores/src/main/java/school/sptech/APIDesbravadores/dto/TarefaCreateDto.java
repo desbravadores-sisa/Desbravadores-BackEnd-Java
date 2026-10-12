@@ -2,6 +2,8 @@ package school.sptech.APIDesbravadores.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.PositiveOrZero;
+import jakarta.validation.constraints.Size;
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
 
@@ -17,6 +19,7 @@ public class TarefaCreateDto {
     private Integer fkCaderno;
 
     @NotBlank
+    @Size(max = 150)
     @Schema(description = "Título da tarefa", example = "Comprar materiais")
     private String titulo;
 
@@ -27,6 +30,7 @@ public class TarefaCreateDto {
     @Schema(description = "Tipo da tarefa: CLUBE ou CADERNO", example = "CLUBE")
     private String tipoTarefa;
 
+    @PositiveOrZero
     @Schema(description = "Pontuação da tarefa", example = "10")
     private Integer pontuacao;
 

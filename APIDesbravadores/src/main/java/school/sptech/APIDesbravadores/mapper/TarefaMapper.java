@@ -37,6 +37,7 @@ public class TarefaMapper {
         dto.setId(entity.getId());
         dto.setFkClube(entity.getClube() != null ? entity.getClube().getId() : null);
         dto.setFkCaderno(entity.getCaderno() != null ? entity.getCaderno().getId() : null);
+        dto.setNomeCaderno(entity.getCaderno() != null ? entity.getCaderno().getNome() : null);
         dto.setTitulo(entity.getTitulo());
         dto.setDescricao(entity.getDescricao());
         dto.setTipoTarefa(entity.getTipoTarefa());

@@ -86,7 +86,7 @@ class TarefaControllerTest {
 
     @Test
     void findByIdDeveBuscarTarefa() throws Exception {
-        when(tarefaService.findById(1)).thenReturn(tarefaResponse());
+        when(tarefaService.findById(eq(1), any())).thenReturn(tarefaResponse());
 
         mockMvc.perform(get("/tarefas/{id}", 1))
                 .andExpect(status().isOk())
@@ -104,7 +104,7 @@ class TarefaControllerTest {
         TarefaResponseDto response = tarefaResponse();
         response.setTitulo("Organizar reuniao atualizada");
         response.setPontuacao(15);
-        when(tarefaService.update(eq(1), any(TarefaUpdateDto.class))).thenReturn(response);
+        when(tarefaService.update(eq(1), any(TarefaUpdateDto.class), any())).thenReturn(response);
 
         mockMvc.perform(put("/tarefas/{id}", 1)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -121,7 +121,7 @@ class TarefaControllerTest {
         mockMvc.perform(delete("/tarefas/{id}", 1))
                 .andExpect(status().isNoContent());
 
-        verify(tarefaService).delete(1);
+        verify(tarefaService).delete(eq(1), any());
     }
 
     @Test
@@ -163,7 +163,7 @@ class TarefaControllerTest {
 
     @Test
     void findByIdDeveRetornarNotFoundComMotivoQuandoTarefaNaoExistir() throws Exception {
-        when(tarefaService.findById(99))
+        when(tarefaService.findById(eq(99), any()))
                 .thenThrow(new EntidadeNaoEncontradaException("Tarefa não encontrada com ID: 99"));
 
         mockMvc.perform(get("/tarefas/{id}", 99))

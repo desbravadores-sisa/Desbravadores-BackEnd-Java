@@ -44,6 +44,15 @@ public class TarefaResponseDto {
     @Schema(description = "Indica se a unidade já enviou evidência para esta tarefa (preenchido no Kanban)", example = "false")
     private Boolean possuiEvidencia;
 
+    @Schema(description = "Nome do caderno (tarefas de caderno)", example = "Amigo")
+    private String nomeCaderno;
+
+    @Schema(description = "Unidades com a tarefa no ciclo ativo", example = "4")
+    private Integer unidadesTotal;
+
+    @Schema(description = "Unidades que já entregaram (em revisão ou concluída) no ciclo ativo", example = "1")
+    private Integer unidadesEntregaram;
+
     public TarefaResponseDto() {
     }
 
@@ -149,5 +158,29 @@ public class TarefaResponseDto {
 
     public void setStatusKanban(String statusKanban) {
         this.statusKanban = statusKanban;
+    }
+
+    public String getNomeCaderno() {
+        return nomeCaderno;
+    }
+
+    public void setNomeCaderno(String nomeCaderno) {
+        this.nomeCaderno = nomeCaderno;
+    }
+
+    public Integer getUnidadesTotal() {
+        return unidadesTotal;
+    }
+
+    public void setUnidadesTotal(Integer unidadesTotal) {
+        this.unidadesTotal = unidadesTotal;
+    }
+
+    public Integer getUnidadesEntregaram() {
+        return unidadesEntregaram;
+    }
+
+    public void setUnidadesEntregaram(Integer unidadesEntregaram) {
+        this.unidadesEntregaram = unidadesEntregaram;
     }
 }

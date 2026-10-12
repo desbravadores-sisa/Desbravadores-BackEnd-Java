@@ -2,17 +2,21 @@ package school.sptech.APIDesbravadores.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.PositiveOrZero;
+import jakarta.validation.constraints.Size;
 import java.time.LocalDate;
 
 public class TarefaUpdateDto {
 
     @NotBlank
+    @Size(max = 150)
     @Schema(description = "Título da tarefa", example = "Comprar materiais atualizado")
     private String titulo;
 
     @Schema(description = "Descrição da tarefa", example = "Nova descrição para a tarefa")
     private String descricao;
 
+    @PositiveOrZero
     @Schema(description = "Pontuação da tarefa", example = "15")
     private Integer pontuacao;
 
