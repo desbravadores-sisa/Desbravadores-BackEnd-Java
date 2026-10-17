@@ -33,6 +33,7 @@ public class ConviteController {
     @PreAuthorize("hasRole('DIRETORIA')")
     public ResponseEntity<ConviteResponseDto> criarConvite(@AuthenticationPrincipal UsuarioDetalhesDto usuariologado, @RequestBody @Valid ConviteCriacaoDto request){
         Integer idClube = usuariologado.getIdClube();
+        System.out.println("Comecei");
         Convite convite = conviteService.criarConvite(request, idClube);
         ConviteResponseDto response = ConviteMapper.toResponse(convite);
         response.setToken(convite.getToken());

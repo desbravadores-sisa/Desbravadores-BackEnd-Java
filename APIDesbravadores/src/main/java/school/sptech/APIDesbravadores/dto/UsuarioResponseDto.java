@@ -30,4 +30,6 @@ public class UsuarioResponseDto {
     private String telefone;
 
     private String fotoUrl;
+
+    private String nomeUnidade;
 }

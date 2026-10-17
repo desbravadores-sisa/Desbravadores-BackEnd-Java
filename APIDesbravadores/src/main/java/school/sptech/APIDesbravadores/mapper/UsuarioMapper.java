@@ -15,12 +15,15 @@ public class UsuarioMapper {
         dto.setId(usuario.getId());
         dto.setNome(usuario.getNome());
         dto.setEmail(usuario.getEmail());
+        dto.setFotoUrl(usuario.getFotoUrl());
+        dto.setTelefone(usuario.getTelefone());
         dto.setTipoConta(usuario.getPerfil() != null ? usuario.getPerfil().getNome() : null);
         if (usuario.getClube() != null){
             dto.setIdClube(usuario.getClube().getId());
         }
         if (usuario.getUnidade() != null){
             dto.setIdUnidade(usuario.getUnidade().getId());
+            dto.setNomeUnidade(usuario.getUnidade().getNome());
         }
         return dto;
     }

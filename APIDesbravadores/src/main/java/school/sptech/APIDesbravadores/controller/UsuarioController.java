@@ -24,6 +24,7 @@ import school.sptech.APIDesbravadores.mapper.UsuarioMapper;
 import school.sptech.APIDesbravadores.service.UsuarioService;
 
 import java.time.Duration;
+import java.util.List;
 
 @RestController
 @RequestMapping("/usuarios")
@@ -105,19 +106,6 @@ public class UsuarioController {
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping("/painel-diretoria")
-    @PreAuthorize("hasRole('DIRETORIA')") // O Spring Security vai olhar a pulseira antes de rodar essa linha
-    @Operation(summary = "Acessar o painel da diretoria", description = "Endpoint restrito para validar a permissão de DIRETOR")
-    @ApiResponse(responseCode = "200", description = "Acesso liberado")
-    @ApiResponse(responseCode = "401", description = "Usuário não autenticado")
-    @ApiResponse(responseCode = "403", description = "Usuário não possui a permissão DIRETOR")
-    public ResponseEntity<UsuarioResponseDto> painelExclusivo(@AuthenticationPrincipal UsuarioDetalhesDto usuarioLogado) {
-        if (usuarioLogado == null) {
-            return ResponseEntity.status(401).build();
-        }
-        return ResponseEntity.ok(usuarioService.buscarPerfil(usuarioLogado.getEmail()));
-    }
-
     @GetMapping("/perfil")
     @Operation(summary = "Buscar dados do perfil do usuário logado", description = "Retorna os dados do usuário autenticado")
     @ApiResponse(responseCode = "200", description = "Dados do perfil retornados com sucesso")
@@ -126,6 +114,15 @@ public class UsuarioController {
             return ResponseEntity.status(401).build();
         }
         return ResponseEntity.ok(usuarioService.buscarPerfil(usuarioLogado.getEmail()));
+    }
+
+    @GetMapping("")
+    @PreAuthorize("hasRole('DIRETORIA')")
+    public ResponseEntity<List<UsuarioResponseDto>> buscarUsuarios(@AuthenticationPrincipal UsuarioDetalhesDto usuarioLogado){
+        if (usuarioLogado == null){
+            return ResponseEntity.status(401).build();
+        }
+        return ResponseEntity.ok(usuarioService.buscarUsuarios(usuarioLogado.getIdClube()));
     }
 
     @PutMapping("/perfil")

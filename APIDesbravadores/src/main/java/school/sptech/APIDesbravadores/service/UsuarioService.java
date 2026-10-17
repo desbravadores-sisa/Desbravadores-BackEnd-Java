@@ -31,6 +31,7 @@ import school.sptech.APIDesbravadores.repository.PerfilRepository;
 import school.sptech.APIDesbravadores.repository.UsuarioRepository;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -145,6 +146,14 @@ public class UsuarioService {
         dto.setTelefone(usuario.getTelefone());
         dto.setFotoUrl(usuario.getFotoUrl());
         return dto;
+    }
+
+    public List<UsuarioResponseDto> buscarUsuarios(Integer idClube){
+        if (idClube == null || !clubeRepository.existsById(idClube)){
+            throw new ClubeNãoEncontradoException();
+        }
+        List<Usuario> usuarios = usuarioRepository.findByClubeId(idClube);
+        return usuarios.stream().map(UsuarioMapper::toResponse).toList();
     }
 
     @Transactional
