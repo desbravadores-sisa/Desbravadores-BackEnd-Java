@@ -8,10 +8,7 @@ import school.sptech.APIDesbravadores.domain.Unidade;
 import school.sptech.APIDesbravadores.dto.ConviteCriacaoDto;
 import school.sptech.APIDesbravadores.dto.ConviteRequestDto;
 import school.sptech.APIDesbravadores.dto.ConviteUpdateDto;
-import school.sptech.APIDesbravadores.exception.ClubeNãoEncontradoException;
-import school.sptech.APIDesbravadores.exception.ConviteNãoEncontradoException;
-import school.sptech.APIDesbravadores.exception.EntidadeNaoEncontradaException;
-import school.sptech.APIDesbravadores.exception.UnidadeNãoEncontradaException;
+import school.sptech.APIDesbravadores.exception.*;
 import school.sptech.APIDesbravadores.mapper.ConviteMapper;
 import school.sptech.APIDesbravadores.repository.ClubeRepository;
 import school.sptech.APIDesbravadores.repository.ConviteRepository;
@@ -46,6 +43,18 @@ public class ConviteService {
         this.perfilRepository = perfilRepository;
     }
 
+    public void validacaoClube(Integer idClube){
+        if (!clubeRepository.existsById(idClube)){
+            throw new ClubeNãoEncontradoException();
+        }
+    }
+
+    public void validacaoUnidade(Integer idUnidade){
+        if (!unidadeRepository.existsById(idUnidade)){
+            throw new UnidadeNãoEncontradaException();
+        }
+    }
+
     public List<Convite> listarConvites(Integer idClube){
         if (!clubeRepository.existsById(idClube)){
             throw  new ClubeNãoEncontradoException();
@@ -63,8 +72,8 @@ public class ConviteService {
                 throw new UnidadeNãoEncontradaException();
             }
         }
-        Perfil perfil = perfilRepository.findByNomeIgnoreCase(request.getTipoConta())
-                .orElseThrow(() -> new EntidadeNaoEncontradaException("Perfil não encontrado: " + request.getTipoConta()));
+        Perfil perfil = perfilRepository.findById(request.getIdPerfil())
+                .orElseThrow(() -> new EntidadeNaoEncontradaException("Perfil não encontrado"));
         Convite convite = new Convite();
         convite.setEmail(request.getEmail());
         convite.setPerfil(perfil);
@@ -115,11 +124,13 @@ public class ConviteService {
         return convite;
     }
 
-    public void deletarConvite(Integer idConvite){
-        if (!conviteRepository.existsById(idConvite)){
-            throw new ConviteNãoEncontradoException();
+    public void excluirConvite(Integer idClube, Integer idConvite){
+        validacaoClube(idClube);
+        Convite convite = conviteRepository.findById(idConvite).orElseThrow(ConviteNãoEncontradoException::new);
+        if (!idClube.equals(convite.getClube().getId())){
+            throw new AcessoNegadoException("Ação não permitida: O convite informado pertence a outro clube.");
         }
-        conviteRepository.deleteById(idConvite);
+        conviteRepository.delete(convite);
     }
 
     private String gerarTokenBase64() {

@@ -151,6 +151,14 @@ public class UsuarioController {
         return ResponseEntity.ok().build();
     }
 
+    @DeleteMapping("")
+    @PreAuthorize("hasRole('DIRETORIA')")
+    public ResponseEntity<Void> inativarUsuario(@AuthenticationPrincipal UsuarioDetalhesDto usuariologado, @RequestParam Integer idUsuario){
+        usuarioService.inativarUsuario(usuariologado.getIdClube(),idUsuario,usuariologado.getIdUsuario());
+        return ResponseEntity.noContent().build();
+    }
+
+
     @PutMapping(value = "/perfil/foto", consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "Enviar foto de perfil", description = "Imagem JPG, PNG ou WEBP de até 5 MB")
     public ResponseEntity<UsuarioResponseDto> enviarFoto(

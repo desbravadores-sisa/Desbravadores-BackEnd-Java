@@ -20,10 +20,7 @@ import school.sptech.APIDesbravadores.dto.UsuarioPerfilUpdateDto;
 import school.sptech.APIDesbravadores.dto.UsuarioResponseDto;
 import school.sptech.APIDesbravadores.dto.UsuarioSenhaUpdateDto;
 import school.sptech.APIDesbravadores.dto.UsuarioTokenDto;
-import school.sptech.APIDesbravadores.exception.ClubeNãoEncontradoException;
-import school.sptech.APIDesbravadores.exception.EmailJaCadastradoException;
-import school.sptech.APIDesbravadores.exception.EntidadeNaoEncontradaException;
-import school.sptech.APIDesbravadores.exception.RequisicaoInvalidaException;
+import school.sptech.APIDesbravadores.exception.*;
 import school.sptech.APIDesbravadores.mapper.UsuarioMapper;
 import school.sptech.APIDesbravadores.repository.ClubeRepository;
 import school.sptech.APIDesbravadores.repository.ConviteRepository;
@@ -53,6 +50,12 @@ public class UsuarioService {
         this.clubeRepository = clubeRepository;
         this.perfilRepository = perfilRepository;
         this.conviteRepository = conviteRepository;
+    }
+
+    public void validacaoClube(Integer idClube){
+        if (!clubeRepository.existsById(idClube)){
+            throw new ClubeNãoEncontradoException();
+        }
     }
 
     @Transactional
@@ -152,7 +155,7 @@ public class UsuarioService {
         if (idClube == null || !clubeRepository.existsById(idClube)){
             throw new ClubeNãoEncontradoException();
         }
-        List<Usuario> usuarios = usuarioRepository.findByClubeId(idClube);
+        List<Usuario> usuarios = usuarioRepository.findByClubeIdAndAtivo(idClube,true);
         return usuarios.stream().map(UsuarioMapper::toResponse).toList();
     }
 
@@ -204,4 +207,33 @@ public class UsuarioService {
         usuarioRepository.save(usuario);
         return buscarPerfil(emailLogado);
     }
+
+    public void inativarUsuario(Integer idClube, Integer idUsuario, Integer idUsuarioLogado){
+
+        if (idUsuario.equals(idUsuarioLogado)){
+            throw new AcessoNegadoException("O usuário não pode inativar do sistema");
+        }
+        validacaoClube(idClube);
+        Usuario usuarioLogado = usuarioRepository.findById(idUsuarioLogado).orElseThrow(UsuarioNaoEncontradoException::new);
+        Usuario usuarioExclusao = usuarioRepository.findById(idUsuario).orElseThrow(UsuarioNaoEncontradoException::new);
+        if (!usuarioLogado.getClube().getId().equals(idClube)){
+            throw new AcessoNegadoException("O usuário não tem acesso, para inativar usuários desse clube");
+        }
+
+        if (!usuarioExclusao.getClube().getId().equals(idClube)) {
+            throw new AcessoNegadoException("O usuário a ser inativado não pertence a este clube.");
+        }
+
+        if (usuarioExclusao.getPerfil().getNome().equalsIgnoreCase("DIRETORIA")){
+            List<Usuario> usuarioAtivos = usuarioRepository.findByClubeIdAndAtivoAndPerfilNome(idClube,true,"DIRETORIA");
+            if (usuarioAtivos.size() < 2){
+                throw new RegraNegocioException("Não é possível inativar o último usuário com cargo de diretoria neste clube.");
+            }
+        }
+
+        usuarioExclusao.setAtivo(false);
+        usuarioRepository.save(usuarioExclusao);
+    }
+
+
 }
