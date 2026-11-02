@@ -10,6 +10,7 @@ import school.sptech.APIDesbravadores.domain.*;
 import school.sptech.APIDesbravadores.dto.*;
 import school.sptech.APIDesbravadores.exception.EmailJaCadastradoException;
 import school.sptech.APIDesbravadores.exception.RequisicaoInvalidaException;
+import school.sptech.APIDesbravadores.exception.SenhaAtualIncorretaException;
 import school.sptech.APIDesbravadores.repository.*;
 
 import java.util.List;
@@ -295,9 +296,13 @@ class IntegracaoFrontServiceTest {
         UsuarioSenhaUpdateDto dto = new UsuarioSenhaUpdateDto();
         dto.setSenhaAtual("errada");
         dto.setNovaSenha("novaSenha123");
+        dto.setConfirmacaoNovaSenha("novaSenha123");
 
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> service.alterarSenha("ana@clube.com", dto));
-        assertEquals(401, ex.getStatusCode().value());
+        SenhaAtualIncorretaException ex = assertThrows(
+            SenhaAtualIncorretaException.class,
+            () -> service.alterarSenha("ana@clube.com", dto)
+        );
+        assertEquals("Senha atual incorreta.", ex.getMessage());
         verify(repo, never()).save(any());
     }
 
@@ -315,8 +320,56 @@ class IntegracaoFrontServiceTest {
         UsuarioSenhaUpdateDto dto = new UsuarioSenhaUpdateDto();
         dto.setSenhaAtual("atual");
         dto.setNovaSenha("novaSenha123");
+        dto.setConfirmacaoNovaSenha("novaSenha123");
         service.alterarSenha("ana@clube.com", dto);
 
         assertEquals("HASH2", u.getSenha());
     }
+
+        @Test
+        void alterarSenhaComNovaSenhaIgualAtualRejeitaSemSalvar() {
+        UsuarioRepository repo = mock(UsuarioRepository.class);
+        when(repo.findByEmail("ana@clube.com")).thenReturn(Optional.of(usuario()));
+        PasswordEncoder encoder = mock(PasswordEncoder.class);
+        when(encoder.matches("atual", "HASH")).thenReturn(true);
+        UsuarioService service = new UsuarioService(repo, mock(GerenciadorTokenJwt.class), mock(AuthenticationManager.class),
+            encoder, mock(ClubeRepository.class), mock(PerfilRepository.class), mock(ConviteRepository.class));
+
+        UsuarioSenhaUpdateDto dto = new UsuarioSenhaUpdateDto();
+        dto.setSenhaAtual("atual");
+        dto.setNovaSenha("atual");
+        dto.setConfirmacaoNovaSenha("atual");
+
+        RequisicaoInvalidaException ex = assertThrows(
+            RequisicaoInvalidaException.class,
+            () -> service.alterarSenha("ana@clube.com", dto)
+        );
+
+        assertEquals("A nova senha deve ser diferente da senha atual.", ex.getMessage());
+        verify(repo, never()).save(any());
+        }
+
+        @Test
+        void alterarSenhaComConfirmacaoDiferenteRejeitaSemSalvar() {
+        UsuarioRepository repo = mock(UsuarioRepository.class);
+        Usuario u = usuario();
+        when(repo.findByEmail("ana@clube.com")).thenReturn(Optional.of(u));
+        PasswordEncoder encoder = mock(PasswordEncoder.class);
+        when(encoder.matches("atual", "HASH")).thenReturn(true);
+        UsuarioService service = new UsuarioService(repo, mock(GerenciadorTokenJwt.class), mock(AuthenticationManager.class),
+            encoder, mock(ClubeRepository.class), mock(PerfilRepository.class), mock(ConviteRepository.class));
+
+        UsuarioSenhaUpdateDto dto = new UsuarioSenhaUpdateDto();
+        dto.setSenhaAtual("atual");
+        dto.setNovaSenha("novaSenha123");
+        dto.setConfirmacaoNovaSenha("diferente123");
+
+        RequisicaoInvalidaException ex = assertThrows(
+            RequisicaoInvalidaException.class,
+            () -> service.alterarSenha("ana@clube.com", dto)
+        );
+
+        assertEquals("A confirmação da nova senha não corresponde.", ex.getMessage());
+        verify(repo, never()).save(any());
+        }
 }

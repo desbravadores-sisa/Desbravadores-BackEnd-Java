@@ -40,6 +40,12 @@ public class ManipuladorGlobalDeExcecoes {
         return montar(HttpStatus.CONFLICT, excecao.getMessage(), requisicao, null);
     }
 
+    @ExceptionHandler(SenhaAtualIncorretaException.class)
+    public ResponseEntity<ErroRespostaDto> tratarSenhaAtualIncorreta(
+            SenhaAtualIncorretaException excecao, HttpServletRequest requisicao) {
+        return montar(HttpStatus.UNAUTHORIZED, excecao.getMessage(), requisicao, null);
+    }
+
     @ExceptionHandler({
             RequisicaoInvalidaException.class,
             IllegalArgumentException.class

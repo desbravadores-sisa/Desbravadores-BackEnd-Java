@@ -179,7 +179,13 @@ public class UsuarioService {
         Usuario usuario = usuarioRepository.findByEmail(emailLogado)
                 .orElseThrow(() -> new EntidadeNaoEncontradaException("Usuário não encontrado"));
         if (!passwordEncoder.matches(dto.getSenhaAtual(), usuario.getSenha())) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Senha atual incorreta");
+            throw new SenhaAtualIncorretaException();
+        }
+        if (passwordEncoder.matches(dto.getNovaSenha(), usuario.getSenha())) {
+            throw new RequisicaoInvalidaException("A nova senha deve ser diferente da senha atual.");
+        }
+        if (!dto.getNovaSenha().equals(dto.getConfirmacaoNovaSenha())) {
+            throw new RequisicaoInvalidaException("A confirmação da nova senha não corresponde.");
         }
         usuario.setSenha(passwordEncoder.encode(dto.getNovaSenha()));
         usuarioRepository.save(usuario);

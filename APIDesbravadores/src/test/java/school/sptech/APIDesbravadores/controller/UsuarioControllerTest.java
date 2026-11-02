@@ -2,27 +2,35 @@ package school.sptech.APIDesbravadores.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.Cookie;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import school.sptech.APIDesbravadores.domain.Perfil;
 import school.sptech.APIDesbravadores.domain.Usuario;
 import school.sptech.APIDesbravadores.dto.UsuarioCriacaoDto;
+import school.sptech.APIDesbravadores.dto.UsuarioDetalhesDto;
 import school.sptech.APIDesbravadores.dto.UsuarioLoginDto;
 import school.sptech.APIDesbravadores.dto.UsuarioResponseDto;
 import school.sptech.APIDesbravadores.dto.UsuarioTokenDto;
+import school.sptech.APIDesbravadores.exception.SenhaAtualIncorretaException;
 import school.sptech.APIDesbravadores.service.UsuarioService;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.cookie;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -39,6 +47,11 @@ class UsuarioControllerTest {
 
     @MockitoBean
     private UsuarioService usuarioService;
+
+    @AfterEach
+    void clearSecurityContext() {
+        SecurityContextHolder.clearContext();
+    }
 
     @Test
     void criarUsuarioDeveCadastrarUsuario() throws Exception {
@@ -103,4 +116,23 @@ class UsuarioControllerTest {
         mockMvc.perform(get("/usuarios/painel-diretoria").with(user("diretor").roles("DIRETORIA")))
                 .andExpect(status().isUnauthorized());
     }
+
+        @Test
+        void alterarSenhaComSenhaAtualIncorretaDeveRetornar401NoStatusENoCorpo() throws Exception {
+        UsuarioDetalhesDto usuarioLogado = new UsuarioDetalhesDto(
+            1, "Ana", "ana@clube.com", "HASH", "DIRETOR", 1, null
+        );
+        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(
+            usuarioLogado, null, usuarioLogado.getAuthorities()
+        ));
+        doThrow(new SenhaAtualIncorretaException())
+            .when(usuarioService).alterarSenha(eq("ana@clube.com"), any());
+
+        mockMvc.perform(put("/usuarios/senha")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"senhaAtual\":\"incorreta\",\"novaSenha\":\"novaSenha123\",\"confirmacaoNovaSenha\":\"novaSenha123\"}"))
+            .andExpect(status().isUnauthorized())
+            .andExpect(jsonPath("$.status").value(401))
+                .andExpect(jsonPath("$.message").value("Senha atual incorreta."));
+        }
 }

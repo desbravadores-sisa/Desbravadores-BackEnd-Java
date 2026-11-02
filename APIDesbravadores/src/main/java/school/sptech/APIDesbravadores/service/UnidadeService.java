@@ -10,6 +10,7 @@ import school.sptech.APIDesbravadores.dto.UnidadeAtualizacaoDto;
 import school.sptech.APIDesbravadores.dto.UnidadeCriacaoDto;
 import school.sptech.APIDesbravadores.dto.UnidadeResponseDto;
 import school.sptech.APIDesbravadores.exception.ClubeNãoEncontradoException;
+import school.sptech.APIDesbravadores.exception.RequisicaoInvalidaException;
 import school.sptech.APIDesbravadores.exception.UnidadeJácadastradaException;
 import school.sptech.APIDesbravadores.exception.UnidadeNãoEncontradaException;
 import school.sptech.APIDesbravadores.mapper.UnidadeMapper;
@@ -82,6 +83,8 @@ public class UnidadeService {
 
     @Transactional
     public UnidadeResponseDto cadastrarUnidade(UnidadeCriacaoDto request, Integer idClube){
+        validarFaixaEtaria(request.getIdadeMinima(), request.getIdadeMaxima());
+
         Optional<Clube> clube = clubeRepository.findById(idClube);
         if (clube.isEmpty()){
             throw new ClubeNãoEncontradoException();
@@ -101,6 +104,8 @@ public class UnidadeService {
 
     @Transactional
     public UnidadeResponseDto atualizarUnidade(UnidadeAtualizacaoDto request, Integer idClubeUsuario){
+        validarFaixaEtaria(request.getIdadeMinima(), request.getIdadeMaxima());
+
         Unidade unidade = unidadeRepository.findById(request.getIdUnidade())
                 .filter(u -> idClubeUsuario == null || (u.getClube() != null && idClubeUsuario.equals(u.getClube().getId())))
                 .orElseThrow(UnidadeNãoEncontradaException::new);
@@ -117,6 +122,12 @@ public class UnidadeService {
 
         unidadeRepository.save(unidade);
         return UnidadeMapper.toResponse(unidade);
+    }
+
+    private void validarFaixaEtaria(Integer idadeMinima, Integer idadeMaxima) {
+        if (idadeMaxima != null && (idadeMinima == null || idadeMinima > idadeMaxima)) {
+            throw new RequisicaoInvalidaException("A idade máxima deve ser menor que a idade mínima necessária.");
+        }
     }
 
     @Transactional

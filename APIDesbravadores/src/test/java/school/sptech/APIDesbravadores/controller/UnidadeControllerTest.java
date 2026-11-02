@@ -81,6 +81,8 @@ class UnidadeControllerTest {
         autenticar(diretor());
         UnidadeCriacaoDto request = new UnidadeCriacaoDto();
         request.setNome("Tigres");
+        request.setGenero("Masculino");
+        request.setIdadeMinima(10);
         when(unidadeService.cadastrarUnidade(any(UnidadeCriacaoDto.class), eq(10))).thenReturn(unidadeResponse());
 
         mockMvc.perform(post("/unidades")
@@ -89,6 +91,29 @@ class UnidadeControllerTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(2))
                 .andExpect(jsonPath("$.nome").value("Tigres"));
+    }
+
+    @Test
+    void cadastrarUnidadeDeveRejeitarGeneroAusente() throws Exception {
+        autenticar(diretor());
+
+        mockMvc.perform(post("/unidades")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nome\":\"Tigres\",\"idadeMinima\":10}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.campos.genero").value("Selecione uma opção."));
+    }
+
+    @Test
+    void cadastrarUnidadeDeveRejeitarIdadeMaximaMaiorOuIgualAMinima() throws Exception {
+        autenticar(diretor());
+
+        mockMvc.perform(post("/unidades")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nome\":\"Tigres\",\"genero\":\"Masculino\",\"idadeMinima\":10,\"idadeMaxima\":10}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.campos.idadeMaximaValida")
+                        .value("A idade máxima deve ser menor que a idade mínima necessária."));
     }
 
     @Test
