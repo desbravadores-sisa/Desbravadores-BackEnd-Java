@@ -34,6 +34,10 @@ public class ConviteService {
     private final ClubeRepository clubeRepository;
     private final UnidadeRepository unidadeRepository;
     private final PerfilRepository perfilRepository;
+    @org.springframework.beans.factory.annotation.Autowired(required=false)
+    private ConviteEmailService emailService;
+    @org.springframework.beans.factory.annotation.Autowired(required=false)
+    private school.sptech.APIDesbravadores.repository.UsuarioRepository usuarios;
     private final SecureRandom secureRandom = new SecureRandom();
 
     public ConviteService(ConviteRepository conviteRepository, ClubeRepository clubeRepository, UnidadeRepository unidadeRepository, PerfilRepository perfilRepository) {
@@ -63,6 +67,7 @@ public class ConviteService {
         return convites;
     }
 
+    @org.springframework.transaction.annotation.Transactional
     public Convite criarConvite(ConviteCriacaoDto request, Integer idClube){
         if (!clubeRepository.existsById(idClube)){
             throw new ClubeNãoEncontradoException();
@@ -74,12 +79,19 @@ public class ConviteService {
         }
         Perfil perfil = perfilRepository.findById(request.getIdPerfil())
                 .orElseThrow(() -> new EntidadeNaoEncontradaException("Perfil não encontrado"));
+        request.setEmail(request.getEmail().trim().toLowerCase(java.util.Locale.ROOT));
+        if (!java.util.Set.of("DIRETORIA","CONSELHEIRO").contains(perfil.getNome().toUpperCase(java.util.Locale.ROOT))) throw new RegraNegocioException("Somente Diretoria e Conselheiro podem ser convidados.");
+        if ("CONSELHEIRO".equalsIgnoreCase(perfil.getNome()) && request.getIdUnidade()==null) throw new RegraNegocioException("Selecione uma unidade para o conselheiro.");
+        if ("DIRETORIA".equalsIgnoreCase(perfil.getNome()) && request.getIdUnidade()!=null) throw new RegraNegocioException("Diretoria não deve ter unidade vinculada.");
+        if (request.getIdUnidade()!=null && !unidadeRepository.findById(request.getIdUnidade()).orElseThrow(UnidadeNãoEncontradaException::new).getClube().getId().equals(idClube)) throw new AcessoNegadoException("Unidade de outro clube.");
+        if (usuarios!=null && usuarios.findByEmail(request.getEmail()).filter(u -> Boolean.TRUE.equals(u.getAtivo())).isPresent()) throw new ConviteDuplicadoException("Este e-mail já possui um cadastro ativo.");
+        if (conviteRepository.findByClubeId(idClube).stream().anyMatch(c -> c.getEmail().equalsIgnoreCase(request.getEmail()) && "PENDENTE".equalsIgnoreCase(c.getStatusConvite()) && c.getDataExpiracao().isAfter(LocalDateTime.now()))) throw new ConviteDuplicadoException("Já existe um convite pendente para este e-mail.");
         Convite convite = new Convite();
         convite.setEmail(request.getEmail());
         convite.setPerfil(perfil);
         convite.setToken(gerarTokenBase64());
         convite.setStatusConvite(STATUS_PENDENTE);
-        convite.setDataExpiracao(LocalDateTime.now().plusDays(7));
+        convite.setDataExpiracao(LocalDateTime.now().plusDays(14));
         Optional<Clube> clube = clubeRepository.findById(idClube);
         convite.setClube(clube.get());
         if (request.getIdUnidade() != null){

@@ -67,6 +67,12 @@ public class NotificacaoService {
         }
     }
 
+    @Transactional
+    public void notificarDiretoria(Integer clube,String titulo,String mensagem,String tipo,Integer referencia) {
+        for(Usuario u:usuarioRepository.findByClubeIdAndAtivoAndPerfilNome(clube,true,"DIRETORIA")) {
+            Notificacao n=new Notificacao();n.setUsuario(u);n.setClube(u.getClube());n.setTitulo(titulo);n.setMensagem(mensagem);n.setTipoReferencia(tipo);n.setIdReferencia(referencia);n.setLida(false);notificacaoRepository.save(n);
+        }
+    }
     static NotificacaoResponseDto toResponse(Notificacao n) {
         NotificacaoResponseDto dto = new NotificacaoResponseDto();
         dto.setId(n.getId());

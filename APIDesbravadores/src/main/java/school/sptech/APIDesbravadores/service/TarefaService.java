@@ -41,6 +41,8 @@ public class TarefaService {
     private final CadernoRepository cadernoRepository;
     private final school.sptech.APIDesbravadores.repository.DesbravadorCadernoRepository vinculoRepository;
     private final EvidenciaRepository evidenciaRepository;
+    @org.springframework.beans.factory.annotation.Autowired(required=false)
+    private NotificacaoService notificacoesEmail;
 
     // Opcionais (testes de unidade antigos não os fornecem): usados só na exclusão em cascata.
     @org.springframework.beans.factory.annotation.Autowired(required = false)
@@ -125,6 +127,7 @@ public class TarefaService {
             tu.setCiclo(ciclo);
             tu.setStatusKanban(StatusKanban.A_FAZER);
             tarefaUnidadeRepository.save(tu);
+            if(notificacoesEmail!=null) notificacoesEmail.notificarUnidade(unidade,"Nova tarefa disponível","A tarefa “"+savedTarefa.getTitulo()+"” foi adicionada à sua unidade.","NOVA_TAREFA",savedTarefa.getId());
             if (primeiro == null) primeiro = tu;
         }
         return TarefaMapper.toResponseDto(savedTarefa, primeiro);

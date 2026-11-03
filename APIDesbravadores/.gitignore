@@ -38,3 +38,9 @@ build/
 ### Uploads (keep directory, never commit uploaded files) ###
 /uploads/**
 !/uploads/.gitkeep
+
+.env
+.env.*
+!.env.example
+
+*.log

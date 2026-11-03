@@ -20,6 +20,10 @@ import java.util.List;
 @Service
 public class EvidenciaService {
 
+    @org.springframework.beans.factory.annotation.Autowired(required=false)
+    private org.springframework.context.ApplicationEventPublisher emailEvents;
+    @org.springframework.beans.factory.annotation.Autowired(required=false)
+    private school.sptech.APIDesbravadores.repository.UsuarioRepository usuariosEmail;
     private final EvidenciaRepository evidenciaRepository;
     private final TarefaUnidadeRepository tarefaUnidadeRepository;
     private final NotificacaoService notificacaoService;
@@ -102,6 +106,11 @@ public class EvidenciaService {
         tu.setStatusKanban(StatusKanban.EM_REVISAO);
         tu.setDataConclusao(null);
         tarefaUnidadeRepository.save(tu);
+        if(emailEvents!=null && usuariosEmail!=null) {
+            var diretores=usuariosEmail.findByClubeIdAndAtivoAndPerfilNome(idClube,true,"DIRETORIA");
+            emailEvents.publishEvent(new EvidenciaEnviadaEvent(tu.getId(),tu.getTarefa().getTitulo(),tu.getUnidade().getNome(),diretores.stream().map(u -> u.getEmail()).distinct().toList()));
+            notificacaoService.notificarDiretoria(idClube,"Evidência enviada","A unidade "+tu.getUnidade().getNome()+" enviou evidências para análise.","EVIDENCIA_ENVIADA",evidencia.getId());
+        }
         return EvidenciaMapper.toResponseDto(evidencia);
     }
 
