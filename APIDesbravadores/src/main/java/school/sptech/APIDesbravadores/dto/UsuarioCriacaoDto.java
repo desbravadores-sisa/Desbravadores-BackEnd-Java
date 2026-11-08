@@ -32,4 +32,13 @@ public class UsuarioCriacaoDto {
     /** Token do convite. Quando presente, perfil/clube/unidade vêm do convite. */
     @Size(max = 128)
     private String token;
+
+    @AssertTrue(message = "Informe um token de convite ou, para cadastro direto, o clube e o tipo de conta.")
+    public boolean isModoCadastroValido() {
+        boolean possuiToken = token != null && !token.isBlank();
+        boolean possuiDadosDeCadastroDireto = idClube != null
+                && tipoConta != null
+                && !tipoConta.isBlank();
+        return possuiToken || possuiDadosDeCadastroDireto;
+    }
 }

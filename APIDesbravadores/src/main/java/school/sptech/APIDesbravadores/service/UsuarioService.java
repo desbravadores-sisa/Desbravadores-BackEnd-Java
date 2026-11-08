@@ -72,15 +72,7 @@ public class UsuarioService {
         }
         Perfil perfil = perfilRepository.findByNomeIgnoreCase(request.getTipoConta())
                 .orElseThrow(() -> new EntidadeNaoEncontradaException("Perfil não encontrado: " + request.getTipoConta()));
-        if (!usuarioRepository.findByEmail(request.getEmail()).isEmpty()){
-            throw new EmailJaCadastradoException();
-        }
-        Usuario usuario = UsuarioMapper.toEntity(request, perfil);
-        String senhaCriptografada = passwordEncoder.encode(request.getSenha());
-        usuario.setSenha(senhaCriptografada);
-        usuario.setClube(clube.get());
-        usuarioRepository.save(usuario);
-        return usuario;
+        return salvarCadastro(request, perfil, clube.get(), null);
     }
 
     /**
@@ -104,19 +96,34 @@ public class UsuarioService {
         if (!convite.getEmail().equalsIgnoreCase(request.getEmail())) {
             throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "E-mail não corresponde ao convite");
         }
-        if (usuarioRepository.findByEmail(request.getEmail()).isPresent()) {
-            throw new EmailJaCadastradoException();
-        }
-
-        Usuario usuario = UsuarioMapper.toEntity(request, convite.getPerfil());
-        usuario.setSenha(passwordEncoder.encode(request.getSenha()));
-        usuario.setClube(convite.getClube());
-        usuario.setUnidade(convite.getUnidade());
-        usuarioRepository.save(usuario);
+        Usuario usuario = salvarCadastro(
+                request,
+                convite.getPerfil(),
+                convite.getClube(),
+                convite.getUnidade()
+        );
 
         convite.setStatusConvite("ACEITO");
         conviteRepository.save(convite);
         return usuario;
+    }
+
+    private Usuario salvarCadastro(UsuarioCriacaoDto request, Perfil perfil, Clube clube,
+                                   school.sptech.APIDesbravadores.domain.Unidade unidade) {
+        Optional<Usuario> usuarioExistente = usuarioRepository.findByEmail(request.getEmail());
+        if (usuarioExistente.filter(usuario -> Boolean.TRUE.equals(usuario.getAtivo())).isPresent()) {
+            throw new EmailJaCadastradoException();
+        }
+
+        Usuario usuario = usuarioExistente.orElseGet(() -> UsuarioMapper.toEntity(request, perfil));
+        usuario.setNome(request.getNome());
+        usuario.setEmail(request.getEmail());
+        usuario.setSenha(passwordEncoder.encode(request.getSenha()));
+        usuario.setPerfil(perfil);
+        usuario.setClube(clube);
+        usuario.setUnidade(unidade);
+        usuario.setAtivo(true);
+        return usuarioRepository.save(usuario);
     }
 
     public UsuarioTokenDto autenticar(UsuarioLoginDto loginDto) {

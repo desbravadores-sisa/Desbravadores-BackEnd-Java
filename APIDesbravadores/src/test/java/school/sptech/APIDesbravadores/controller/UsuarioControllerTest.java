@@ -26,6 +26,7 @@ import school.sptech.APIDesbravadores.service.UsuarioService;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -81,6 +82,23 @@ class UsuarioControllerTest {
                 .andExpect(jsonPath("$.nome").value("Maria"))
                 .andExpect(jsonPath("$.email").value("maria@email.com"))
                 .andExpect(jsonPath("$.senha").doesNotExist());
+    }
+
+    @Test
+    void criarUsuarioSemTokenNemDadosDeCadastroDiretoDeveRetornar400() throws Exception {
+        UsuarioCriacaoDto request = new UsuarioCriacaoDto();
+        request.setNome("Maria");
+        request.setEmail("maria@email.com");
+        request.setSenha("senha123");
+
+        mockMvc.perform(post("/usuarios/cadastro")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.message").value("Dados de entrada inválidos"));
+
+        verifyNoInteractions(usuarioService);
     }
 
     @Test
