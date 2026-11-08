@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import school.sptech.APIDesbravadores.domain.Convite;
 import school.sptech.APIDesbravadores.dto.*;
 import school.sptech.APIDesbravadores.mapper.ConviteMapper;
+import school.sptech.APIDesbravadores.service.ConviteEmailService;
 import school.sptech.APIDesbravadores.service.ConviteService;
 
 import java.util.List;
@@ -21,9 +22,11 @@ import java.util.List;
 public class ConviteController {
 
     private final ConviteService conviteService;
+    private final ConviteEmailService conviteEmailService;
 
-    public ConviteController(ConviteService conviteService) {
+    public ConviteController(ConviteService conviteService, ConviteEmailService conviteEmailService) {
         this.conviteService = conviteService;
+        this.conviteEmailService = conviteEmailService;
     }
 
     @GetMapping("")
@@ -41,6 +44,7 @@ public class ConviteController {
         Convite convite = conviteService.criarConvite(request, idClube);
         ConviteResponseDto response = ConviteMapper.toResponse(convite);
         response.setToken(convite.getToken());
+        conviteEmailService.enviar(convite);
         return ResponseEntity.status(201).body(response);
     }
 

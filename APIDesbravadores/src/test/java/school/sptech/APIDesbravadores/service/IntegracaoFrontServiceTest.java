@@ -3,6 +3,7 @@ package school.sptech.APIDesbravadores.service;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.server.ResponseStatusException;
 import school.sptech.APIDesbravadores.config.GerenciadorTokenJwt;
@@ -192,6 +193,33 @@ class IntegracaoFrontServiceTest {
         return new UsuarioService(repo, mock(GerenciadorTokenJwt.class), mock(AuthenticationManager.class),
                 encoder, mock(ClubeRepository.class), mock(PerfilRepository.class), conviteRepo);
     }
+
+            @Test
+            void autenticarUsuarioInativoRetorna401SemGerarToken() {
+            UsuarioRepository repo = mock(UsuarioRepository.class);
+            Usuario usuarioInativo = usuario();
+            usuarioInativo.setAtivo(false);
+            when(repo.findByEmail("ana@clube.com")).thenReturn(Optional.of(usuarioInativo));
+
+            AuthenticationManager authenticationManager = mock(AuthenticationManager.class);
+            Authentication authentication = mock(Authentication.class);
+            when(authenticationManager.authenticate(any(Authentication.class))).thenReturn(authentication);
+            GerenciadorTokenJwt tokenManager = mock(GerenciadorTokenJwt.class);
+            UsuarioService service = new UsuarioService(repo, tokenManager, authenticationManager,
+                mock(PasswordEncoder.class), mock(ClubeRepository.class), mock(PerfilRepository.class), mock(ConviteRepository.class));
+
+            UsuarioLoginDto login = new UsuarioLoginDto();
+            login.setEmail("ana@clube.com");
+            login.setSenha("senha-correta");
+
+            ResponseStatusException excecao = assertThrows(
+                ResponseStatusException.class,
+                () -> service.autenticar(login)
+            );
+
+            assertEquals(401, excecao.getStatusCode().value());
+            verify(tokenManager, never()).generateToken(any(Authentication.class));
+            }
 
     @Test
     void cadastroComConviteValidoUsaDadosDoConviteEMarcaComoAceito() {

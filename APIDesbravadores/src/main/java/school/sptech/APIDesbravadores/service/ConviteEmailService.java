@@ -27,10 +27,12 @@ public class ConviteEmailService {
 
     public void enviar(Convite convite) {
         if (!enabled || from.isBlank()) {
+            System.out.println("Email desativado");
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,
                     "Configure o serviço de e-mail antes de enviar convites.");
         }
         try {
+            System.out.println("Enviando e-mail");
             var conteudo = ConviteEmailTemplate.renderizar(convite, frontend);
             var message = sender.createMimeMessage();
             var helper = new MimeMessageHelper(message, MimeMessageHelper.MULTIPART_MODE_MIXED, "UTF-8");
@@ -39,7 +41,9 @@ public class ConviteEmailService {
             helper.setSubject("Você foi convidado para o Tigre da Montanha");
             helper.setText(conteudo.texto(), conteudo.html());
             sender.send(message);
+            System.out.println("E-mail enviado");
         } catch (org.springframework.mail.MailException | jakarta.mail.MessagingException | java.io.IOException ex) {
+            System.out.println("Erro ao enviar o e-mail");
             throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,
                     "Não foi possível enviar o convite. Tente novamente mais tarde.");
         }

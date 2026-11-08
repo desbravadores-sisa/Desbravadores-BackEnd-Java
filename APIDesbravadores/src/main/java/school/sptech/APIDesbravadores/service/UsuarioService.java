@@ -125,6 +125,9 @@ public class UsuarioService {
         final Authentication authentication = this.authenticationManager.authenticate(credentials);
         Usuario usuarioAutenticado = usuarioRepository.findByEmail(loginDto.getEmail())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuário não cadastrado", null));
+        if (Boolean.FALSE.equals(usuarioAutenticado.getAtivo())) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "E-mail ou senha inválidos");
+        }
         SecurityContextHolder.getContext().setAuthentication(authentication);
         final String token = gerenciadorTokenJwt.generateToken(authentication);
         return new UsuarioTokenDto(
